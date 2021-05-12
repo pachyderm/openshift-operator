@@ -1,0 +1,698 @@
+---
+# Source: pachyderm/templates/pachd/rbac/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: "pachyderm"
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/rbac/worker-serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm-worker
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/storage-secret.yaml
+apiVersion: v1
+data:
+  amazon-bucket: ""
+  amazon-distribution: ""
+  amazon-id: ""
+  amazon-region: ""
+  amazon-secret: ""
+  amazon-token: ""
+  custom-endpoint: ""
+  disable-ssl: "ZmFsc2U="
+  log-options: ""
+  max-upload-parts: "MTAwMDA="
+  no-verify-ssl: "ZmFsc2U="
+  part-size: "NTI0Mjg4MA=="
+  retries: "MTA="
+  reverse: "dHJ1ZQ=="
+  timeout: "NW0="
+  upload-acl: "YnVja2V0LW93bmVyLWZ1bGwtY29udHJvbA=="
+kind: Secret
+metadata:
+  labels:
+    app: pachyderm-storage-secret
+    suite: pachyderm
+  name: pachyderm-storage-secret
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/tls-secret.yaml
+apiVersion: "v1"
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMxVENDQWIyZ0F3SUJBZ0lKQUtreGM2Nk9kSzNHTUEwR0NTcUdTSWIzRFFFQkJRVUFNQm94R0RBV0JnTlYKQkFNVEQzZDNkeTVsZUdGdGNHeGxMbU52YlRBZUZ3MHlNVEEwTXpBeE5UTTFNVEJhRncwek1UQTBNamd4TlRNMQpNVEJhTUJveEdEQVdCZ05WQkFNVEQzZDNkeTVsZUdGdGNHeGxMbU52YlRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCCkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUx5OC9uUGNrRFFnMXFDVDc5S1ZIVjREVS9WanJUTFRVNTgrMVM2Vm01d0wKQVBnVnVvWmI2UEZZRXJHczhzb0prTjkzK1hWQjFuOFJZMC9rOGFwOHpyYnNpSk55Q29lK0VHYS9KT0ZYYzZjbQpGcE5sdGN0b3ZPdUlFWUdsMVZhZG9waFliR05TR200bHRWenhaalNPYVBSbWsxNGV3RGV5TlFpeDlzZXdtV1lGCm9nSTZhSXdPaUtRRjJWZ1JHeWxVb2hEdTE0RjV4ekZZS3ZHcTA4QUhGaHp0ZzRCT3VRbnJobkRrVGVGR2t5U1QKbkxuT0Fna0dVKzBmMHhxakNVQ3dqc29yNjdQci8rODhrMXJiQVdadkd2R1pwb1FBU2RhU0M1WEVtVGY0S1RNRwpDNVJKT3N3eklMYkFzaHlva0dRdlpWc045WWQ2WUFyc0ExVk4wWW8vdW5rQ0F3RUFBYU1lTUJ3d0dnWURWUjBSCkJCTXdFWUlQZDNkM0xtVjRZVzF3YkdVdVkyOXRNQTBHQ1NxR1NJYjNEUUVCQlFVQUE0SUJBUUJncVVPQVhGUWEKR0IrSkc3M0tkcEgrMUsxZXluVjNkOFZSUVZmQVhKakF0SHVCNDNuZXVvckpINTl1dlptNUxpK2JFbGg1QllHRworVlZhSmY3aWRnamxycExCSnUvRnQxa25lZGh3SXBxZnMxRjNnZDNrZHZFWUJrRVlTOG00b2xFSi9Cb25GbUhnCmJYRWdGQzk1UkNXLzhKUE56djlrSXVNUk9Ubk4yVHdsSUpsRnlNZ0I2cFlvMGJVaitaMFh0Nm4rL3J2NDNUNkkKTnJwV01Bb1dKK0U1WkxuQXdDL0RKNVB3VDdPanZZN1R1VXltNVBieGw3NEk3TldRM0xZSndrKzR0YXo3emRhOQptdlVPQkw5dS9oOE1GNHR1TkRZUDBhOGtRQWV6Z2xqUjNJNDZCd2dVYURLU3VacWdBeDBkUjNocUM3Y3FxTGR3CkZPV2tyVk4xTklkRgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBdkx6K2M5eVFOQ0RXb0pQdjBwVWRYZ05UOVdPdE10TlRuejdWTHBXYm5Bc0ErQlc2Cmhsdm84VmdTc2F6eXlnbVEzM2Y1ZFVIV2Z4RmpUK1R4cW56T3R1eUlrM0lLaDc0UVpyOGs0VmR6cHlZV2syVzEKeTJpODY0Z1JnYVhWVnAyaW1GaHNZMUlhYmlXMVhQRm1OSTVvOUdhVFhoN0FON0kxQ0xIMng3Q1paZ1dpQWpwbwpqQTZJcEFYWldCRWJLVlNpRU83WGdYbkhNVmdxOGFyVHdBY1dITzJEZ0U2NUNldUdjT1JONFVhVEpKT2N1YzRDCkNRWlQ3Ui9UR3FNSlFMQ095aXZycyt2Lzd6eVRXdHNCWm04YThabW1oQUJKMXBJTGxjU1pOL2dwTXdZTGxFazYKekRNZ3RzQ3lIS2lRWkM5bFd3MzFoM3BnQ3V3RFZVM1Jpais2ZVFJREFRQUJBb0lCQUd0cDNCNndYbGxzZnZtdwplQUtPM3NITWZ4SGZBb2swZ0JqWE41aGxpTVFMOXljNXBvZ2s4ck8zL2h1a1pDRGJ4Tm1KZkMxaHBPTjRUOTcrCld4TStLSjh1aXFQdmVWSzd0clhpL3VoSVR3Zkh3MzFybTBVQ2ZOSkhCRCtXMDQyUjlTRmk0WHk5RTFHd29FRWYKR1oyN2xydlJUUGw1NHNkUDRxTHFOWnA4UlRFcjg1L3cxaXllZ2pHNFpteUhKajhZSFIxeXIyOG5UNFdUWjRmcAp6ay8zY0lOVjBHaGtodVN6eFZvMXVmTkt0emwwZjgzLzNJWUhvMVNUL0ZTcGk0NUZKYXhobU81TUlweVI2M25oCnd6NHl6OGFIbnRSYkVwTkFOU0tDTkgvbWpTZ0FZR01lMWJlMWZ3ekxFei81WU5PVXNFcVVEcGN2djBFL2hjdlAKYzh3YnFhRUNnWUVBOXRYeE1IaXpVMjU3UU05TXhXY0ZGOXNudVd6cm9aVytucCt5ZHZ2bFY4ekpSREFvcHhCVgp3QXZhZHhNVFh0YUk5MHlydGRZdXBubTFzZDRuNWtMdWoxank5SVV0ZEVGYnlWbU5oYjAvVGVrb3lnUUNOTDkyCmNvS0tjSXN2VE5kd0paOU1oNmFnaUNBU0pudGg5MUlocVhzUzgvR2RibllKbHY4UjFpaEo5VjBDZ1lFQXc3N2MKMnVtTlVnL3p0K1VMYkZvNlh2amZDY0JWVXplc0xxTGVtOE1lSVQxL2FYUlQwSHpGcDhUdUJzbitzYVcvUDFIRAptbkhnaGJWNWxKd05HT3FzREZ6bHZlWStSWTR4SHV4ak5LTGZMa2dTS1ViY09YcWprR0Y5clN0K2NCMUgxNkVRCldmdi9oRXcxNGVLTzh1dzErNjh3L05CQnIyVkNXeUNlNTBaMFM4MENnWUVBcnBibTBVVWVlaTNVS2lRMmhnMzMKTVVlSEVvV3pLUWkwMnBmVWNJcDlUcHYvNUNZNEt1ckg3RjIxK2JGWmF5Uk5uclh4WWwyTGc1N2s0RmxsV1Y0UQpSUDVDWXFmc1hhVjVHYk1wQWVhNDV3KzdGU0MrdXJhT1BqS05YMHRqZW5PTDFHQ1hqZjlTM3RYb1lLVzJ4bXVtCmVhMGUyOE1UZXJVczFVdTNQd1lpUWRVQ2dZRUFwci92K3BqYzU1eHBQUzNrVmxCaXkwYnRFYXlEdzFsNDExMnQKanpsZmNHZW9JNWlTVWRnSXRRdkF6WTNENTJmUURNdkZlc3NwdmgzRFRjTEdNWVN3UGZQaFRxMVdQUUNOZmM5WQpENTN6eThSZm5FUWVGT1VSYzB4cHVGeUY0RkpCUWtLVjRHSVk0SVhmbk9iWWFiNnBtaGM2L3hNVjhhbXNKbDhhCm51Qlk3NzBDZ1lFQTBYaVhBcE93d3NvcjkydW5sN3dhU25EZVBnbHFXbFNMQWNsQ2k3VytkUm5TVW5OUkg1RSsKMmUybVlnRjdPRnlsUG5EUlM1K3llT1FhY3BIQUNURW96NUVPQUZRcGZUSC9qNFJZQWdvRkpBY0FYeWRhUExLOQpkR2x6N3UrODVvQmJLV2VtcjhlYzdaMTJXMVFPdXBxcUlGS0NJUzYrSW5ueFJURzdNVVlkQUVJPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+kind: Secret
+metadata:
+  labels:
+    app: "pachyderm"
+    suite: "pachyderm"
+  name: "pachd-tls-cert"
+---
+# Source: pachyderm/templates/etcd/storageclass.yaml
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd-storage-class
+parameters:
+  type: gp2
+provisioner: kubernetes.io/aws-ebs
+---
+# Source: pachyderm/templates/pachd/rbac/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - pods
+  - pods/log
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  - deletecollection
+---
+# Source: pachyderm/templates/pachd/rbac/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm
+  namespace: default
+roleRef:
+  apiGroup: ""
+  kind: ClusterRole
+  name: pachyderm
+subjects:
+- kind: ServiceAccount
+  name: "pachyderm"
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/rbac/worker-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm-worker
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - update
+  - create
+  - delete
+---
+# Source: pachyderm/templates/pachd/rbac/worker-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm-worker
+  namespace: default
+roleRef:
+  apiGroup: ""
+  kind: Role
+  name: pachyderm-worker
+subjects:
+- kind: ServiceAccount
+  name: pachyderm-worker
+  namespace: default
+---
+# Source: pachyderm/templates/dash/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dash
+    suite: pachyderm
+  name: dash
+  namespace: default
+spec:
+  ports:
+  - name: dash-http
+    port: 8080
+  - name: grpc-proxy-http
+    port: 8081
+  selector:
+    app: dash
+    suite: pachyderm
+  type: ClusterIP
+---
+# Source: pachyderm/templates/etcd/headless-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd-headless
+  namespace: default
+spec:
+  clusterIP: None
+  ports:
+  - name: peer-port
+    port: 2380
+  selector:
+    app: etcd
+---
+# Source: pachyderm/templates/etcd/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd
+  namespace: default
+spec:
+  ports:
+  - name: client-port
+    port: 2379
+    targetPort: client-port
+  selector:
+    app: etcd
+  type: ClusterIP
+---
+# Source: pachyderm/templates/pachd/peer-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pachd
+    suite: pachyderm
+  name: pachd-peer
+  namespace: default
+spec:
+  ports:
+  - name: api-grpc-peer-port
+    port: 30653
+    targetPort: 653
+  selector:
+    app: pachd
+  type: ClusterIP
+---
+# Source: pachyderm/templates/pachd/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "656"
+    prometheus.io/scrape: "true"
+  labels:
+    app: pachd
+    suite: pachyderm
+  name: pachd
+  namespace: default
+spec:
+  ports:
+  # This must remain first in the list for compatibility with old dash (can't connect when TLS enabled on api-grpc-port)
+  # The first port in the list sets the PACHD_SERVICE_PORT variable used by https://github.com/pachyderm/grpc-proxy/blob/master/Dockerfile
+  - name: api-grpc-peer
+    port: 653
+    targetPort: peer-port
+  - name: api-grpc-port
+    port: 650
+    targetPort: api-grpc-port
+  - name: trace-port
+    port: 651
+    targetPort: trace-port
+  - name: api-http-port
+    port: 652
+    targetPort: api-http-port
+  - name: saml-port
+    port: 654
+    targetPort: saml-port
+  - name: oidc-port
+    port: 657
+    targetPort: oidc-port
+  - name: api-git-port
+    port: 655
+    targetPort: api-git-port
+  - name: s3gateway-port
+    port: 600
+    targetPort: s3gateway-port
+  - name: prom-metrics
+    port: 656
+    protocol: TCP
+    targetPort: prom-metrics
+  selector:
+    app: pachd
+  type: ClusterIP
+---
+# Source: pachyderm/templates/dash/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dash
+    suite: pachyderm
+  name: dash
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: dash
+      suite: pachyderm
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: dash
+        suite: pachyderm
+      name: dash
+      namespace: default
+    spec:
+      containers:
+      - image: "pachyderm/dash:0.5.57"
+        imagePullPolicy: IfNotPresent
+        name: dash
+        ports:
+        - containerPort: 8080
+          name: dash-http
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1G
+          requests:
+            cpu: "1"
+            memory: 1G
+      - image: pachyderm/grpc-proxy:0.4.10
+        imagePullPolicy: IfNotPresent
+        name: grpc-proxy
+        ports:
+        - containerPort: 8081
+          name: grpc-proxy-http
+---
+# Source: pachyderm/templates/pachd/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pachd
+    suite: pachyderm
+  name: pachd
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pachd
+      suite: pachyderm
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: pachd
+        suite: pachyderm
+      name: pachd
+      namespace: default
+    spec:
+      containers:
+      - command:
+        - /pachd
+        env:
+        - name: LOKI_LOGGING
+          value: "false"
+        - name: PACH_ROOT
+          value: "/pach"
+        - name: ETCD_PREFIX
+          #value:
+        - name: NUM_SHARDS
+          value: "16"
+        - name: STORAGE_BACKEND
+          value: "AMAZON"
+        - name: STORAGE_HOST_PATH
+        - name: WORKER_IMAGE
+          value: "pachyderm/worker:1.13.0"
+        - name: IMAGE_PULL_SECRET
+          value: ""
+        - name: WORKER_SIDECAR_IMAGE
+          value: "pachyderm/pachd:1.13.0"
+        - name: WORKER_IMAGE_PULL_POLICY
+          value: "IfNotPresent"
+        - name: WORKER_SERVICE_ACCOUNT
+          value: "pachyderm-worker"
+        - name: PACHD_VERSION
+          value: "1.13.0"
+        - name: METRICS
+          value: "true"
+        - name: LOG_LEVEL
+          value: info
+        - name: BLOCK_CACHE_BYTES
+          value: "1G"
+        - name: NO_EXPOSE_DOCKER_SOCKET
+          value: "true"
+        - name: PACHYDERM_AUTHENTICATION_DISABLED_FOR_TESTING
+          value: "false"
+        - name: PACH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: PACHD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              containerName: pachd
+              divisor: "0"
+              resource: requests.memory
+        - name: EXPOSE_OBJECT_API
+          value: "false"
+        - name: REQUIRE_CRITICAL_SERVERS_ONLY
+          value: "false"
+        - name: PACHD_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: PPS_WORKER_GRPC_PORT
+          value: "80"
+        - name: AMAZON_REGION
+          valueFrom:
+            secretKeyRef:
+              key: amazon-region
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_BUCKET
+          valueFrom:
+            secretKeyRef:
+              key: amazon-bucket
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_ID
+          valueFrom:
+            secretKeyRef:
+              key: amazon-id
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: amazon-secret
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: amazon-token
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_VAULT_ADDR
+          valueFrom:
+            secretKeyRef:
+              key: amazon-vault-addr
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_VAULT_ROLE
+          valueFrom:
+            secretKeyRef:
+              key: amazon-vault-role
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: amazon-vault-token
+              name: pachyderm-storage-secret
+              optional: true
+        - name: AMAZON_DISTRIBUTION
+          valueFrom:
+            secretKeyRef:
+              key: amazon-distribution
+              name: pachyderm-storage-secret
+              optional: true
+        - name: CUSTOM_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              key: custom-endpoint
+              name: pachyderm-storage-secret
+              optional: true
+        - name: RETRIES
+          valueFrom:
+            secretKeyRef:
+              key: retries
+              name: pachyderm-storage-secret
+              optional: true
+        - name: TIMEOUT
+          valueFrom:
+            secretKeyRef:
+              key: timeout
+              name: pachyderm-storage-secret
+              optional: true
+        - name: UPLOAD_ACL
+          valueFrom:
+            secretKeyRef:
+              key: upload-acl
+              name: pachyderm-storage-secret
+              optional: true
+        - name: REVERSE
+          valueFrom:
+            secretKeyRef:
+              key: reverse
+              name: pachyderm-storage-secret
+              optional: true
+        - name: PART_SIZE
+          valueFrom:
+            secretKeyRef:
+              key: part-size
+              name: pachyderm-storage-secret
+              optional: true
+        - name: MAX_UPLOAD_PARTS
+          valueFrom:
+            secretKeyRef:
+              key: max-upload-parts
+              name: pachyderm-storage-secret
+              optional: true
+        - name: DISABLE_SSL
+          valueFrom:
+            secretKeyRef:
+              key: disable-ssl
+              name: pachyderm-storage-secret
+              optional: true
+        - name: NO_VERIFY_SSL
+          valueFrom:
+            secretKeyRef:
+              key: no-verify-ssl
+              name: pachyderm-storage-secret
+              optional: true
+        - name: OBJ_LOG_OPTS
+          valueFrom:
+            secretKeyRef:
+              key: log-options
+              name: pachyderm-storage-secret
+              optional: true
+        - name: STORAGE_UPLOAD_CONCURRENCY_LIMIT
+          value: "100"
+        - name: STORAGE_PUT_FILE_CONCURRENCY_LIMIT
+          value: "100"
+        - name: STORAGE_V2
+          value: "false"
+        image: "pachyderm/pachd:1.13.0"
+        imagePullPolicy: IfNotPresent
+        name: pachd
+        ports:
+        - containerPort: 650
+          name: api-grpc-port
+          protocol: TCP
+        - containerPort: 651
+          name: trace-port
+        - containerPort: 652
+          name: api-http-port
+          protocol: TCP
+        - containerPort: 653
+          name: peer-port
+          protocol: TCP
+        - containerPort: 655
+          name: api-git-port
+          protocol: TCP
+        - containerPort: 654
+          name: saml-port
+          protocol: TCP
+        - containerPort: 657
+          name: oidc-port
+          protocol: TCP
+        - containerPort: 656
+          name: prom-metrics
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /pachd
+            - --readiness
+        resources:
+          limits:
+            cpu: "1"
+            memory: 3G
+          requests:
+            cpu: 500m
+            memory: 3G
+        volumeMounts:
+        - mountPath: /pach
+          name: pach-disk
+        - mountPath: /pachyderm-storage-secret
+          name: pachyderm-storage-secret
+        - mountPath: /pachd-tls-cert
+          name: pachd-tls-cert
+      serviceAccountName: "pachyderm"
+      volumes:
+      - name: pach-disk
+      - name: pachyderm-storage-secret
+        secret:
+          secretName: pachyderm-storage-secret
+      - name: pachd-tls-cert
+        secret:
+          secretName: "pachd-tls-cert"
+---
+# Source: pachyderm/templates/etcd/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+      suite: pachyderm
+  serviceName: etcd-headless
+  template:
+    metadata:
+      labels:
+        app: etcd
+        suite: pachyderm
+      name: etcd
+      namespace: default
+    spec:
+      containers:
+      - args:
+        - '"/usr/local/bin/etcd" "--listen-client-urls=http://0.0.0.0:2379" "--advertise-client-urls=http://0.0.0.0:2379"
+          "--data-dir=/var/data/etcd" "--auto-compaction-retention=1" "--max-txn-ops=10000"
+          "--max-request-bytes=52428800" "--quota-backend-bytes=8589934592" "--listen-peer-urls=http://0.0.0.0:2380"
+          "--initial-cluster-token=pach-cluster" "--initial-advertise-peer-urls=http://${ETCD_NAME}.etcd-headless.${NAMESPACE}.svc.cluster.local:2380"
+          "--initial-cluster=etcd-0=http://etcd-0.etcd-headless.${NAMESPACE}.svc.cluster.local:2380"'
+        command:
+        - /bin/sh
+        - -c
+        env:
+        - name: ETCD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: "pachyderm/etcd:v3.3.5"
+        imagePullPolicy: IfNotPresent
+        name: etcd
+        ports:
+        - containerPort: 2379
+          name: client-port
+        - containerPort: 2380
+          name: peer-port
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2G
+          requests:
+            cpu: 500m
+            memory: 2G
+        volumeMounts:
+        - mountPath: /var/data/etcd
+          name: etcd-storage
+  volumeClaimTemplates:
+  - metadata:
+      annotations:
+        volume.beta.kubernetes.io/storage-class: etcd-storage-class
+      labels:
+        app: etcd
+        suite: pachyderm
+      name: etcd-storage
+      namespace: default
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 50Gi
+---
+# Source: pachyderm/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pachyderm-test-connection
+  labels:
+    suite: pachyderm
+    app: pach-test
+  namespace: default
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: nc
+      image: "alpine"
+      command: ['/bin/sh', '-c', '--']
+      args: ['while ! nc -vz pachd-peer 30653 ; do sleep 1 ; done']
+  restartPolicy: Never

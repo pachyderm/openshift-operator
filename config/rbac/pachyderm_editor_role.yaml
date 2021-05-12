@@ -1,0 +1,24 @@
+# permissions for end users to edit pachyderms.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pachyderm-editor-role
+rules:
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachyderms
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachyderms/status
+  verbs:
+  - get

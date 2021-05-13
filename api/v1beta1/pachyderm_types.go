@@ -108,7 +108,7 @@ type PachdOptions struct {
 	// Default: false
 	RequireCriticalServers bool `json:"requireCriticalServersOnly,omitempty"`
 	// Object storage options for Pachd
-	Storage ObjectStorageOptions `json:"storage,omitempty"`
+	Storage *ObjectStorageOptions `json:"storage,omitempty"`
 	// Optional image overrides.
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
@@ -118,10 +118,10 @@ type PachdOptions struct {
 	// Optional value to determine the format of the logs
 	// Default: false
 	LokiLogging                      bool              `json:"lokiLogging,omitempty"`
-	AuthenticationDisabledForTesting bool              `json:"authenticationDisabledForTesting"`
-	PPSWorkerGRPCPort                int               `json:"ppsWorkerGRPCPort"`
-	ExposeDockerSocket               bool              `json:"exposeDockerSocket"`
-	ExposeObjectAPI                  bool              `json:"exposeObjectAPI"`
+	AuthenticationDisabledForTesting bool              `json:"authenticationDisabledForTesting,omitempty"`
+	PPSWorkerGRPCPort                int               `json:"ppsWorkerGRPCPort,omitempty"`
+	ExposeDockerSocket               bool              `json:"exposeDockerSocket,omitempty"`
+	ExposeObjectAPI                  bool              `json:"exposeObjectAPI,omitempty"`
 	Service                          *ServiceOverrides `json:"service,omitempty"`
 	Metrics                          *MetricsOptions   `json:"metrics,omitempty"`
 	ServiceAccountName               string            `json:"serviceAccountName,omitempty"`

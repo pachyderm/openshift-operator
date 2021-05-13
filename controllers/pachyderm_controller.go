@@ -141,7 +141,7 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return err
 	}
 
-	// Deploy services
+	// Deploy storage class
 	if err := r.reconcileStorageClass(ctx, components); err != nil {
 		return err
 	}
@@ -162,6 +162,7 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 }
 
 // TODO: cleanup Pachyderm objects
+// - service accounts
 func (r *PachydermReconciler) cleanupPachydermObj(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
 	fmt.Println("delete pachyderm child resources")
 	return nil
@@ -282,11 +283,11 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components g
 
 	for _, secret := range components.Secrets() {
 		// set owner reference
-		if err := controllerutil.SetControllerReference(pd, &secret, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(pd, secret, r.Scheme); err != nil {
 			return err
 		}
 
-		if err := r.Create(ctx, &secret); err != nil {
+		if err := r.Create(ctx, secret); err != nil {
 			if errors.IsAlreadyExists(err) {
 				// Check if the secret contents have changed
 				currentSecret := &corev1.Secret{}
@@ -390,15 +391,9 @@ func (r *PachydermReconciler) deployDash(ctx context.Context, components generat
 }
 
 func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components generators.PachydermComponents) error {
-	pd := components.Parent()
-
 	sc := components.StorageClass()
 	if sc == nil {
 		return nil
-	}
-
-	if err := controllerutil.SetControllerReference(pd, sc, r.Scheme); err != nil {
-		return err
 	}
 
 	if err := r.Create(ctx, sc); err != nil {

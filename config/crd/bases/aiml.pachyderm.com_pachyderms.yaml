@@ -393,11 +393,6 @@ spec:
                         format: int32
                         type: integer
                     type: object
-                required:
-                - authenticationDisabledForTesting
-                - exposeDockerSocket
-                - exposeObjectAPI
-                - ppsWorkerGRPCPort
                 type: object
               worker:
                 properties:

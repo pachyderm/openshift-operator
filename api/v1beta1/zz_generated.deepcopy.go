@@ -245,7 +245,11 @@ func (in *ObjectStorageOptions) DeepCopy() *ObjectStorageOptions {
 func (in *PachdOptions) DeepCopyInto(out *PachdOptions) {
 	*out = *in
 	in.Resources.DeepCopyInto(&out.Resources)
-	in.Storage.DeepCopyInto(&out.Storage)
+	if in.Storage != nil {
+		in, out := &in.Storage, &out.Storage
+		*out = new(ObjectStorageOptions)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Image != nil {
 		in, out := &in.Image, &out.Image
 		*out = new(ImageOverride)

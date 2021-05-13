@@ -92,7 +92,7 @@ func loadManifests() ([][]byte, error) {
 // PachydermComponents is a structure that contains a slice of
 // all the Kubernetes resources that make up a Pachyderm deployment
 type PachydermComponents struct {
-	parent              *aimlv1beta1.Pachyderm
+	pachyderm           *aimlv1beta1.Pachyderm
 	dashDeploy          *appsv1.Deployment
 	pachdDeploy         *appsv1.Deployment
 	etcdStatefulSet     *appsv1.StatefulSet
@@ -103,7 +103,7 @@ type PachydermComponents struct {
 	Roles               []rbacv1.Role
 	ServiceAccounts     []corev1.ServiceAccount
 	Services            []corev1.Service
-	secrets             []corev1.Secret
+	secrets             []*corev1.Secret
 	storageClass        storagev1.StorageClass
 }
 
@@ -148,7 +148,7 @@ func getPachydermComponents() PachydermComponents {
 			if err := toTypedResource(obj, &secret); err != nil {
 				fmt.Println("error converting to secret.", err.Error())
 			}
-			components.secrets = append(components.secrets, secret)
+			components.secrets = append(components.secrets, &secret)
 		case "StorageClass":
 			var sc storagev1.StorageClass
 			if err := toTypedResource(obj, &sc); err != nil {
@@ -239,53 +239,56 @@ func (c *PachydermComponents) parsePod(obj *unstructured.Unstructured) error {
 
 // Parent returns the pachyderm resource used to configure components
 func (c *PachydermComponents) Parent() *aimlv1beta1.Pachyderm {
-	return c.parent
+	return c.pachyderm
 }
 
 func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
-	// 	pd := c.parent
-	// 	var allowExpansion bool = true
+	pd := c.pachyderm
+	var allowExpansion bool = true
 
-	// 	if pd.Spec.Etcd != nil && pd.Spec.Etcd.StorageClass == "" {
-	// 		return nil
-	// 	}
+	if pd.Spec.Etcd != nil && pd.Spec.Etcd.StorageClass != "" {
+		return nil
+	}
 
-	// 	if pd.Spec.Etcd != nil {
-	// 		sc := &c.storageClass
-	// 		sc.Namespace = pd.Namespace
-	// 		sc.AllowVolumeExpansion = &allowExpansion
+	// if storage class is not provided,
+	// create a new storage class
+	sc := &c.storageClass
+	sc.Namespace = pd.Namespace
+	sc.AllowVolumeExpansion = &allowExpansion
 
-	// 		switch pd.Spec.Etcd.StorageProvider {
-	// 		case "google":
-	// 			sc.Provisioner = "kubernetes.io/gce-pd"
-	// 			sc.Parameters = map[string]string{
-	// 				"type": "pd-ssd",
-	// 			}
-	// 		case "amazon":
-	// 			sc.Provisioner = "kubernetes.io/aws-ebs"
-	// 			sc.Parameters = map[string]string{
-	// 				"type": "gp2",
-	// 			}
-	// 		}
+	switch pd.Spec.Pachd.Storage.Backend {
+	case "google":
+		sc.Provisioner = "kubernetes.io/gce-pd"
+		sc.Parameters = map[string]string{
+			"type": "pd-ssd",
+		}
+	case "amazon":
+		sc.Provisioner = "kubernetes.io/aws-ebs"
+		sc.Parameters = map[string]string{
+			"type": "gp2",
+		}
+	default:
+		sc.Provisioner = "kubernetes.io/aws-ebs"
+		sc.Parameters = map[string]string{
+			"type": "gp2",
+		}
+	}
 
-	// 		return &c.storageClass
-	// 	}
-
-	return nil
+	return &c.storageClass
 }
 
-func (c *PachydermComponents) Secrets() []corev1.Secret {
-	pd := c.parent
+func (c *PachydermComponents) Secrets() []*corev1.Secret {
+	pd := c.pachyderm
 
 	for _, secret := range c.secrets {
 		secret.Namespace = pd.Namespace
 
 		if secret.Name == "pachyderm-storage-secret" {
-			setupStorageSecret(&secret, pd)
+			setupStorageSecret(secret, pd)
 		}
 
 		if secret.Name == "pachd-tls-cert" {
-			setupPachdTLSSecret(&secret, pd)
+			setupPachdTLSSecret(secret, pd)
 		}
 	}
 
@@ -326,11 +329,12 @@ func setupPachdTLSSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 
 	data["tls.crt"] = []byte{}
 	data["tls.key"] = []byte{}
+	fmt.Printf("%+v\n", secret)
 }
 
 // EtcdStatefulSet returns the etcd statefulset resource
 func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
-	pd := c.parent
+	pd := c.pachyderm
 
 	if pd.Spec.Etcd != nil {
 		for _, container := range c.etcdStatefulSet.Spec.Template.Spec.Containers {
@@ -349,7 +353,7 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 
 	for _, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == "pachd" {
-			container.Env = pachdEnvVarirables(c.parent)
+			container.Env = pachdEnvVarirables(c.pachyderm)
 		}
 	}
 
@@ -369,6 +373,6 @@ func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
 func Prepare(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 	components := getPachydermComponents()
 	// set pachyderm resource as parent
-	components.parent = pd
+	components.pachyderm = pd
 	return components
 }

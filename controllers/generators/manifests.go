@@ -323,13 +323,22 @@ func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 	// }
 }
 
-// TODO: generate self-signed TLS secret
+// generate self-signed TLS secret
 func setupPachdTLSSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
-	data := secret.Data
+	rsaKey, err := newPrivateKeyRSA(keyBitSize)
+	if err != nil {
+		fmt.Println("error:", err.Error())
+	}
 
-	data["tls.crt"] = []byte{}
-	data["tls.key"] = []byte{}
-	fmt.Printf("%+v\n", secret)
+	x509Cert, err := newClientCertificate(rsaKey, []string{"example.pachyderm.com"})
+	if err != nil {
+		fmt.Println("error:", err.Error())
+	}
+
+	secret.Data = map[string][]byte{
+		"tls.crt": encodeCertificateToPEM(x509Cert),
+		"tls.key": encodePrivateKeyToPEM(rsaKey),
+	}
 }
 
 // EtcdStatefulSet returns the etcd statefulset resource
@@ -370,6 +379,8 @@ func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
 // 	return c.storageClasses
 // }
 
+// Prepare takes a pachyderm custom resource and returns
+// child resources based on the pachyderm custom resource
 func Prepare(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 	components := getPachydermComponents()
 	// set pachyderm resource as parent

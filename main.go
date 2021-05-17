@@ -86,6 +86,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Pachyderm")
 		os.Exit(1)
 	}
+	if err = (&aimlv1beta1.Pachyderm{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Pachyderm")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

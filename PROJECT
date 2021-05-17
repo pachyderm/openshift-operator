@@ -1,5 +1,6 @@
 domain: pachyderm.com
-layout: go.kubebuilder.io/v3
+layout:
+- go.kubebuilder.io/v3
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
@@ -15,4 +16,8 @@ resources:
   kind: Pachyderm
   path: github.com/OchiengEd/pachyderm-operator/api/v1beta1
   version: v1beta1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 version: "3"

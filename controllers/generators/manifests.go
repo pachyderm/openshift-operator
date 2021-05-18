@@ -242,6 +242,8 @@ func (c *PachydermComponents) Parent() *aimlv1beta1.Pachyderm {
 	return c.pachyderm
 }
 
+// StorageClass returns a new etcd storage class
+// if an existing one is not used or provided
 func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 	pd := c.pachyderm
 	var allowExpansion bool = true
@@ -256,27 +258,30 @@ func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 	sc.Namespace = pd.Namespace
 	sc.AllowVolumeExpansion = &allowExpansion
 
-	switch pd.Spec.Pachd.Storage.Backend {
-	case "google":
-		sc.Provisioner = "kubernetes.io/gce-pd"
-		sc.Parameters = map[string]string{
-			"type": "pd-ssd",
-		}
-	case "amazon":
-		sc.Provisioner = "kubernetes.io/aws-ebs"
-		sc.Parameters = map[string]string{
-			"type": "gp2",
-		}
-	default:
-		sc.Provisioner = "kubernetes.io/aws-ebs"
-		sc.Parameters = map[string]string{
-			"type": "gp2",
+	if pd.Spec.Pachd != nil && pd.Spec.Pachd.Storage != nil {
+		switch pd.Spec.Pachd.Storage.Backend {
+		case "google":
+			sc.Provisioner = "kubernetes.io/gce-pd"
+			sc.Parameters = map[string]string{
+				"type": "pd-ssd",
+			}
+		case "amazon":
+			sc.Provisioner = "kubernetes.io/aws-ebs"
+			sc.Parameters = map[string]string{
+				"type": "gp2",
+			}
+		default:
+			sc.Provisioner = "kubernetes.io/aws-ebs"
+			sc.Parameters = map[string]string{
+				"type": "gp2",
+			}
 		}
 	}
 
 	return &c.storageClass
 }
 
+// Secrets returns secrets used by the pachyderm resource
 func (c *PachydermComponents) Secrets() []*corev1.Secret {
 	pd := c.pachyderm
 

@@ -41,6 +41,12 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+const (
+	webhookCertDir  string = "/apiserver.local.config/certificates"
+	webhookCertName string = "apiserver.crt"
+	webhookKeyName  string = "apiserver.key"
+)
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -103,9 +109,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	// sets mgr to use the OLM provided cert and key
+	// to secure webhook server
+	if hasOLMCert() {
+		webhookSrv := mgr.GetWebhookServer()
+		webhookSrv.CertDir = webhookCertDir
+		webhookSrv.CertName = webhookCertName
+		webhookSrv.KeyName = webhookKeyName
+	}
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func hasOLMCert() bool {
+	_, err := os.Stat(webhookCertDir)
+	return err == nil
 }

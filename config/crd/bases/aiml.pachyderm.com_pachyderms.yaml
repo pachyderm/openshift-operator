@@ -37,7 +37,7 @@ spec:
             description: PachydermSpec defines the desired state of Pachyderm
             properties:
               dash:
-                description: Options used to configure dashd deployment
+                description: Allows the user to customize the dashd instance(s)
                 properties:
                   enabled:
                     description: 'Option to disable dash Default: true'
@@ -103,8 +103,7 @@ spec:
                     type: string
                 type: object
               etcd:
-                description: Etd option allows user to customize deployment of the
-                  Etcd key value store
+                description: Allows the user to customize the etcd key-value store
                 properties:
                   dynamicNodes:
                     description: Optional parameter to set the number of nodes in
@@ -177,7 +176,7 @@ spec:
                     type: string
                 type: object
               pachd:
-                description: Pachd options allow you to customize deployment of pachd
+                description: Allows the user to customize the pachd instance(s)
                 properties:
                   authenticationDisabledForTesting:
                     type: boolean
@@ -220,15 +219,14 @@ spec:
                       Default: false'
                     type: boolean
                   metrics:
+                    description: MetricsOptions allows the user to enable/disable
+                      pachyderm metrics
                     properties:
                       enabled:
                         description: 'Default: true'
                         type: boolean
                       endpoint:
                         type: string
-                    required:
-                    - enabled
-                    - endpoint
                     type: object
                   numShards:
                     description: 'Sets the maximum number of pachd nodes allowed in
@@ -320,6 +318,8 @@ spec:
                           uploadACL:
                             type: string
                           vault:
+                            description: AmazonStorageVault exposes options to configure
+                              Amazon vault
                             properties:
                               address:
                                 type: string
@@ -327,10 +327,6 @@ spec:
                                 type: string
                               token:
                                 type: string
-                            required:
-                            - address
-                            - role
-                            - token
                             type: object
                           verifySSL:
                             type: boolean
@@ -358,6 +354,8 @@ spec:
                             type: string
                         type: object
                       microsoft:
+                        description: MicrosoftStorageOptions exposes options to configure
+                          Microsoft storage
                         properties:
                           container:
                             type: string
@@ -367,6 +365,8 @@ spec:
                             type: string
                         type: object
                       minio:
+                        description: MinioStorageOptions exposes options to confugure
+                          Minio object store
                         properties:
                           bucket:
                             type: string
@@ -395,6 +395,7 @@ spec:
                     type: object
                 type: object
               worker:
+                description: WorkerOptions allows the user to configure workers
                 properties:
                   image:
                     description: Optional image overrides. Used to specify alternative
@@ -421,8 +422,8 @@ spec:
             description: PachydermStatus defines the observed state of Pachyderm
             properties:
               phase:
-                description: PachydermStatus defines the data type used to define
-                  the status of a Pachyderm resource
+                description: PachydermPhase defines the data type used to report the
+                  status of a Pachyderm resource
                 type: string
             required:
             - phase

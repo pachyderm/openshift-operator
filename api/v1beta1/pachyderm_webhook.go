@@ -17,6 +17,9 @@ limitations under the License.
 package v1beta1
 
 import (
+	"reflect"
+	"strconv"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -26,13 +29,12 @@ import (
 // log is for logging in this package.
 var pachydermlog = logf.Log.WithName("pachyderm-resource")
 
+// SetupWebhookWithManager setups the webhook
 func (r *Pachyderm) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 //+kubebuilder:webhook:path=/mutate-aiml-pachyderm-com-v1beta1-pachyderm,mutating=true,failurePolicy=fail,sideEffects=None,groups=aiml.pachyderm.com,resources=pachyderms,verbs=create;update,versions=v1beta1,name=mpachyderm.kb.io,admissionReviewVersions={v1,v1beta1}
 
@@ -43,6 +45,35 @@ func (r *Pachyderm) Default() {
 	pachydermlog.Info("default", "name", r.Name)
 
 	// TODO(user): fill in your defaulting logic.
+	if err := r.setDefaults(); err != nil {
+		pachydermlog.Error(err, "failed setting defaults")
+	}
+}
+
+func (r *Pachyderm) setDefaults() error {
+	val := reflect.ValueOf(r).Elem()
+	typ := val.Type()
+
+	for i := 0; i < typ.NumField(); i++ {
+		if defaultVal := typ.Field(i).Tag.Get("default"); defaultVal != "-" {
+			if err := setField(val.Field(i), defaultVal); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func setField(field reflect.Value, defaultVal string) error {
+	switch field.Kind() {
+	case reflect.Int32:
+		if val, err := strconv.ParseInt(defaultVal, 10, 64); err == nil {
+			field.Set(reflect.ValueOf(int32(val)).Convert(field.Type()))
+		}
+	case reflect.String:
+		field.Set(reflect.ValueOf(defaultVal).Convert(field.Type()))
+	}
+	return nil
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

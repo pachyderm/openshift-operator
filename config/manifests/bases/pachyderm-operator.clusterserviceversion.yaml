@@ -1,0 +1,53 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: pachyderm-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Pachyderm is the Schema for the pachyderms API
+      displayName: Pachyderm
+      kind: Pachyderm
+      name: pachyderms.aiml.pachyderm.com
+      version: v1beta1
+  description: Operator to manage the deployment of pachyderm instances on Openshift
+  displayName: Pachyderm
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - pachyderm
+  - versioning
+  - machine learning
+  - artificial intelligence
+  links:
+  - name: Pachyderm Operator
+    url: https://pachyderm-operator.domain
+  maintainers:
+  - email: kyle@pachyderm.io
+    name: Kyle White
+  - email: eochieng@redhat.com
+    name: Edmund Ochieng
+  maturity: alpha
+  provider:
+    name: Pachyderm, Inc.
+    url: https://docs.pachyderm.com/latest/, https://pachyderm.com
+  version: 0.0.0

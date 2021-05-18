@@ -1,0 +1,187 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "aiml.pachyderm.com/v1beta1",
+          "kind": "Pachyderm",
+          "metadata": {
+            "name": "pachyderm-sample"
+          },
+          "spec": {}
+        }
+      ]
+    capabilities: Basic Install
+    operators.operatorframework.io/builder: operator-sdk-v1.6.1+git
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+  name: pachyderm-operator.v0.0.1
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Pachyderm is the Schema for the pachyderms API
+      displayName: Pachyderm
+      kind: Pachyderm
+      name: pachyderms.aiml.pachyderm.com
+      version: v1beta1
+  description: Operator to manage the deployment of pachyderm instances on Openshift
+  displayName: Pachyderm
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachyderms
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachyderms/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachyderms/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        serviceAccountName: pachyderm-operator-controller-manager
+      deployments:
+      - name: pachyderm-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                resources: {}
+              - args:
+                - --health-probe-bind-address=:8081
+                - --metrics-bind-address=127.0.0.1:8080
+                - --leader-elect
+                command:
+                - /manager
+                image: quay.io/opdev/pachyderm-operator:latest
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 30Mi
+                  requests:
+                    cpu: 100m
+                    memory: 20Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: pachyderm-operator-controller-manager
+              terminationGracePeriodSeconds: 10
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          - coordination.k8s.io
+          resources:
+          - configmaps
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: pachyderm-operator-controller-manager
+    strategy: deployment
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - pachyderm
+  - versioning
+  - machine learning
+  - artificial intelligence
+  links:
+  - name: Pachyderm Operator
+    url: https://pachyderm-operator.domain
+  maintainers:
+  - email: kyle@pachyderm.io
+    name: Kyle White
+  - email: eochieng@redhat.com
+    name: Edmund Ochieng
+  maturity: alpha
+  provider:
+    name: Pachyderm, Inc.
+    url: https://docs.pachyderm.com/latest/, https://pachyderm.com
+  version: 0.0.1

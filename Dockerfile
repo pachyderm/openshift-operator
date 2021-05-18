@@ -17,11 +17,21 @@ COPY controllers/ controllers/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+# Use Red Hat UBI base image
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+LABEL name=pachyderm-operator \
+      vendor='Pachyderm, Inc.' \
+      version=$VERSION \
+      release=$VERSION \
+      description='Operator to manage Pachyderm instances' \
+      summary='Pachyderm is a data science platform that combines Data Lineage with End-to-End Pipelines'
+
+ENV USER_ID=1001
+ADD LICENSE /license/apache2
+ADD hack/manifests /manifests
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
+USER ${USER_ID}
 
 ENTRYPOINT ["/manager"]

@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	aimlv1beta1 "github.com/OchiengEd/pachyderm-operator/api/v1beta1"
@@ -13,7 +14,7 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 	envs := []corev1.EnvVar{}
 	pachdOpts := pd.Spec.Pachd
 
-	if pachdOpts != nil {
+	if !reflect.DeepEqual(pachdOpts, aimlv1beta1.PachdOptions{}) {
 		// enable loki logging
 		envs = append(envs, corev1.EnvVar{
 			Name:  "LOKI_LOGGING",
@@ -224,7 +225,7 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 		},
 	}
 
-	if pd.Spec.Pachd != nil {
+	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) {
 
 		switch backend := strings.ToLower(pd.Spec.Pachd.Storage.Backend); backend {
 		case "amazon":

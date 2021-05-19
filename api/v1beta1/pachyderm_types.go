@@ -24,11 +24,11 @@ import (
 // PachydermSpec defines the desired state of Pachyderm
 type PachydermSpec struct {
 	// Allows the user to customize the etcd key-value store
-	Etcd *EtcdOptions `json:"etcd,omitempty"`
+	Etcd EtcdOptions `json:"etcd,omitempty"`
 	// Allows the user to customize the pachd instance(s)
-	Pachd *PachdOptions `json:"pachd,omitempty"`
+	Pachd PachdOptions `json:"pachd,omitempty"`
 	// Allows the user to customize the dashd instance(s)
-	Dashd  *DashOptions   `json:"dash,omitempty"`
+	Dashd  DashOptions    `json:"dash,omitempty"`
 	Worker *WorkerOptions `json:"worker,omitempty"`
 }
 
@@ -84,7 +84,7 @@ type EtcdOptions struct {
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
 	// Resource requests and limits for Etcd
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 	// If specified, etcd would use an existing storage class for its storage
 	// Name of existing storage class to use for the Etcd persistent volume.
 	StorageClass string `json:"storageClass,omitempty"`

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	aimlv1beta1 "github.com/OchiengEd/pachyderm-operator/api/v1beta1"
 	goyaml "github.com/go-yaml/yaml"
@@ -248,7 +249,8 @@ func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 	pd := c.pachyderm
 	var allowExpansion bool = true
 
-	if pd.Spec.Etcd != nil && pd.Spec.Etcd.StorageClass != "" {
+	if !reflect.DeepEqual(pd.Spec.Etcd, aimlv1beta1.EtcdOptions{}) &&
+		pd.Spec.Etcd.StorageClass != "" {
 		return nil
 	}
 
@@ -258,7 +260,8 @@ func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 	sc.Namespace = pd.Namespace
 	sc.AllowVolumeExpansion = &allowExpansion
 
-	if pd.Spec.Pachd != nil && pd.Spec.Pachd.Storage != nil {
+	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) &&
+		pd.Spec.Pachd.Storage != nil {
 		switch pd.Spec.Pachd.Storage.Backend {
 		case "google":
 			sc.Provisioner = "kubernetes.io/gce-pd"
@@ -350,10 +353,13 @@ func setupPachdTLSSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
 	pd := c.pachyderm
 
-	if pd.Spec.Etcd != nil {
+	if !reflect.DeepEqual(pd.Spec.Etcd, aimlv1beta1.EtcdOptions{}) {
 		for _, container := range c.etcdStatefulSet.Spec.Template.Spec.Containers {
 			if container.Name == "etcd" {
-				container.Resources = pd.Spec.Etcd.Resources
+				if pd.Spec.Etcd.Resources != nil {
+					container.Resources.Limits = pd.Spec.Etcd.Resources.Limits
+					container.Resources.Requests = pd.Spec.Etcd.Resources.Requests
+				}
 			}
 		}
 	}

@@ -69,13 +69,14 @@ type ImageOverride struct {
 	PullPolicy string `json:"pullPolicy,omitempty"`
 }
 
+// ServiceOverrides allows user to customize k8s
+// service type and annotations
 type ServiceOverrides struct {
 	Annotations []string `json:"annotations,omitempty"`
 	Type        string   `json:"type"`
 }
 
 // EtcdOptions allows users to change the etcd statefulset
-// TODO: potentially remove StorageProvider
 type EtcdOptions struct {
 	// Optional parameter to set the number of nodes in the Etcd statefulset.
 	// Analogous --dynamic-etcd-nodes argument to 'pachctl deploy'

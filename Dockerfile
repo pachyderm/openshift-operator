@@ -19,6 +19,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 
 # Use Red Hat UBI base image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+ARG VERSION
 LABEL name=pachyderm-operator \
       vendor='Pachyderm, Inc.' \
       version=$VERSION \

@@ -72,6 +72,7 @@ spec:
                         type: object
                     type: object
                   service:
+                    description: ServiceOverrides allows user to customize k8s service type and annotations
                     properties:
                       annotations:
                         items:
@@ -129,6 +130,7 @@ spec:
                         type: object
                     type: object
                   service:
+                    description: ServiceOverrides allows user to customize k8s service type and annotations
                     properties:
                       annotations:
                         items:
@@ -221,6 +223,7 @@ spec:
                         type: object
                     type: object
                   service:
+                    description: ServiceOverrides allows user to customize k8s service type and annotations
                     properties:
                       annotations:
                         items:

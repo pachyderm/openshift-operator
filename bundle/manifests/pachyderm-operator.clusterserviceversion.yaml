@@ -114,6 +114,10 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -185,3 +189,46 @@ spec:
     name: Pachyderm, Inc.
     url: https://docs.pachyderm.com/latest/, https://pachyderm.com
   version: 0.0.1
+  webhookdefinitions:
+  - admissionReviewVersions:
+    - v1
+    - v1beta1
+    containerPort: 443
+    deploymentName: pachyderm-operator-controller-manager
+    failurePolicy: Fail
+    generateName: vpachyderm.kb.io
+    rules:
+    - apiGroups:
+      - aiml.pachyderm.com
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pachyderms
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-aiml-pachyderm-com-v1beta1-pachyderm
+  - admissionReviewVersions:
+    - v1
+    - v1beta1
+    containerPort: 443
+    deploymentName: pachyderm-operator-controller-manager
+    failurePolicy: Fail
+    generateName: mpachyderm.kb.io
+    rules:
+    - apiGroups:
+      - aiml.pachyderm.com
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pachyderms
+    sideEffects: None
+    targetPort: 9443
+    type: MutatingAdmissionWebhook
+    webhookPath: /mutate-aiml-pachyderm-com-v1beta1-pachyderm

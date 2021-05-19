@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/base64"
 	"reflect"
 	"strconv"
 
@@ -85,7 +86,10 @@ var _ webhook.Validator = &Pachyderm{}
 func (r *Pachyderm) ValidateCreate() error {
 	pachydermlog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	if r.Spec.Pachd.Storage.AmazonStorage != nil {
+		r.prepareAmazonStorage()
+	}
+
 	return nil
 }
 
@@ -103,4 +107,21 @@ func (r *Pachyderm) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
+}
+
+func (r *Pachyderm) prepareAmazonStorage() {
+	v := reflect.ValueOf(r.Spec.Pachd.Storage.AmazonStorage).Elem()
+	t := v.Type()
+
+	for i := 0; i < t.NumField(); i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.String && !field.IsZero() {
+			fieldVal := encodeString(field.Interface().(string))
+			field.Set(reflect.ValueOf(fieldVal).Convert(field.Type()))
+		}
+	}
+}
+
+func encodeString(input string) string {
+	return base64.StdEncoding.EncodeToString([]byte(input))
 }

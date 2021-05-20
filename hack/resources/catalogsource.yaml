@@ -8,7 +8,7 @@ spec:
   icon:
     base64data: ""
     mediatype: ""
-  image: quay.io/opdev/pachyderm-index@sha256:c01e605e64c2156f3fab1b139be9407dae59fe7936acefd45ad8e02deb24ff8e
+  image: quay.io/opdev/pachyderm-index:latest
   priority: -100
   publisher: Op Dev
   sourceType: grpc

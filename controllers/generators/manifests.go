@@ -108,7 +108,7 @@ type PachydermComponents struct {
 	storageClass        storagev1.StorageClass
 }
 
-func getPachydermComponents() PachydermComponents {
+func getPachydermComponents(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 	components := PachydermComponents{}
 
 	manifests, err := loadManifests()
@@ -127,15 +127,15 @@ func getPachydermComponents() PachydermComponents {
 		// Convert from unstructured.Unstructured to kubernetes types
 		switch gvk.Kind {
 		case "Deployment":
-			if err := components.parseDeployment(obj); err != nil {
+			if err := components.parseDeployment(obj, pd.Namespace); err != nil {
 				fmt.Println("error parsing deployment.", err.Error())
 			}
 		case "StatefulSet":
-			if err := components.parseStatefulSet(obj); err != nil {
+			if err := components.parseStatefulSet(obj, pd.Namespace); err != nil {
 				fmt.Println("error parsing deployment.", err.Error())
 			}
 		case "Pod":
-			if err := components.parsePod(obj); err != nil {
+			if err := components.parsePod(obj, pd.Namespace); err != nil {
 				fmt.Println("error parsing pod.", err.Error())
 			}
 		case "ServiceAccount":
@@ -143,12 +143,14 @@ func getPachydermComponents() PachydermComponents {
 			if err := toTypedResource(obj, &sa); err != nil {
 				fmt.Println("error converting to service account.", err.Error())
 			}
+			sa.Namespace = pd.Namespace
 			components.ServiceAccounts = append(components.ServiceAccounts, sa)
 		case "Secret":
 			var secret corev1.Secret
 			if err := toTypedResource(obj, &secret); err != nil {
 				fmt.Println("error converting to secret.", err.Error())
 			}
+			secret.Namespace = pd.Namespace
 			components.secrets = append(components.secrets, &secret)
 		case "StorageClass":
 			var sc storagev1.StorageClass
@@ -173,18 +175,21 @@ func getPachydermComponents() PachydermComponents {
 			if err := toTypedResource(obj, &role); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
+			role.Namespace = pd.Namespace
 			components.Roles = append(components.Roles, role)
 		case "RoleBinding":
 			var roleBinding rbacv1.RoleBinding
 			if err := toTypedResource(obj, &roleBinding); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
+			roleBinding.Namespace = pd.Namespace
 			components.RoleBindings = append(components.RoleBindings, roleBinding)
 		case "Service":
 			var svc corev1.Service
 			if err := toTypedResource(obj, &svc); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
+			svc.Namespace = pd.Namespace
 			components.Services = append(components.Services, svc)
 		}
 	}
@@ -196,44 +201,50 @@ func toTypedResource(unstructured *unstructured.Unstructured, object interface{}
 	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured.Object, object)
 }
 
-func (c *PachydermComponents) parseDeployment(obj *unstructured.Unstructured) error {
-	var deployment *appsv1.Deployment
+func (c *PachydermComponents) parseDeployment(obj *unstructured.Unstructured, namespace string) error {
+	var deployment appsv1.Deployment
 	if err := toTypedResource(obj, &deployment); err != nil {
 		return err
 	}
 
-	switch deployment.Name {
-	case "dash":
-		c.dashDeploy = deployment
-	case "pachd":
-		c.pachdDeploy = deployment
+	if !reflect.DeepEqual(deployment, appsv1.Deployment{}) {
+		deployment.Namespace = namespace
+
+		switch deployment.Name {
+		case "dash":
+			c.dashDeploy = &deployment
+		case "pachd":
+			c.pachdDeploy = &deployment
+		}
 	}
 
 	return nil
 }
 
-func (c *PachydermComponents) parseStatefulSet(obj *unstructured.Unstructured) error {
-	var sts *appsv1.StatefulSet
+func (c *PachydermComponents) parseStatefulSet(obj *unstructured.Unstructured, namespace string) error {
+	var sts appsv1.StatefulSet
 	if err := toTypedResource(obj, &sts); err != nil {
 		fmt.Println("error converting to statefulset.", err.Error())
 	}
 
-	if sts != nil && sts.Name == "etcd" {
-		c.etcdStatefulSet = sts
+	if !reflect.DeepEqual(sts, appsv1.StatefulSet{}) {
+		sts.Namespace = namespace
+
+		if sts.Name == "etcd" {
+			c.etcdStatefulSet = &sts
+		}
 	}
 
 	return nil
 }
 
-func (c *PachydermComponents) parsePod(obj *unstructured.Unstructured) error {
-	var pod *corev1.Pod
+func (c *PachydermComponents) parsePod(obj *unstructured.Unstructured, namespace string) error {
+	var pod corev1.Pod
 	if err := toTypedResource(obj, &pod); err != nil {
 		return err
 	}
-
-	if c.Pod != nil {
-		c.Pod = pod
-	}
+	pod.Namespace = namespace
+	c.Pod = &pod
 
 	return nil
 }
@@ -257,7 +268,6 @@ func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 	// if storage class is not provided,
 	// create a new storage class
 	sc := &c.storageClass
-	sc.Namespace = pd.Namespace
 	sc.AllowVolumeExpansion = &allowExpansion
 
 	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) &&
@@ -289,8 +299,6 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 	pd := c.pachyderm
 
 	for _, secret := range c.secrets {
-		secret.Namespace = pd.Namespace
-
 		if secret.Name == "pachyderm-storage-secret" {
 			setupStorageSecret(secret, pd)
 		}
@@ -393,7 +401,7 @@ func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
 // Prepare takes a pachyderm custom resource and returns
 // child resources based on the pachyderm custom resource
 func Prepare(pd *aimlv1beta1.Pachyderm) PachydermComponents {
-	components := getPachydermComponents()
+	components := getPachydermComponents(pd)
 	// set pachyderm resource as parent
 	components.pachyderm = pd
 	return components

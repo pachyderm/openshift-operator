@@ -232,11 +232,11 @@ func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1
 	return r.Update(ctx, pd)
 }
 
+// TODO(OchiengEd): remove owner reference and use finalizers to clean up service accounts
 func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, components generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	for _, sa := range components.ServiceAccounts {
-		sa.Namespace = pd.Namespace
 		// add owner references
 		if err := controllerutil.SetControllerReference(pd, &sa, r.Scheme); err != nil {
 			return err
@@ -254,11 +254,43 @@ func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, comp
 	return nil
 }
 
+// TODO(OchiengEd): remove owner reference and use finalizers to clean up roles
+func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components generators.PachydermComponents) error {
+
+	for _, role := range components.Roles {
+		// add owner references
+		if err := controllerutil.SetControllerReference(components.Parent(), &role, r.Scheme); err != nil {
+			return err
+		}
+
+		if err := r.Create(ctx, &role); err != nil {
+			if errors.IsAlreadyExists(err) {
+				return nil
+			}
+
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *PachydermReconciler) reconcileClusterRoles(ctx context.Context, components generators.PachydermComponents) error {
+	return nil
+}
+
+func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, components generators.PachydermComponents) error {
+	return nil
+}
+
+func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, components generators.PachydermComponents) error {
+	return nil
+}
+
 func (r *PachydermReconciler) reconcileServices(ctx context.Context, components generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	for _, svc := range components.Services {
-		svc.Namespace = pd.Namespace
 		// add owner references
 		if err := controllerutil.SetControllerReference(pd, &svc, r.Scheme); err != nil {
 			return err
@@ -334,12 +366,8 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components g
 }
 
 func (r *PachydermReconciler) deployEtcd(ctx context.Context, components generators.PachydermComponents) error {
-	pd := components.Parent()
-
 	etcd := components.EtcdStatefulSet()
-	etcd.Namespace = pd.Namespace
-
-	if err := controllerutil.SetControllerReference(pd, etcd, r.Scheme); err != nil {
+	if err := controllerutil.SetControllerReference(components.Parent(), etcd, r.Scheme); err != nil {
 		return err
 	}
 
@@ -367,8 +395,6 @@ func (r *PachydermReconciler) deployPachd(ctx context.Context, components genera
 	}
 
 	pachd := components.PachdDeployment()
-	pachd.Namespace = pd.Namespace
-
 	if err := controllerutil.SetControllerReference(pd, pachd, r.Scheme); err != nil {
 		return err
 	}
@@ -388,8 +414,6 @@ func (r *PachydermReconciler) deployDash(ctx context.Context, components generat
 	pd := components.Parent()
 
 	dash := components.DashDeployment()
-	dash.Namespace = pd.Namespace
-
 	if err := controllerutil.SetControllerReference(pd, dash, r.Scheme); err != nil {
 		return err
 	}

@@ -354,7 +354,7 @@ spec:
                         type: object
                       backend:
                         description: Sets the type of storage backend. Should be one
-                          of "google", "amazon", "minio", "microsoft" of "local"
+                          of "google", "amazon", "minio", "microsoft" or "local"
                         enum:
                         - amazon
                         - minio

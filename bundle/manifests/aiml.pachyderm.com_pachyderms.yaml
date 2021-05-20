@@ -303,7 +303,12 @@ spec:
                             type: boolean
                         type: object
                       backend:
-                        description: Sets the type of storage backend. Should be one of "google", "amazon", "minio", "microsoft" of "local"
+                        description: Sets the type of storage backend. Should be one of "google", "amazon", "minio", "microsoft" or "local"
+                        enum:
+                        - amazon
+                        - minio
+                        - microsoft
+                        - local
                         type: string
                       google:
                         description: Configures the Google storage backend

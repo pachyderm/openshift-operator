@@ -216,7 +216,31 @@ spec:
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
-          - role
+          - clusterroles
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - rolebindings
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - roles
           verbs:
           - create
           - delete
@@ -302,10 +326,10 @@ spec:
                 resources:
                   limits:
                     cpu: 100m
-                    memory: 30Mi
+                    memory: 80Mi
                   requests:
                     cpu: 100m
-                    memory: 20Mi
+                    memory: 60Mi
                 securityContext:
                   allowPrivilegeEscalation: false
               securityContext:

@@ -23,3 +23,6 @@ testbin/*
 *.swp
 *.swo
 *~
+
+# custom files
+catalogsource.yaml

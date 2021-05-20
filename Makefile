@@ -30,6 +30,7 @@ BUNDLE_IMG ?= quay.io/opdev/pachyderm-bundle:$(VERSION)
 
 # Image URL to use all building/pushing image targets
 IMG ?= quay.io/opdev/pachyderm-operator:latest
+VERSION_IMG := quay.io/opdev/pachyderm-operator:$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -87,10 +88,11 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 docker-build: test ## Build docker image with the manager.
-	docker build --build-arg VERSION=$(VERSION) -t ${IMG} .
+	docker build --build-arg VERSION=$(VERSION) -t ${IMG} -t ${VERSION_IMG} .
 
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
+	docker push ${VERSION_IMG}
 
 ##@ Deployment
 

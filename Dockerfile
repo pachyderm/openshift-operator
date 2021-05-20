@@ -23,7 +23,7 @@ ARG VERSION
 LABEL name=pachyderm-operator \
       vendor='Pachyderm, Inc.' \
       version=$VERSION \
-      release=$VERSION \
+      release='beta' \
       description='Operator to manage Pachyderm instances' \
       summary='Pachyderm is a data science platform that combines Data Lineage with End-to-End Pipelines'
 

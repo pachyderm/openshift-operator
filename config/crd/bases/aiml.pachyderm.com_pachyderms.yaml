@@ -40,15 +40,20 @@ spec:
                 description: Allows the user to customize the dashd instance(s)
                 properties:
                   enabled:
-                    description: 'Option to disable dash Default: true'
+                    default: true
+                    description: Option to disable dash
                     type: boolean
                   image:
                     description: Optional image overrides. Used to specify alternative
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled Either,
-                          "IfNotPresent" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
+                        enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
                         type: string
                       repository:
                         description: This option dictates the particular image to
@@ -118,8 +123,12 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled Either,
-                          "IfNotPresent" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
+                        enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
                         type: string
                       repository:
                         description: This option dictates the particular image to
@@ -202,8 +211,12 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled Either,
-                          "IfNotPresent" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
+                        enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
                         type: string
                       repository:
                         description: This option dictates the particular image to
@@ -227,22 +240,24 @@ spec:
                       pachyderm metrics
                     properties:
                       enabled:
+                        default: true
                         description: 'Default: true'
                         type: boolean
                       endpoint:
                         type: string
                     type: object
                   numShards:
+                    default: 16
                     description: 'Sets the maximum number of pachd nodes allowed in
                       the cluster. Increasing this number blindly could lead to degraded
-                      performance Default: 16'
+                      performance. Default: 16'
                     format: int32
                     type: integer
                   ppsWorkerGRPCPort:
                     type: integer
                   requireCriticalServersOnly:
-                    description: 'Require only critical Pachd servers to startup and
-                      run without errors. Default: false'
+                    description: Require only critical Pachd servers to startup and
+                      run without errors.
                     type: boolean
                   resources:
                     description: Resource requests and limits for Pachd
@@ -340,6 +355,11 @@ spec:
                       backend:
                         description: Sets the type of storage backend. Should be one
                           of "google", "amazon", "minio", "microsoft" of "local"
+                        enum:
+                        - amazon
+                        - minio
+                        - microsoft
+                        - local
                         type: string
                       google:
                         description: Configures the Google storage backend
@@ -388,12 +408,14 @@ spec:
                             type: string
                         type: object
                       putFileConcurrencyLimit:
+                        default: 100
                         description: 'The maximum number of files to upload or fetch
                           from remote sources (HTTP, blob storage) using PutFile concurrently.
                           Default: 100'
                         format: int32
                         type: integer
                       uploadFileConcurrencyLimit:
+                        default: 100
                         description: 'The maximum number of concurrent object storage
                           uploads per Pachd instance. Default: 100'
                         format: int32
@@ -401,15 +423,19 @@ spec:
                     type: object
                 type: object
               worker:
-                description: WorkerOptions allows the user to configure workers
+                description: Allows user to customize worker instance(s)
                 properties:
                   image:
                     description: Optional image overrides. Used to specify alternative
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled Either,
-                          "IfNotPresent" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
+                        enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
                         type: string
                       repository:
                         description: This option dictates the particular image to

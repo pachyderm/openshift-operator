@@ -28,7 +28,8 @@ type PachydermSpec struct {
 	// Allows the user to customize the pachd instance(s)
 	Pachd PachdOptions `json:"pachd,omitempty"`
 	// Allows the user to customize the dashd instance(s)
-	Dashd  DashOptions    `json:"dash,omitempty"`
+	Dashd DashOptions `json:"dash,omitempty"`
+	// Allows user to customize worker instance(s)
 	Worker *WorkerOptions `json:"worker,omitempty"`
 }
 
@@ -43,8 +44,8 @@ type WorkerOptions struct {
 // DashOptions provides options to configure the dashd component
 type DashOptions struct {
 	// Option to disable dash
-	// Default: true
-	Enabled bool `json:"enabled,omitempty" default:"true"`
+	// +kubebuilder:default:=true
+	Enabled bool `json:"enabled,omitempty"`
 	// Optional image overrides.
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
@@ -64,8 +65,9 @@ type ImageOverride struct {
 	// Used with the image registry to choose a specific
 	// image in a cointainer registry to pull
 	ImageTag string `json:"tag,omitempty"`
-	// Determines when images should be pulled
-	// Either, "IfNotPresent" or "Always"
+	// Determines when images should be pulled.
+	// It accepts, "IfNotPresent","Never" or "Always"
+	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
 	PullPolicy string `json:"pullPolicy,omitempty"`
 }
 
@@ -101,16 +103,16 @@ type PachdOptions struct {
 	// Defaults to a random value if none is provided
 	ClusterID string `json:"clusterDeploymentID,omitempty"`
 	// Sets the maximum number of pachd nodes allowed in the cluster.
-	// Increasing this number blindly could lead to degraded performance
+	// Increasing this number blindly could lead to degraded performance.
 	// Default: 16
-	NumShards int32 `json:"numShards,omitempty" default:"16"`
+	// +kubebuilder:default:=16
+	NumShards int32 `json:"numShards,omitempty"`
 	// Size of Pachd's in-memory cache for PFS file.
 	// Size is specified in bytes, with allowed SI suffixes (M, K, G, Mi, Ki, Gi, etc)
 	BlockCacheBytes string `json:"blockCacheBytes,omitempty"`
 	// Resource requests and limits for Pachd
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 	// Require only critical Pachd servers to startup and run without errors.
-	// Default: false
 	RequireCriticalServers bool `json:"requireCriticalServersOnly,omitempty"`
 	// Object storage options for Pachd
 	Storage *ObjectStorageOptions `json:"storage,omitempty"`
@@ -135,7 +137,8 @@ type PachdOptions struct {
 // MetricsOptions allows the user to enable/disable pachyderm metrics
 type MetricsOptions struct {
 	// Default: true
-	Enabled  bool   `json:"enabled,omitempty" default:"true"`
+	// +kubebuilder:default:=true
+	Enabled  bool   `json:"enabled,omitempty"`
 	Endpoint string `json:"endpoint,omitempty"`
 }
 
@@ -144,12 +147,15 @@ type MetricsOptions struct {
 type ObjectStorageOptions struct {
 	// The maximum number of files to upload or fetch from remote sources (HTTP, blob storage) using PutFile concurrently.
 	// Default: 100
-	PutFileConcurrencyLimit int32 `json:"putFileConcurrencyLimit,omitempty" default:"100"`
+	// +kubebuilder:default:=100
+	PutFileConcurrencyLimit int32 `json:"putFileConcurrencyLimit,omitempty"`
 	// The maximum number of concurrent object storage uploads per Pachd instance.
 	// Default: 100
-	UploadFileConcurrencyLimit int32 `json:"uploadFileConcurrencyLimit,omitempty" default:"100"`
+	// +kubebuilder:default:=100
+	UploadFileConcurrencyLimit int32 `json:"uploadFileConcurrencyLimit,omitempty"`
 	// Sets the type of storage backend.
-	// Should be one of "google", "amazon", "minio", "microsoft" of "local"
+	// Should be one of "google", "amazon", "minio", "microsoft" or "local"
+	// +kubebuilder:validation:Enum:=amazon;minio;microsoft;local
 	Backend string `json:"backend,omitempty"`
 	// Configures the Amazon storage backend
 	AmazonStorage *AmazonStorageOptions `json:"amazon,omitempty"`

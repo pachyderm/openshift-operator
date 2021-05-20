@@ -4,6 +4,12 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Basic Install
+    categories: AI/Machine Learning
+    containerImage: quay.io/opdev/pachyderm-operator:latest
+    createdAt: "2021-05-20T08:05:00Z"
+    description: Pachyderm operator manages the lifecycle of Pachyderm instances
+    repository: https://github.com/opdev/pachyderm-operator
+    support: Pachyderm, Inc.
   name: pachyderm-operator.v0.0.0
   namespace: placeholder
 spec:

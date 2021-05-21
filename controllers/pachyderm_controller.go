@@ -300,10 +300,6 @@ func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components gen
 func (r *PachydermReconciler) reconcileClusterRoles(ctx context.Context, components generators.PachydermComponents) error {
 
 	for _, clusterrole := range components.ClusterRoles {
-		// add owner references
-		if err := controllerutil.SetControllerReference(components.Parent(), &clusterrole, r.Scheme); err != nil {
-			return err
-		}
 
 		if err := r.Create(ctx, &clusterrole); err != nil {
 			if errors.IsAlreadyExists(err) {
@@ -338,10 +334,6 @@ func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, compone
 
 func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, components generators.PachydermComponents) error {
 	for _, crb := range components.ClusterRoleBindings {
-		// add owner references
-		if err := controllerutil.SetControllerReference(components.Parent(), &crb, r.Scheme); err != nil {
-			return err
-		}
 
 		if err := r.Create(ctx, &crb); err != nil {
 			if errors.IsAlreadyExists(err) {

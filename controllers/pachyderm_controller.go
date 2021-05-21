@@ -66,7 +66,7 @@ type PachydermReconciler struct {
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods/logs,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=replicationcontrollers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=replicationcontrollers/scale,verbs=get;list;watch;create;update;patch;delete

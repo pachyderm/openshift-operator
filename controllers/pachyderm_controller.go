@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -200,8 +199,58 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 
 // TODO: cleanup Pachyderm objects
 // - service accounts
-func (r *PachydermReconciler) cleanupPachydermObj(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
-	fmt.Println("delete pachyderm child resources")
+func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	pds := &aimlv1beta1.PachydermList{}
+	if err := r.List(ctx, pds, client.InNamespace(pd.Namespace)); err != nil {
+		return err
+	}
+
+	// delete cluster resources
+	components := generators.Prepare(pd)
+	if len(pds.Items) <= 1 {
+		// delete roles
+		for _, role := range components.Roles {
+			if err := r.Delete(ctx, &role); err != nil {
+				return err
+			}
+		}
+
+		// delete role bindings
+		for _, rb := range components.RoleBindings {
+			if err := r.Delete(ctx, &rb); err != nil {
+				return err
+			}
+		}
+
+		// delete service accounts
+		for _, sa := range components.ServiceAccounts {
+			if err := r.Delete(ctx, &sa); err != nil {
+				return err
+			}
+		}
+	}
+
+	// clean up cluster resources
+	if err := r.List(ctx, pds); err != nil {
+		return err
+	}
+
+	if len(pds.Items) <= 1 {
+		// delete cluster role bindings
+		for _, crb := range components.ClusterRoleBindings {
+			if err := r.Delete(ctx, &crb); err != nil {
+				return err
+			}
+		}
+
+		// delete cluster roles
+		for _, cr := range components.ClusterRoles {
+			if err := r.Delete(ctx, &cr); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -240,7 +289,7 @@ func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1
 
 	// perform clean up and delete finalizer otherwise
 	if len(pd.ObjectMeta.Finalizers) > 0 && pd.DeletionTimestamp != nil {
-		if err := r.cleanupPachydermObj(ctx, pd); err != nil {
+		if err := r.cleanupPachydermResources(ctx, pd); err != nil {
 			return err
 		}
 		// remove finalizer if clean up is successful

@@ -148,6 +148,26 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return err
 	}
 
+	// roles
+	if err := r.reconcileRoles(ctx, components); err != nil {
+		return err
+	}
+
+	// role bindings
+	if err := r.reconcileRoleBindings(ctx, components); err != nil {
+		return err
+	}
+
+	// cluster roles
+	if err := r.reconcileClusterRoles(ctx, components); err != nil {
+		return err
+	}
+
+	// cluster role bindings
+	if err := r.reconcileClusterRoleBindings(ctx, components); err != nil {
+		return err
+	}
+
 	// Deploy secrets
 	if err := r.reconcileSecrets(ctx, components); err != nil {
 		return err

@@ -321,8 +321,8 @@ spec:
                   httpGet:
                     path: /readyz
                     port: 8081
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
+                  initialDelaySeconds: 30
+                  periodSeconds: 15
                 resources:
                   limits:
                     cpu: 100m

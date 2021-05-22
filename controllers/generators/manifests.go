@@ -312,31 +312,36 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 }
 
 func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
-	// data := secret.Data
+	data := secret.Data
 
-	// if len(pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreBucket) != 0 {
-	// 	data["amazon-bucket"] = pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreBucket
-	// }
+	if pd.Spec.Pachd.Storage.AmazonStorage.Bucket != "" {
+		data["amazon-bucket"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Bucket)
+	}
 
-	// if len(pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreSecret) != 0 {
-	// 	data["amazon-secret"] = pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreSecret
-	// }
+	if pd.Spec.Pachd.Storage.AmazonStorage.Secret != "" {
+		data["amazon-secret"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Secret)
+	}
 
-	// if len(pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreEndpoint) != 0 {
-	// 	data["custom-endpoint"] = pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreEndpoint
-	// }
+	if pd.Spec.Pachd.Storage.AmazonStorage.CustomEndpoint != "" {
+		data["custom-endpoint"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.CustomEndpoint)
+	}
 
-	// if len(pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreRegion) != 0 {
-	// 	data["amazon-region"] = pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreRegion
-	// }
+	if pd.Spec.Pachd.Storage.AmazonStorage.Region != "" {
+		data["amazon-region"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Region)
+	}
 
-	// if len(pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreToken) != 0 {
-	// 	data["amazon-token"] = pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreToken
-	// }
+	if pd.Spec.Pachd.Storage.AmazonStorage.Token != "" {
+		data["amazon-token"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Token)
+	}
 
-	// if len(pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreID) != 0 {
-	// 	data["amazon-id"] = pd.Spec.Pachd.Storage.AmazonS3.ObjectStoreID
-	// }
+	if pd.Spec.Pachd.Storage.AmazonStorage.ID != "" {
+		data["amazon-id"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.ID)
+	}
+}
+
+// accepts string and returns a slice of type bytes
+func toBytes(value string) []byte {
+	return []byte(value)
 }
 
 // generate self-signed TLS secret

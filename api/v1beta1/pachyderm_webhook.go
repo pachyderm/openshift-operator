@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"encoding/base64"
+	"fmt"
 	"reflect"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,6 +58,7 @@ func (r *Pachyderm) ValidateCreate() error {
 	pachydermlog.Info("validate create", "name", r.Name)
 
 	if r.Spec.Pachd.Storage.AmazonStorage != nil {
+		fmt.Println("apply mutating webhook logic")
 		r.prepareAmazonStorage()
 	}
 

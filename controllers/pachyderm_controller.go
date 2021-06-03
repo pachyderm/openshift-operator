@@ -211,6 +211,9 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		// delete roles
 		for _, role := range components.Roles {
 			if err := r.Delete(ctx, &role); err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -218,6 +221,9 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		// delete role bindings
 		for _, rb := range components.RoleBindings {
 			if err := r.Delete(ctx, &rb); err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -225,6 +231,9 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		// delete service accounts
 		for _, sa := range components.ServiceAccounts {
 			if err := r.Delete(ctx, &sa); err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -232,6 +241,9 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 
 	// clean up cluster resources
 	if err := r.List(ctx, pds); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -239,6 +251,9 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		// delete cluster role bindings
 		for _, crb := range components.ClusterRoleBindings {
 			if err := r.Delete(ctx, &crb); err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
 				return err
 			}
 		}
@@ -246,6 +261,9 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		// delete cluster roles
 		for _, cr := range components.ClusterRoles {
 			if err := r.Delete(ctx, &cr); err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
 				return err
 			}
 		}

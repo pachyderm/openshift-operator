@@ -18,8 +18,6 @@ package v1beta1
 
 import (
 	"encoding/base64"
-	"fmt"
-	"reflect"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -45,7 +43,9 @@ var _ webhook.Defaulter = &Pachyderm{}
 func (r *Pachyderm) Default() {
 	pachydermlog.Info("default", "name", r.Name)
 
-	// TODO(OchiengEd): Implement custom defaulting logic
+	if r.Spec.Pachd.Storage.Amazon != nil {
+		r.prepareAmazonStorage()
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -56,11 +56,6 @@ var _ webhook.Validator = &Pachyderm{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Pachyderm) ValidateCreate() error {
 	pachydermlog.Info("validate create", "name", r.Name)
-
-	if r.Spec.Pachd.Storage.AmazonStorage != nil {
-		fmt.Println("apply mutating webhook logic")
-		r.prepareAmazonStorage()
-	}
 
 	return nil
 }
@@ -82,18 +77,62 @@ func (r *Pachyderm) ValidateDelete() error {
 }
 
 func (r *Pachyderm) prepareAmazonStorage() {
-	v := reflect.ValueOf(r.Spec.Pachd.Storage.AmazonStorage).Elem()
-	t := v.Type()
-
-	for i := 0; i < t.NumField(); i++ {
-		field := v.Field(i)
-		if field.Kind() == reflect.String && !field.IsZero() {
-			fieldVal := encodeString(field.Interface().(string))
-			field.Set(reflect.ValueOf(fieldVal).Convert(field.Type()))
-		}
+	if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
+		r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = encodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution, false)
+	}
+	if r.Spec.Pachd.Storage.Amazon.IAMRole != "" {
+		r.Spec.Pachd.Storage.Amazon.IAMRole = encodeString(r.Spec.Pachd.Storage.Amazon.IAMRole, false)
+	}
+	if r.Spec.Pachd.Storage.Amazon.ID != "" {
+		r.Spec.Pachd.Storage.Amazon.ID = encodeString(r.Spec.Pachd.Storage.Amazon.ID, true)
+	}
+	if r.Spec.Pachd.Storage.Amazon.Secret != "" {
+		r.Spec.Pachd.Storage.Amazon.Secret = encodeString(r.Spec.Pachd.Storage.Amazon.Secret, true)
+	}
+	if r.Spec.Pachd.Storage.Amazon.Token != "" {
+		r.Spec.Pachd.Storage.Amazon.Token = encodeString(r.Spec.Pachd.Storage.Amazon.Token, true)
+	}
+	if r.Spec.Pachd.Storage.Amazon.UploadACL != "" {
+		r.Spec.Pachd.Storage.Amazon.UploadACL = encodeString(r.Spec.Pachd.Storage.Amazon.UploadACL, false)
 	}
 }
 
-func encodeString(input string) string {
+// checks if input string is base64 encoded.
+// If yes, input variable is returned
+// else, base64 encoded input is returned
+func encodeString(input string, override bool) string {
+	if !override {
+		if IsBase64Encoded(input) {
+			return input
+		}
+	}
+
+	if encodeCount(input) == 2 {
+		return input
+	}
+
 	return base64.StdEncoding.EncodeToString([]byte(input))
+}
+
+// IsBase64Encoded checks if user input is already base64 encoded
+func IsBase64Encoded(input string) bool {
+	if _, err := base64.StdEncoding.DecodeString(input); err == nil {
+		return true
+	}
+	return false
+}
+
+func encodeCount(input string) int {
+	var count int
+	var err error
+	result := input
+
+	for count = 0; err == nil; count++ {
+		out, err := base64.StdEncoding.DecodeString(result)
+		if err != nil {
+			break
+		}
+		result = string(out)
+	}
+	return count
 }

@@ -115,7 +115,7 @@ type PachdOptions struct {
 	// Require only critical Pachd servers to startup and run without errors.
 	RequireCriticalServers bool `json:"requireCriticalServersOnly,omitempty"`
 	// Object storage options for Pachd
-	Storage *ObjectStorageOptions `json:"storage,omitempty"`
+	Storage ObjectStorageOptions `json:"storage,omitempty"`
 	// Optional image overrides.
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
@@ -158,11 +158,11 @@ type ObjectStorageOptions struct {
 	// +kubebuilder:validation:Enum:=amazon;minio;microsoft;local
 	Backend string `json:"backend,omitempty"`
 	// Configures the Amazon storage backend
-	AmazonStorage *AmazonStorageOptions `json:"amazon,omitempty"`
+	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`
 	// Configures the Google storage backend
-	GoogleStorage    *GoogleStorageOptions    `json:"google,omitempty"`
-	MicrosoftStorage *MicrosoftStorageOptions `json:"microsoft,omitempty"`
-	MinioStorage     *MinioStorageOptions     `json:"minio,omitempty"`
+	Google    *GoogleStorageOptions    `json:"google,omitempty"`
+	Microsoft *MicrosoftStorageOptions `json:"microsoft,omitempty"`
+	Minio     *MinioStorageOptions     `json:"minio,omitempty"`
 	// Kubernetes hostPath
 	LocalStorage *LocalStorageOptions `json:"local,omitempty"`
 }

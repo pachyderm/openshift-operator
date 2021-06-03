@@ -229,7 +229,7 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 
 		switch backend := strings.ToLower(pd.Spec.Pachd.Storage.Backend); backend {
 		case "amazon":
-			if pachdOpts.Storage.AmazonStorage != nil {
+			if pachdOpts.Storage.Amazon != nil {
 				var optional bool = true
 				// setup Amazon server configs
 				amzn := []corev1.EnvVar{

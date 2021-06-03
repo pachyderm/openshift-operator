@@ -2,6 +2,7 @@ package generators
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -270,8 +271,7 @@ func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 	sc := &c.storageClass
 	sc.AllowVolumeExpansion = &allowExpansion
 
-	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) &&
-		pd.Spec.Pachd.Storage != nil {
+	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) {
 		switch pd.Spec.Pachd.Storage.Backend {
 		case "google":
 			sc.Provisioner = "kubernetes.io/gce-pd"
@@ -314,33 +314,38 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 	data := secret.Data
 
-	if pd.Spec.Pachd.Storage.AmazonStorage.Bucket != "" {
-		data["amazon-bucket"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Bucket)
+	if pd.Spec.Pachd.Storage.Amazon.Bucket != "" {
+		data["amazon-bucket"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket)
 	}
 
-	if pd.Spec.Pachd.Storage.AmazonStorage.Secret != "" {
-		data["amazon-secret"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Secret)
+	if pd.Spec.Pachd.Storage.Amazon.Secret != "" {
+		data["amazon-secret"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Secret)
 	}
 
-	if pd.Spec.Pachd.Storage.AmazonStorage.CustomEndpoint != "" {
-		data["custom-endpoint"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.CustomEndpoint)
+	if pd.Spec.Pachd.Storage.Amazon.CustomEndpoint != "" {
+		data["custom-endpoint"] = toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint)
 	}
 
-	if pd.Spec.Pachd.Storage.AmazonStorage.Region != "" {
-		data["amazon-region"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Region)
+	if pd.Spec.Pachd.Storage.Amazon.Region != "" {
+		data["amazon-region"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Region)
 	}
 
-	if pd.Spec.Pachd.Storage.AmazonStorage.Token != "" {
-		data["amazon-token"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.Token)
+	if pd.Spec.Pachd.Storage.Amazon.Token != "" {
+		data["amazon-token"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Token)
 	}
 
-	if pd.Spec.Pachd.Storage.AmazonStorage.ID != "" {
-		data["amazon-id"] = toBytes(pd.Spec.Pachd.Storage.AmazonStorage.ID)
+	if pd.Spec.Pachd.Storage.Amazon.ID != "" {
+		data["amazon-id"] = toBytes(pd.Spec.Pachd.Storage.Amazon.ID)
 	}
 }
 
 // accepts string and returns a slice of type bytes
 func toBytes(value string) []byte {
+	if aimlv1beta1.IsBase64Encoded(value) {
+		if out, err := base64.StdEncoding.DecodeString(value); err == nil {
+			return out
+		}
+	}
 	return []byte(value)
 }
 

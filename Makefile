@@ -145,3 +145,9 @@ bundle-build:
 
 bundle-push:
 	docker push $(BUNDLE_IMG)
+
+index-build:
+	opm index add --bundles quay.io/opdev/pachyderm-bundle:$(VERSION) -t quay.io/opdev/pachyderm-index:latest -u docker
+
+index-push: index-build
+	docker push quay.io/opdev/pachyderm-index:latest

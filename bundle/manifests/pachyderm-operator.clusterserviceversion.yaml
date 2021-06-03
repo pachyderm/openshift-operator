@@ -326,10 +326,10 @@ spec:
                 resources:
                   limits:
                     cpu: 100m
-                    memory: 80Mi
+                    memory: 160Mi
                   requests:
                     cpu: 100m
-                    memory: 60Mi
+                    memory: 100Mi
                 securityContext:
                   allowPrivilegeEscalation: false
               securityContext:

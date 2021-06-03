@@ -288,13 +288,58 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 		return err
 	}
 
+	if pd.DeletionTimestamp != nil && pd.Status.Phase != aimlv1beta1.PhaseDeleting {
+		current.Status.Phase = aimlv1beta1.PhaseDeleting
+	}
+
 	if reflect.DeepEqual(current.Status, aimlv1beta1.PachydermStatus{}) &&
 		pd.DeletionTimestamp == nil {
 		current.Status.Phase = aimlv1beta1.PhaseInitializing
 	}
 
-	return r.Status().Patch(ctx, current, client.MergeFrom(pd))
-	// return r.Status().Update(ctx, current)
+	if r.isPachydermRunning(ctx, pd) && pd.DeletionTimestamp == nil {
+		current.Status.Phase = aimlv1beta1.PhaseRunning
+	}
+
+	if err := r.Status().Patch(ctx, current, client.MergeFrom(pd)); err != nil {
+		if errors.IsResourceExpired(err) {
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {
+	// check status of etcd
+	etcdSvc := types.NamespacedName{
+		Name:      "etcd",
+		Namespace: pd.Namespace,
+	}
+	if !r.isServiceReady(ctx, etcdSvc) {
+		return false
+	}
+
+	// check status of pachd
+	pachdSvc := types.NamespacedName{
+		Name:      "pachd",
+		Namespace: pd.Namespace,
+	}
+	if !r.isServiceReady(ctx, pachdSvc) {
+		return false
+	}
+
+	// check status of dash
+	dashSvc := types.NamespacedName{
+		Name:      "dash",
+		Namespace: pd.Namespace,
+	}
+	if !r.isServiceReady(ctx, dashSvc) {
+		return false
+	}
+
+	return true
 }
 
 func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {

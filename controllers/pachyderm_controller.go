@@ -38,6 +38,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
 )
 
 const (
@@ -602,11 +603,21 @@ func (r *PachydermReconciler) deployDash(ctx context.Context, components generat
 }
 
 func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components generators.PachydermComponents) error {
-	sc := components.StorageClass()
-	if sc == nil {
+	pachyderm := components.Parent()
+	storageClassName := generators.EtcdStorageClassName(pachyderm)
+	if storageClassName != "etcd-storage-class" {
+		userStorageClass := &storagev1.StorageClass{}
+		userSCKey := types.NamespacedName{
+			Name:      storageClassName,
+			Namespace: pachyderm.Namespace,
+		}
+		if err := r.Get(ctx, userSCKey, userStorageClass); err != nil {
+			return err
+		}
 		return nil
 	}
 
+	sc := components.StorageClass()
 	if err := r.Create(ctx, sc); err != nil {
 		if errors.IsAlreadyExists(err) {
 			// TODO: implement update logic

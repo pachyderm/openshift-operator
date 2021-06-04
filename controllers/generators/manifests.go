@@ -255,6 +255,15 @@ func (c *PachydermComponents) Parent() *aimlv1beta1.Pachyderm {
 	return c.pachyderm
 }
 
+// EtcdStorageClassName return aname of storage class to be used by etcd
+func EtcdStorageClassName(pd *aimlv1beta1.Pachyderm) string {
+	var storageClass string = "etcd-storage-class"
+	if pd.Spec.Etcd.StorageClass != "" {
+		storageClass = pd.Spec.Etcd.StorageClass
+	}
+	return storageClass
+}
+
 // StorageClass returns a new etcd storage class
 // if an existing one is not used or provided
 func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
@@ -371,6 +380,7 @@ func setupPachdTLSSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
 	pd := c.pachyderm
 
+	// set resource requests and limits
 	if !reflect.DeepEqual(pd.Spec.Etcd, aimlv1beta1.EtcdOptions{}) {
 		for _, container := range c.etcdStatefulSet.Spec.Template.Spec.Containers {
 			if container.Name == "etcd" {
@@ -379,6 +389,13 @@ func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
 					container.Resources.Requests = pd.Spec.Etcd.Resources.Requests
 				}
 			}
+		}
+	}
+
+	// set etcd storage class
+	for _, volumeClaim := range c.etcdStatefulSet.Spec.VolumeClaimTemplates {
+		if volumeClaim.Name == "etcd-storage" {
+			volumeClaim.Annotations["volume.beta.kubernetes.io/storage-class"] = EtcdStorageClassName(pd)
 		}
 	}
 
@@ -402,11 +419,6 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
 	return c.dashDeploy
 }
-
-// StorageClass returns the etcd storage class resource
-// func (c *PachydermComponents) StorageClasses() []storagev1.StorageClass {
-// 	return c.storageClasses
-// }
 
 // Prepare takes a pachyderm custom resource and returns
 // child resources based on the pachyderm custom resource

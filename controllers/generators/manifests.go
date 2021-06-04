@@ -288,14 +288,25 @@ func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
 				"type": "pd-ssd",
 			}
 		case "amazon":
-			sc.Provisioner = "kubernetes.io/aws-ebs"
+			// https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
+			sc.Provisioner = "ebs.csi.aws.com"
 			sc.Parameters = map[string]string{
-				"type": "gp2",
+				"type": "gp3",
+			}
+		case "microsoft":
+			sc.Provisioner = ""
+			sc.Parameters = map[string]string{
+				"type": "",
+			}
+		case "minio":
+			sc.Provisioner = ""
+			sc.Parameters = map[string]string{
+				"type": "",
 			}
 		default:
-			sc.Provisioner = "kubernetes.io/aws-ebs"
+			sc.Provisioner = "ebs.csi.aws.com"
 			sc.Parameters = map[string]string{
-				"type": "gp2",
+				"type": "gp3",
 			}
 		}
 	}
@@ -323,29 +334,36 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 	data := secret.Data
 
-	if pd.Spec.Pachd.Storage.Amazon.Bucket != "" {
-		data["amazon-bucket"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket)
+	if pd.Spec.Pachd.Storage.Backend == "amazon" {
+		if pd.Spec.Pachd.Storage.Amazon.Bucket != "" {
+			data["amazon-bucket"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket)
+		}
+
+		if pd.Spec.Pachd.Storage.Amazon.Secret != "" {
+			data["amazon-secret"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Secret)
+		}
+
+		if pd.Spec.Pachd.Storage.Amazon.CustomEndpoint != "" {
+			data["custom-endpoint"] = toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint)
+		}
+
+		if pd.Spec.Pachd.Storage.Amazon.Region != "" {
+			data["amazon-region"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Region)
+		}
+
+		if pd.Spec.Pachd.Storage.Amazon.Token != "" {
+			data["amazon-token"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Token)
+		}
+
+		if pd.Spec.Pachd.Storage.Amazon.ID != "" {
+			data["amazon-id"] = toBytes(pd.Spec.Pachd.Storage.Amazon.ID)
+		}
 	}
 
-	if pd.Spec.Pachd.Storage.Amazon.Secret != "" {
-		data["amazon-secret"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Secret)
+	if pd.Spec.Pachd.Storage.Backend == "local" {
+		secret.Data = map[string][]byte{}
 	}
 
-	if pd.Spec.Pachd.Storage.Amazon.CustomEndpoint != "" {
-		data["custom-endpoint"] = toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint)
-	}
-
-	if pd.Spec.Pachd.Storage.Amazon.Region != "" {
-		data["amazon-region"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Region)
-	}
-
-	if pd.Spec.Pachd.Storage.Amazon.Token != "" {
-		data["amazon-token"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Token)
-	}
-
-	if pd.Spec.Pachd.Storage.Amazon.ID != "" {
-		data["amazon-id"] = toBytes(pd.Spec.Pachd.Storage.Amazon.ID)
-	}
 }
 
 // accepts string and returns a slice of type bytes
@@ -405,10 +423,28 @@ func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
 // PachdDeployment returns the pachd deployment resource
 func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 	deploy := c.pachdDeploy
+	pachyderm := c.Parent()
 
-	for _, container := range deploy.Spec.Template.Spec.Containers {
+	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == "pachd" {
-			container.Env = pachdEnvVarirables(c.pachyderm)
+			deploy.Spec.Template.Spec.Containers[i].Env = pachdEnvVarirables(c.pachyderm)
+		}
+	}
+
+	if pachyderm.Spec.Pachd.Storage.Backend == "local" {
+		for _, volume := range deploy.Spec.Template.Spec.Volumes {
+			if volume.Name == "pach-disk" {
+				dirOrCreate := corev1.HostPathDirectoryOrCreate
+				volume = corev1.Volume{
+					Name: "pach-disk",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: filepath.Join(pachyderm.Spec.Pachd.Storage.Local.HostPath, "pachd"),
+							Type: &dirOrCreate,
+						},
+					},
+				}
+			}
 		}
 	}
 

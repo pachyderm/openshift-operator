@@ -229,8 +229,8 @@ func (in *ObjectStorageOptions) DeepCopyInto(out *ObjectStorageOptions) {
 		*out = new(MinioStorageOptions)
 		**out = **in
 	}
-	if in.LocalStorage != nil {
-		in, out := &in.LocalStorage, &out.LocalStorage
+	if in.Local != nil {
+		in, out := &in.Local, &out.Local
 		*out = new(LocalStorageOptions)
 		**out = **in
 	}

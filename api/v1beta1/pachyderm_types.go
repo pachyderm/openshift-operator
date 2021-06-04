@@ -156,7 +156,7 @@ type ObjectStorageOptions struct {
 	// Sets the type of storage backend.
 	// Should be one of "google", "amazon", "minio", "microsoft" or "local"
 	// +kubebuilder:validation:Enum:=amazon;minio;microsoft;local
-	Backend string `json:"backend,omitempty"`
+	Backend string `json:"backend"`
 	// Configures the Amazon storage backend
 	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`
 	// Configures the Google storage backend
@@ -164,7 +164,7 @@ type ObjectStorageOptions struct {
 	Microsoft *MicrosoftStorageOptions `json:"microsoft,omitempty"`
 	Minio     *MinioStorageOptions     `json:"minio,omitempty"`
 	// Kubernetes hostPath
-	LocalStorage *LocalStorageOptions `json:"local,omitempty"`
+	Local *LocalStorageOptions `json:"local,omitempty"`
 }
 
 // GoogleStorageOptions exposes options to configure Google Cloud Storage
@@ -177,24 +177,30 @@ type GoogleStorageOptions struct {
 // AmazonStorageOptions exposes options to
 // configure Amazon s3 storage
 type AmazonStorageOptions struct {
-	Bucket                 string              `json:"bucket,omitempty"`
-	CloudFrontDistribution string              `json:"cloudFrontDistribution,omitempty"`
-	CustomEndpoint         string              `json:"customEndpoint,omitempty"`
-	DisableSSL             bool                `json:"disableSSL,omitempty"`
-	IAMRole                string              `json:"iamRole,omitempty"`
-	ID                     string              `json:"id,omitempty"`
-	LogOptions             string              `json:"logOptions,omitempty"`
-	MaxUploadParts         int                 `json:"maxUploadParts,omitempty"`
-	VerifySSL              bool                `json:"verifySSL,omitempty"`
-	PartSize               string              `json:"partSize,omitempty"`
-	Region                 string              `json:"region,omitempty"`
-	Retries                int                 `json:"retries,omitempty"`
-	Reverse                bool                `json:"reverse,omitempty"`
-	Secret                 string              `json:"secret,omitempty"`
-	Timeout                string              `json:"timeout,omitempty"`
-	Token                  string              `json:"token,omitempty"`
-	UploadACL              string              `json:"uploadACL,omitempty"`
-	Vault                  *AmazonStorageVault `json:"vault,omitempty"`
+	Bucket                 string `json:"bucket,omitempty"`
+	CloudFrontDistribution string `json:"cloudFrontDistribution,omitempty"`
+	CustomEndpoint         string `json:"customEndpoint,omitempty"`
+	DisableSSL             bool   `json:"disableSSL,omitempty"`
+	IAMRole                string `json:"iamRole,omitempty"`
+	ID                     string `json:"id,omitempty"`
+	LogOptions             string `json:"logOptions,omitempty"`
+	// +kubebuilder:default:=10000
+	MaxUploadParts int  `json:"maxUploadParts,omitempty"`
+	VerifySSL      bool `json:"verifySSL,omitempty"`
+	// +kubebuilder:default:=5242880
+	PartSize int64  `json:"partSize,omitempty"`
+	Region   string `json:"region,omitempty"`
+	// +kubebuilder:default:=10
+	Retries int `json:"retries,omitempty"`
+	// +kubebuilder:default:=true
+	Reverse bool   `json:"reverse,omitempty"`
+	Secret  string `json:"secret,omitempty"`
+	// +kubebuilder:default:="5m"
+	Timeout string `json:"timeout,omitempty"`
+	Token   string `json:"token,omitempty"`
+	// +kubebuilder:default:="bucket-owner-full-control"
+	UploadACL string              `json:"uploadACL,omitempty"`
+	Vault     *AmazonStorageVault `json:"vault,omitempty"`
 }
 
 // AmazonStorageVault exposes options to configure
@@ -229,6 +235,7 @@ type MinioStorageOptions struct {
 type LocalStorageOptions struct {
 	// Location on the worker node to be mounted
 	// into the pod
+	// +kubebuilder:default:="/var/pachyderm/"
 	HostPath string `json:"hostPath,omitempty"`
 }
 

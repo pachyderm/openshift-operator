@@ -43,8 +43,14 @@ var _ webhook.Defaulter = &Pachyderm{}
 func (r *Pachyderm) Default() {
 	pachydermlog.Info("default", "name", r.Name)
 
-	if r.Spec.Pachd.Storage.Amazon != nil {
+	if r.Spec.Pachd.Storage.Backend == "amazon" {
 		r.prepareAmazonStorage()
+	}
+
+	// if backend is "local" but, spec.pachd.storage.local is nil
+	// populate the hostPath
+	if r.Spec.Pachd.Storage.Backend == "local" {
+		r.prepareLocalStorage()
 	}
 }
 
@@ -76,24 +82,34 @@ func (r *Pachyderm) ValidateDelete() error {
 	return nil
 }
 
+func (r *Pachyderm) prepareLocalStorage() {
+	if r.Spec.Pachd.Storage.Local == nil {
+		r.Spec.Pachd.Storage.Local = &LocalStorageOptions{
+			HostPath: "/var/pachyderm/",
+		}
+	}
+}
+
 func (r *Pachyderm) prepareAmazonStorage() {
-	if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
-		r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = encodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution, false)
-	}
-	if r.Spec.Pachd.Storage.Amazon.IAMRole != "" {
-		r.Spec.Pachd.Storage.Amazon.IAMRole = encodeString(r.Spec.Pachd.Storage.Amazon.IAMRole, false)
-	}
-	if r.Spec.Pachd.Storage.Amazon.ID != "" {
-		r.Spec.Pachd.Storage.Amazon.ID = encodeString(r.Spec.Pachd.Storage.Amazon.ID, true)
-	}
-	if r.Spec.Pachd.Storage.Amazon.Secret != "" {
-		r.Spec.Pachd.Storage.Amazon.Secret = encodeString(r.Spec.Pachd.Storage.Amazon.Secret, true)
-	}
-	if r.Spec.Pachd.Storage.Amazon.Token != "" {
-		r.Spec.Pachd.Storage.Amazon.Token = encodeString(r.Spec.Pachd.Storage.Amazon.Token, true)
-	}
-	if r.Spec.Pachd.Storage.Amazon.UploadACL != "" {
-		r.Spec.Pachd.Storage.Amazon.UploadACL = encodeString(r.Spec.Pachd.Storage.Amazon.UploadACL, false)
+	if r.Spec.Pachd.Storage.Amazon != nil {
+		if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
+			r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = encodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution, false)
+		}
+		if r.Spec.Pachd.Storage.Amazon.IAMRole != "" {
+			r.Spec.Pachd.Storage.Amazon.IAMRole = encodeString(r.Spec.Pachd.Storage.Amazon.IAMRole, false)
+		}
+		if r.Spec.Pachd.Storage.Amazon.ID != "" {
+			r.Spec.Pachd.Storage.Amazon.ID = encodeString(r.Spec.Pachd.Storage.Amazon.ID, true)
+		}
+		if r.Spec.Pachd.Storage.Amazon.Secret != "" {
+			r.Spec.Pachd.Storage.Amazon.Secret = encodeString(r.Spec.Pachd.Storage.Amazon.Secret, true)
+		}
+		if r.Spec.Pachd.Storage.Amazon.Token != "" {
+			r.Spec.Pachd.Storage.Amazon.Token = encodeString(r.Spec.Pachd.Storage.Amazon.Token, true)
+		}
+		if r.Spec.Pachd.Storage.Amazon.UploadACL != "" {
+			r.Spec.Pachd.Storage.Amazon.UploadACL = encodeString(r.Spec.Pachd.Storage.Amazon.UploadACL, false)
+		}
 	}
 }
 

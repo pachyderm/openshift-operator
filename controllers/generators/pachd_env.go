@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -38,20 +39,6 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 			Name:  "NUM_SHARDS",
 			Value: fmt.Sprintf("%d", pachdOpts.NumShards),
 		})
-
-		// storage backend
-		envs = append(envs, corev1.EnvVar{
-			Name:  "STORAGE_BACKEND",
-			Value: strings.ToUpper(pachdOpts.Storage.Backend),
-		})
-
-		// storage host path
-		if pachdOpts.Storage.LocalStorage != nil {
-			envs = append(envs, corev1.EnvVar{
-				Name:  "STORAGE_HOST_PATH",
-				Value: pachdOpts.Storage.LocalStorage.HostPath,
-			})
-		}
 
 		if pd.Spec.Worker != nil {
 			// worker image
@@ -173,23 +160,23 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 			},
 		})
 
-		// require critical servers only
+		// worker pps grpc port
 		envs = append(envs, corev1.EnvVar{
 			Name:  "PPS_WORKER_GRPC_PORT",
 			Value: fmt.Sprintf("%d", pachdOpts.PPSWorkerGRPCPort),
 		})
 
-		// require critical servers only
+		// storage version
 		envs = append(envs, corev1.EnvVar{
 			Name:  "STORAGE_V2",
-			Value: "80",
+			Value: "false",
 		})
 	} // .spec.pachd
 
 	// setup pachd storage
-	storageOpts := setupPachdStorage(pd)
-	if len(storageOpts) > 0 {
-		envs = append(envs, storageOpts...)
+	storageEnv := setupPachdStorage(pd)
+	if len(storageEnv) > 0 {
+		envs = append(envs, storageEnv...)
 	}
 
 	return envs
@@ -213,23 +200,27 @@ func getWorkerImage(pd *aimlv1beta1.Pachyderm) string {
 }
 
 func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
-	pachdOpts := pd.Spec.Pachd
+	pachdOptions := pd.Spec.Pachd
 	storageEnv := []corev1.EnvVar{
 		{
 			Name:  "STORAGE_PUT_FILE_CONCURRENCY_LIMIT",
-			Value: fmt.Sprintf("%d", pachdOpts.Storage.PutFileConcurrencyLimit),
+			Value: fmt.Sprintf("%d", pachdOptions.Storage.PutFileConcurrencyLimit),
 		},
 		{
 			Name:  "STORAGE_UPLOAD_CONCURRENCY_LIMIT",
-			Value: fmt.Sprintf("%d", pachdOpts.Storage.PutFileConcurrencyLimit),
+			Value: fmt.Sprintf("%d", pachdOptions.Storage.PutFileConcurrencyLimit),
+		},
+		{
+			Name:  "STORAGE_BACKEND",
+			Value: strings.ToUpper(pachdOptions.Storage.Backend),
 		},
 	}
 
 	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) {
 
-		switch backend := strings.ToLower(pd.Spec.Pachd.Storage.Backend); backend {
+		switch pd.Spec.Pachd.Storage.Backend {
 		case "amazon":
-			if pachdOpts.Storage.Amazon != nil {
+			if pachdOptions.Storage.Amazon != nil {
 				var optional bool = true
 				// setup Amazon server configs
 				amzn := []corev1.EnvVar{
@@ -472,7 +463,7 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 		case "local":
 			storageEnv = append(storageEnv, corev1.EnvVar{
 				Name:  "STORAGE_HOST_PATH",
-				Value: pd.Spec.Pachd.Storage.LocalStorage.HostPath,
+				Value: filepath.Join(pd.Spec.Pachd.Storage.Local.HostPath, "pachd"),
 			})
 		case "minio":
 			minio := []corev1.EnvVar{}

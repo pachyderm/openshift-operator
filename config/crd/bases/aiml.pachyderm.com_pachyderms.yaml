@@ -321,22 +321,29 @@ spec:
                           logOptions:
                             type: string
                           maxUploadParts:
+                            default: 10000
                             type: integer
                           partSize:
-                            type: string
+                            default: 5242880
+                            format: int64
+                            type: integer
                           region:
                             type: string
                           retries:
+                            default: 10
                             type: integer
                           reverse:
+                            default: true
                             type: boolean
                           secret:
                             type: string
                           timeout:
+                            default: 5m
                             type: string
                           token:
                             type: string
                           uploadACL:
+                            default: bucket-owner-full-control
                             type: string
                           vault:
                             description: AmazonStorageVault exposes options to configure
@@ -375,6 +382,7 @@ spec:
                         description: Kubernetes hostPath
                         properties:
                           hostPath:
+                            default: /var/pachyderm/
                             description: Location on the worker node to be mounted
                               into the pod
                             type: string
@@ -420,6 +428,8 @@ spec:
                           uploads per Pachd instance. Default: 100'
                         format: int32
                         type: integer
+                    required:
+                    - backend
                     type: object
                 type: object
               worker:

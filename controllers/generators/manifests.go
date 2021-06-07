@@ -332,38 +332,47 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 }
 
 func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
-	data := secret.Data
-
-	if pd.Spec.Pachd.Storage.Backend == "amazon" {
-		if pd.Spec.Pachd.Storage.Amazon.Bucket != "" {
-			data["amazon-bucket"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket)
-		}
-
-		if pd.Spec.Pachd.Storage.Amazon.Secret != "" {
-			data["amazon-secret"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Secret)
-		}
-
-		if pd.Spec.Pachd.Storage.Amazon.CustomEndpoint != "" {
-			data["custom-endpoint"] = toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint)
-		}
-
-		if pd.Spec.Pachd.Storage.Amazon.Region != "" {
-			data["amazon-region"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Region)
-		}
-
-		if pd.Spec.Pachd.Storage.Amazon.Token != "" {
-			data["amazon-token"] = toBytes(pd.Spec.Pachd.Storage.Amazon.Token)
-		}
-
-		if pd.Spec.Pachd.Storage.Amazon.ID != "" {
-			data["amazon-id"] = toBytes(pd.Spec.Pachd.Storage.Amazon.ID)
-		}
-	}
 
 	if pd.Spec.Pachd.Storage.Backend == "local" {
 		secret.Data = map[string][]byte{}
 	}
 
+	if pd.Spec.Pachd.Storage.Backend == "amazon" {
+		secret.Data = map[string][]byte{
+			"amazon-bucket":   toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket),
+			"amazon-secret":   toBytes(pd.Spec.Pachd.Storage.Amazon.Secret),
+			"custom-endpoint": toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint),
+			"amazon-region":   toBytes(pd.Spec.Pachd.Storage.Amazon.Region),
+			"amazon-token":    toBytes(pd.Spec.Pachd.Storage.Amazon.Token),
+			"amazon-id":       toBytes(pd.Spec.Pachd.Storage.Amazon.ID),
+		}
+	}
+
+	if pd.Spec.Pachd.Storage.Backend == "minio" {
+		secret.Data = map[string][]byte{
+			"minio-bucket":    toBytes(pd.Spec.Pachd.Storage.Minio.Bucket),
+			"minio-endpoint":  toBytes(pd.Spec.Pachd.Storage.Minio.Endpoint),
+			"minio-id":        toBytes(pd.Spec.Pachd.Storage.Minio.ID),
+			"minio-secret":    toBytes(pd.Spec.Pachd.Storage.Minio.Secret),
+			"minio-secure":    toBytes(pd.Spec.Pachd.Storage.Minio.Secure),
+			"minio-signature": toBytes(pd.Spec.Pachd.Storage.Minio.Signature),
+		}
+	}
+
+	if pd.Spec.Pachd.Storage.Backend == "google" {
+		secret.Data = map[string][]byte{
+			"google-bucket": toBytes(pd.Spec.Pachd.Storage.Google.Bucket),
+			"google-cred":   toBytes(pd.Spec.Pachd.Storage.Google.CredentialSecret),
+		}
+	}
+
+	if pd.Spec.Pachd.Storage.Backend == "microsoft" {
+		secret.Data = map[string][]byte{
+			"microsoft-container": toBytes(pd.Spec.Pachd.Storage.Microsoft.Container),
+			"microsoft-secret":    toBytes(pd.Spec.Pachd.Storage.Microsoft.Secret),
+			"microsoft-id":        toBytes(pd.Spec.Pachd.Storage.Microsoft.ID),
+		}
+	}
 }
 
 // accepts string and returns a slice of type bytes

@@ -216,9 +216,8 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 		},
 	}
 
-	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) {
-
-		switch pd.Spec.Pachd.Storage.Backend {
+	if !reflect.DeepEqual(pachdOptions, aimlv1beta1.PachdOptions{}) {
+		switch pachdOptions.Storage.Backend {
 		case "amazon":
 			if pachdOptions.Storage.Amazon != nil {
 				var optional bool = true
@@ -466,7 +465,81 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 				Value: filepath.Join(pd.Spec.Pachd.Storage.Local.HostPath, "pachd"),
 			})
 		case "minio":
-			minio := []corev1.EnvVar{}
+			var optional bool = true
+			minio := []corev1.EnvVar{
+				{
+					Name: "MINIO_BUCKET",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "minio-bucket",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MINIO_ENDPOINT",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "minio-endpoint",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MINIO_ID",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "minio-id",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MINIO_SECRET",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "minio-secret",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MINIO_SECURE",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "minio-secure",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MINIO_SIGNATURE",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "minio-signature",
+							Optional: &optional,
+						},
+					},
+				},
+			}
 			storageEnv = append(storageEnv, minio...)
 		}
 	}

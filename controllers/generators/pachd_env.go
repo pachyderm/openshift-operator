@@ -457,7 +457,33 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 				storageEnv = append(storageEnv, amzn...)
 			}
 		case "google":
-			google := []corev1.EnvVar{}
+			var optional bool = true
+			google := []corev1.EnvVar{
+				{
+					Name: "GOOGLE_BUCKET",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "google-bucket",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "GOOGLE_CRED",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "google-cred",
+							Optional: &optional,
+						},
+					},
+				},
+			}
 			storageEnv = append(storageEnv, google...)
 		case "local":
 			storageEnv = append(storageEnv, corev1.EnvVar{

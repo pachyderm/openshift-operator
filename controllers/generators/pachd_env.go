@@ -567,6 +567,47 @@ func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 				},
 			}
 			storageEnv = append(storageEnv, minio...)
+		case "microsoft":
+			var optional bool = true
+			ms := []corev1.EnvVar{
+				{
+					Name: "MICROSOFT_CONTAINER",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "microsoft-container",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MICROSOFT_ID",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "microsoft-id",
+							Optional: &optional,
+						},
+					},
+				},
+				{
+					Name: "MICROSOFT_SECRET",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: "pachyderm-storage-secret",
+							},
+							Key:      "microsoft-secret",
+							Optional: &optional,
+						},
+					},
+				},
+			}
+			storageEnv = append(storageEnv, ms...)
 		}
 	}
 

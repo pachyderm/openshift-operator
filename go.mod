@@ -3,6 +3,7 @@ module github.com/OchiengEd/pachyderm-operator
 go 1.15
 
 require (
+	github.com/creasty/defaults v1.5.1 // indirect
 	github.com/go-logr/logr v0.3.0
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/imdario/mergo v0.3.12

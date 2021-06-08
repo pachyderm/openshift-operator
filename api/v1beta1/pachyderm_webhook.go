@@ -18,7 +18,9 @@ package v1beta1
 
 import (
 	"encoding/base64"
+	"fmt"
 
+	"github.com/creasty/defaults"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -84,14 +86,20 @@ func (r *Pachyderm) ValidateDelete() error {
 
 func (r *Pachyderm) prepareLocalStorage() {
 	if r.Spec.Pachd.Storage.Local == nil {
-		r.Spec.Pachd.Storage.Local = &LocalStorageOptions{
-			HostPath: "/var/pachyderm/",
+		r.Spec.Pachd.Storage.Local = &LocalStorageOptions{}
+		if err := defaults.Set(r.Spec.Pachd.Storage.Local); err != nil {
+			fmt.Println("err:", err.Error())
 		}
 	}
 }
 
 func (r *Pachyderm) prepareAmazonStorage() {
 	if r.Spec.Pachd.Storage.Amazon != nil {
+		// apply defaults
+		if err := defaults.Set(r.Spec.Pachd.Storage.Amazon); err != nil {
+			fmt.Println("err:", err.Error())
+		}
+
 		if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
 			r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = encodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution, false)
 		}

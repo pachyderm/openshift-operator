@@ -37,8 +37,9 @@ type PachydermSpec struct {
 type WorkerOptions struct {
 	// Optional image overrides.
 	// Used to specify alternative images to use to deploy dash
-	Image              *ImageOverride `json:"image,omitempty"`
-	ServiceAccountName string         `json:"serviceAccountName,omitempty"`
+	Image *ImageOverride `json:"image,omitempty"`
+	// Name of worker service account
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
 // DashOptions provides options to configure the dashd component
@@ -124,21 +125,30 @@ type PachdOptions struct {
 	LogLevel string `json:"logLevel,omitempty"`
 	// Optional value to determine the format of the logs
 	// Default: false
-	LokiLogging                      bool              `json:"lokiLogging,omitempty"`
-	AuthenticationDisabledForTesting bool              `json:"authenticationDisabledForTesting,omitempty"`
-	PPSWorkerGRPCPort                int               `json:"ppsWorkerGRPCPort,omitempty"`
-	ExposeDockerSocket               bool              `json:"exposeDockerSocket,omitempty"`
-	ExposeObjectAPI                  bool              `json:"exposeObjectAPI,omitempty"`
-	Service                          *ServiceOverrides `json:"service,omitempty"`
-	Metrics                          *MetricsOptions   `json:"metrics,omitempty"`
-	ServiceAccountName               string            `json:"serviceAccountName,omitempty"`
+	LokiLogging bool `json:"lokiLogging,omitempty"`
+	// When true, allows user to disable authentication during testing
+	AuthenticationDisabledForTesting bool `json:"authenticationDisabledForTesting,omitempty"`
+	// Pachyderm Pipeline System(PPS) worker GRPC port
+	PPSWorkerGRPCPort int `json:"ppsWorkerGRPCPort,omitempty"`
+	// Expose the Docker socket to worker containers.
+	// When false, limits the worker container privileges preventing them from
+	// automatically setting the container's working dir and user
+	ExposeDockerSocket bool `json:"exposeDockerSocket,omitempty"`
+	// If set, instructs pachd to serve its object/block API on its public port.
+	// Do not  use in production
+	ExposeObjectAPI bool              `json:"exposeObjectAPI,omitempty"`
+	Service         *ServiceOverrides `json:"service,omitempty"`
+	// Allows user to customize metrics options
+	Metrics            *MetricsOptions `json:"metrics,omitempty"`
+	ServiceAccountName string          `json:"serviceAccountName,omitempty"`
 }
 
 // MetricsOptions allows the user to enable/disable pachyderm metrics
 type MetricsOptions struct {
 	// Default: true
 	// +kubebuilder:default:=true
-	Enabled  bool   `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
+	// Metrics endpoint to configure
 	Endpoint string `json:"endpoint,omitempty"`
 }
 
@@ -160,16 +170,20 @@ type ObjectStorageOptions struct {
 	// Configures the Amazon storage backend
 	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`
 	// Configures the Google storage backend
-	Google    *GoogleStorageOptions    `json:"google,omitempty"`
+	Google *GoogleStorageOptions `json:"google,omitempty"`
+	// Configures Microsoft storage backend
 	Microsoft *MicrosoftStorageOptions `json:"microsoft,omitempty"`
-	Minio     *MinioStorageOptions     `json:"minio,omitempty"`
+	// Configures Minio object store
+	Minio *MinioStorageOptions `json:"minio,omitempty"`
 	// Kubernetes hostPath
 	Local *LocalStorageOptions `json:"local,omitempty"`
 }
 
 // GoogleStorageOptions exposes options to configure Google Cloud Storage
 type GoogleStorageOptions struct {
-	Bucket             string `json:"bucket,omitempty"`
+	// Name of GCS bucket to hold objects
+	Bucket string `json:"bucket,omitempty"`
+	// Credentials json file
 	CredentialSecret   string `json:"credentialSecret,omitempty"`
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
@@ -177,29 +191,44 @@ type GoogleStorageOptions struct {
 // AmazonStorageOptions exposes options to
 // configure Amazon s3 storage
 type AmazonStorageOptions struct {
+	// Name of the S3 bucket to hold objects
 	Bucket                 string `json:"bucket,omitempty"`
 	CloudFrontDistribution string `json:"cloudFrontDistribution,omitempty"`
-	CustomEndpoint         string `json:"customEndpoint,omitempty"`
-	DisableSSL             bool   `json:"disableSSL,omitempty"`
-	IAMRole                string `json:"iamRole,omitempty"`
-	ID                     string `json:"id,omitempty"`
-	LogOptions             string `json:"logOptions,omitempty"`
-	// +kubebuilder:default:=10000
-	MaxUploadParts int  `json:"maxUploadParts,omitempty"`
-	VerifySSL      bool `json:"verifySSL,omitempty"`
-	// +kubebuilder:default:=5242880
-	PartSize int64  `json:"partSize,omitempty"`
-	Region   string `json:"region,omitempty"`
-	// +kubebuilder:default:=10
-	Retries int `json:"retries,omitempty"`
-	// +kubebuilder:default:=true
-	Reverse bool   `json:"reverse,omitempty"`
+	// Custom endpoint for connecting to S3 object store
+	CustomEndpoint string `json:"customEndpoint,omitempty"`
+	// Disable SSL.
+	DisableSSL bool   `json:"disableSSL,omitempty"`
+	IAMRole    string `json:"iamRole,omitempty"`
+	// Set an ID for the cluster deployment.
+	// Defaults to a random value.
+	ID string `json:"id,omitempty"`
+	// Enable verbose logging in Pachyderm's internal S3 client for debugging.
+	LogOptions string `json:"logOptions,omitempty"`
+	// Set a custom maximum number of upload parts.
+	// Default: 10000
+	MaxUploadParts int `json:"maxUploadParts,omitempty" default:"10000"`
+	// Skip SSL certificate verification.
+	// Typically used for enabling self-signed certificates
+	VerifySSL bool `json:"verifySSL,omitempty"`
+	// Set a custom part size for object storage uploads.
+	// Default: 5242880
+	PartSize int64 `json:"partSize,omitempty" default:"5242880"`
+	// Region for the object storqge cluster
+	Region string `json:"region,omitempty"`
+	// Set a custom number of retries for object storage requests.
+	// Default: 10
+	Retries int `json:"retries,omitempty" default:"10"`
+	// Reverse object storage paths.
+	// Default: true
+	Reverse bool   `json:"reverse,omitempty" default:"true"`
 	Secret  string `json:"secret,omitempty"`
-	// +kubebuilder:default:="5m"
-	Timeout string `json:"timeout,omitempty"`
+	// Set a custom timeout for object storage requests.
+	// Default: 5m
+	Timeout string `json:"timeout,omitempty" default:"5m"`
 	Token   string `json:"token,omitempty"`
-	// +kubebuilder:default:="bucket-owner-full-control"
-	UploadACL string              `json:"uploadACL,omitempty"`
+	// Sets a custom upload ACL for object store uploads.
+	// Default: "bucket-owner-full-control"
+	UploadACL string              `json:"uploadACL,omitempty" default:"bucket-owner-full-control"`
 	Vault     *AmazonStorageVault `json:"vault,omitempty"`
 }
 
@@ -222,9 +251,14 @@ type MicrosoftStorageOptions struct {
 // MinioStorageOptions exposes options to
 // confugure Minio object store
 type MinioStorageOptions struct {
-	Bucket    string `json:"bucket,omitempty"`
-	Endpoint  string `json:"endpoint,omitempty"`
-	ID        string `json:"id,omitempty"`
+	// Name of minio bucket to store pachd objects
+	Bucket string `json:"bucket,omitempty"`
+	// The hostname and port that are used to access the minio object store
+	// Example: "minio-server:9000"
+	Endpoint string `json:"endpoint,omitempty"`
+	// The user access ID that is used to access minio object store.
+	ID string `json:"id,omitempty"`
+	// The associated password that is used with the user access ID
 	Secret    string `json:"secret,omitempty"`
 	Secure    string `json:"secure,omitempty"`
 	Signature string `json:"signature,omitempty"`
@@ -233,10 +267,10 @@ type MinioStorageOptions struct {
 // LocalStorageOptions exposes options to
 // confifure local storage
 type LocalStorageOptions struct {
-	// Location on the worker node to be mounted
-	// into the pod
-	// +kubebuilder:default:="/var/pachyderm/"
-	HostPath string `json:"hostPath,omitempty"`
+	// Location on the worker node to be
+	// mounted into the pod.
+	// Default: "/var/pachyderm/"
+	HostPath string `json:"hostPath,omitempty" default:"/var/pachyderm/"`
 }
 
 // PachydermPhase defines the data type used

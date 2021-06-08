@@ -160,7 +160,8 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 			},
 		})
 
-		// worker pps grpc port
+		// Pachyderm Pipeline System(PPS)
+		// worker GRPC port
 		envs = append(envs, corev1.EnvVar{
 			Name:  "PPS_WORKER_GRPC_PORT",
 			Value: fmt.Sprintf("%d", pachdOpts.PPSWorkerGRPCPort),

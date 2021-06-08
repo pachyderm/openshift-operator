@@ -2,4 +2,14 @@ apiVersion: aiml.pachyderm.com/v1beta1
 kind: Pachyderm
 metadata:
   name: pachyderm-sample
-spec: {}
+spec:
+  dash: 
+    enabled: true
+  pachd:
+    metrics:
+      enabled: true
+    storage:
+      backend: local
+      local:
+        hostPath: /var/pachyderm
+

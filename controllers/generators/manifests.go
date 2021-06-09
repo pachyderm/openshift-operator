@@ -164,11 +164,22 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 			if err := toTypedResource(obj, &clusterrole); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
+			if clusterrole.Name == "pachyderm" {
+				clusterrole.Rules = append(clusterrole.Rules, rbacv1.PolicyRule{
+					APIGroups:     []string{"security.openshift.io"},
+					Resources:     []string{"securitycontextconstraints"},
+					ResourceNames: []string{"anyuid"},
+					Verbs:         []string{"use"},
+				})
+			}
 			components.ClusterRoles = append(components.ClusterRoles, clusterrole)
 		case "ClusterRoleBinding":
 			var clusterRoleBinding rbacv1.ClusterRoleBinding
 			if err := toTypedResource(obj, &clusterRoleBinding); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
+			}
+			for i := range clusterRoleBinding.Subjects {
+				clusterRoleBinding.Subjects[i].Namespace = pd.Namespace
 			}
 			components.ClusterRoleBindings = append(components.ClusterRoleBindings, clusterRoleBinding)
 		case "Role":
@@ -437,6 +448,11 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == "pachd" {
 			deploy.Spec.Template.Spec.Containers[i].Env = pachdEnvVarirables(c.pachyderm)
+
+			var rootUID int64 = 0
+			deploy.Spec.Template.Spec.Containers[i].SecurityContext = &corev1.SecurityContext{
+				RunAsUser: &rootUID,
+			}
 		}
 	}
 
@@ -462,6 +478,19 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 
 // DashDeployment returns the dash deployment resource
 func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
+
+	// use pachyderm service account
+	c.dashDeploy.Spec.Template.Spec.ServiceAccountName = "pachyderm"
+
+	var rootUID int64 = 0
+	for i := range c.dashDeploy.Spec.Template.Spec.Containers {
+		if c.dashDeploy.Spec.Template.Spec.Containers[i].Name == "dash" {
+			c.dashDeploy.Spec.Template.Spec.Containers[i].SecurityContext = &corev1.SecurityContext{
+				RunAsUser: &rootUID,
+			}
+		}
+	}
+
 	return c.dashDeploy
 }
 

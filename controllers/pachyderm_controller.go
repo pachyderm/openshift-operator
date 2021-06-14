@@ -610,7 +610,6 @@ func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, compone
 		userStorageClass := &storagev1.StorageClass{}
 		userSCKey := types.NamespacedName{
 			Name:      storageClassName,
-			Namespace: pachyderm.Namespace,
 		}
 		if err := r.Get(ctx, userSCKey, userStorageClass); err != nil {
 			return err

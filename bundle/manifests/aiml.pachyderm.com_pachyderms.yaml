@@ -39,7 +39,8 @@ spec:
                 properties:
                   enabled:
                     default: true
-                    description: Option to disable dash
+                    description: Option to disable the Pachyderm dashboard. Defaults
+                      to true
                     type: boolean
                   image:
                     description: Optional image overrides. Used to specify alternative
@@ -245,10 +246,13 @@ spec:
                     properties:
                       enabled:
                         default: true
-                        description: 'Default: true'
+                        description: Option to allow user to disable metrics endpoint.
+                          Defaults to true
                         type: boolean
                       endpoint:
-                        description: Metrics endpoint to configure
+                        default: /metrics
+                        description: Option to customize pachd metrics endpoint. Defaults
+                          to /metrics
                         type: string
                     type: object
                   numShards:

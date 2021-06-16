@@ -19,7 +19,10 @@ package controllers
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
+	"net"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -341,7 +344,21 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 		return false
 	}
 
-	return true
+	// pachd-peer connection test
+	return testPachdPeerConnection(ctx, pd)
+}
+
+func testPachdPeerConnection(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {
+	hostname := strings.Join([]string{"pachd-peer", pd.Namespace}, ".")
+	pachdPeer := fmt.Sprintf("%s:%s", hostname, "30653")
+
+	conn, err := net.Dial("tcp", pachdPeer)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+
+	return (conn != nil)
 }
 
 func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {

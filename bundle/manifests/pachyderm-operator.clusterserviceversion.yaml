@@ -32,8 +32,9 @@ metadata:
     categories: AI/Machine Learning
     containerImage: quay.io/opdev/pachyderm-operator:latest
     createdAt: "2021-05-20T08:05:00Z"
-    description: Pachyderm provides version control for data. Think, "git for data", but better.
-    operators.operatorframework.io/builder: operator-sdk-v1.6.1+git
+    description: Pachyderm provides version control for data. Think, "git for data",
+      but better.
+    operators.operatorframework.io/builder: operator-sdk-v1.7.1+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/opdev/pachyderm-operator
     support: Pachyderm, Inc.

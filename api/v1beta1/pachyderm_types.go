@@ -44,7 +44,8 @@ type WorkerOptions struct {
 
 // DashOptions provides options to configure the dashd component
 type DashOptions struct {
-	// Option to disable dash
+	// Option to disable the Pachyderm dashboard.
+	// Defaults to true
 	// +kubebuilder:default:=true
 	Enabled bool `json:"enabled,omitempty"`
 	// Optional image overrides.
@@ -145,10 +146,14 @@ type PachdOptions struct {
 
 // MetricsOptions allows the user to enable/disable pachyderm metrics
 type MetricsOptions struct {
-	// Default: true
+	// Option to allow user to disable metrics endpoint.
+	// Defaults to true
 	// +kubebuilder:default:=true
 	Enabled bool `json:"enabled,omitempty"`
-	// Metrics endpoint to configure
+
+	// Option to customize pachd metrics endpoint.
+	// Defaults to /metrics
+	// +kubebuilder:default:=/metrics
 	Endpoint string `json:"endpoint,omitempty"`
 }
 

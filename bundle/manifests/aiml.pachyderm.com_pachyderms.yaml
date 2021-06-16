@@ -20,10 +20,14 @@ spec:
         description: Pachyderm is the Schema for the pachyderms API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -38,24 +42,29 @@ spec:
                     description: Option to disable dash
                     type: boolean
                   image:
-                    description: Optional image overrides. Used to specify alternative images to use to deploy dash
+                    description: Optional image overrides. Used to specify alternative
+                      images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled. It accepts, "IfNotPresent","Never" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
                         enum:
                         - IfNotPresent
                         - Always
                         - Never
                         type: string
                       repository:
-                        description: This option dictates the particular image to pull
+                        description: This option dictates the particular image to
+                          pull
                         type: string
                       tag:
-                        description: Used with the image registry to choose a specific image in a cointainer registry to pull
+                        description: Used with the image registry to choose a specific
+                          image in a cointainer registry to pull
                         type: string
                     type: object
                   resources:
-                    description: Optional resource requirements required to run the dash pods.
+                    description: Optional resource requirements required to run the
+                      dash pods.
                     properties:
                       limits:
                         additionalProperties:
@@ -64,7 +73,8 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                       requests:
                         additionalProperties:
@@ -73,11 +83,15 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service type and annotations
+                    description: ServiceOverrides allows user to customize k8s service
+                      type and annotations
                     properties:
                       annotations:
                         items:
@@ -89,31 +103,38 @@ spec:
                     - type
                     type: object
                   url:
-                    description: The address to use as the host in the dash ingress. Used as the host of a rule
+                    description: The address to use as the host in the dash ingress.
+                      Used as the host of a rule
                     type: string
                 type: object
               etcd:
                 description: Allows the user to customize the etcd key-value store
                 properties:
                   dynamicNodes:
-                    description: Optional parameter to set the number of nodes in the Etcd statefulset. Analogous --dynamic-etcd-nodes argument to 'pachctl deploy'
+                    description: Optional parameter to set the number of nodes in
+                      the Etcd statefulset. Analogous --dynamic-etcd-nodes argument
+                      to 'pachctl deploy'
                     format: int32
                     type: integer
                   image:
-                    description: Optional image overrides. Used to specify alternative images to use to deploy dash
+                    description: Optional image overrides. Used to specify alternative
+                      images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled. It accepts, "IfNotPresent","Never" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
                         enum:
                         - IfNotPresent
                         - Always
                         - Never
                         type: string
                       repository:
-                        description: This option dictates the particular image to pull
+                        description: This option dictates the particular image to
+                          pull
                         type: string
                       tag:
-                        description: Used with the image registry to choose a specific image in a cointainer registry to pull
+                        description: Used with the image registry to choose a specific
+                          image in a cointainer registry to pull
                         type: string
                     type: object
                   resources:
@@ -126,7 +147,8 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                       requests:
                         additionalProperties:
@@ -135,11 +157,15 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service type and annotations
+                    description: ServiceOverrides allows user to customize k8s service
+                      type and annotations
                     properties:
                       annotations:
                         items:
@@ -151,52 +177,68 @@ spec:
                     - type
                     type: object
                   storageClass:
-                    description: If specified, etcd would use an existing storage class for its storage Name of existing storage class to use for the Etcd persistent volume.
+                    description: If specified, etcd would use an existing storage
+                      class for its storage Name of existing storage class to use
+                      for the Etcd persistent volume.
                     type: string
                   storageSize:
-                    description: 'The size of the storage to use for etcd. For example: "100Gi"'
+                    description: 'The size of the storage to use for etcd. For example:
+                      "100Gi"'
                     type: string
                 type: object
               pachd:
                 description: Allows the user to customize the pachd instance(s)
                 properties:
                   authenticationDisabledForTesting:
-                    description: When true, allows user to disable authentication during testing
+                    description: When true, allows user to disable authentication
+                      during testing
                     type: boolean
                   blockCacheBytes:
-                    description: Size of Pachd's in-memory cache for PFS file. Size is specified in bytes, with allowed SI suffixes (M, K, G, Mi, Ki, Gi, etc)
+                    description: Size of Pachd's in-memory cache for PFS file. Size
+                      is specified in bytes, with allowed SI suffixes (M, K, G, Mi,
+                      Ki, Gi, etc)
                     type: string
                   clusterDeploymentID:
-                    description: Set an ID for the cluster deployment. Defaults to a random value if none is provided
+                    description: Set an ID for the cluster deployment. Defaults to
+                      a random value if none is provided
                     type: string
                   exposeDockerSocket:
-                    description: Expose the Docker socket to worker containers. When false, limits the worker container privileges preventing them from automatically setting the container's working dir and user
+                    description: Expose the Docker socket to worker containers. When
+                      false, limits the worker container privileges preventing them
+                      from automatically setting the container's working dir and user
                     type: boolean
                   exposeObjectAPI:
-                    description: If set, instructs pachd to serve its object/block API on its public port. Do not  use in production
+                    description: If set, instructs pachd to serve its object/block
+                      API on its public port. Do not  use in production
                     type: boolean
                   image:
-                    description: Optional image overrides. Used to specify alternative images to use to deploy dash
+                    description: Optional image overrides. Used to specify alternative
+                      images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled. It accepts, "IfNotPresent","Never" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
                         enum:
                         - IfNotPresent
                         - Always
                         - Never
                         type: string
                       repository:
-                        description: This option dictates the particular image to pull
+                        description: This option dictates the particular image to
+                          pull
                         type: string
                       tag:
-                        description: Used with the image registry to choose a specific image in a cointainer registry to pull
+                        description: Used with the image registry to choose a specific
+                          image in a cointainer registry to pull
                         type: string
                     type: object
                   logLevel:
-                    description: The log level option determines the severity of logs that are of interest to the user
+                    description: The log level option determines the severity of logs
+                      that are of interest to the user
                     type: string
                   lokiLogging:
-                    description: 'Optional value to determine the format of the logs Default: false'
+                    description: 'Optional value to determine the format of the logs
+                      Default: false'
                     type: boolean
                   metrics:
                     description: Allows user to customize metrics options
@@ -211,14 +253,17 @@ spec:
                     type: object
                   numShards:
                     default: 16
-                    description: 'Sets the maximum number of pachd nodes allowed in the cluster. Increasing this number blindly could lead to degraded performance. Default: 16'
+                    description: 'Sets the maximum number of pachd nodes allowed in
+                      the cluster. Increasing this number blindly could lead to degraded
+                      performance. Default: 16'
                     format: int32
                     type: integer
                   ppsWorkerGRPCPort:
                     description: Pachyderm Pipeline System(PPS) worker GRPC port
                     type: integer
                   requireCriticalServersOnly:
-                    description: Require only critical Pachd servers to startup and run without errors.
+                    description: Require only critical Pachd servers to startup and
+                      run without errors.
                     type: boolean
                   resources:
                     description: Resource requests and limits for Pachd
@@ -230,7 +275,8 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                       requests:
                         additionalProperties:
@@ -239,11 +285,15 @@ spec:
                           - type: string
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service type and annotations
+                    description: ServiceOverrides allows user to customize k8s service
+                      type and annotations
                     properties:
                       annotations:
                         items:
@@ -268,7 +318,8 @@ spec:
                           cloudFrontDistribution:
                             type: string
                           customEndpoint:
-                            description: Custom endpoint for connecting to S3 object store
+                            description: Custom endpoint for connecting to S3 object
+                              store
                             type: string
                           disableSSL:
                             description: Disable SSL.
@@ -276,23 +327,28 @@ spec:
                           iamRole:
                             type: string
                           id:
-                            description: Set an ID for the cluster deployment. Defaults to a random value.
+                            description: Set an ID for the cluster deployment. Defaults
+                              to a random value.
                             type: string
                           logOptions:
-                            description: Enable verbose logging in Pachyderm's internal S3 client for debugging.
+                            description: Enable verbose logging in Pachyderm's internal
+                              S3 client for debugging.
                             type: string
                           maxUploadParts:
-                            description: 'Set a custom maximum number of upload parts. Default: 10000'
+                            description: 'Set a custom maximum number of upload parts.
+                              Default: 10000'
                             type: integer
                           partSize:
-                            description: 'Set a custom part size for object storage uploads. Default: 5242880'
+                            description: 'Set a custom part size for object storage
+                              uploads. Default: 5242880'
                             format: int64
                             type: integer
                           region:
                             description: Region for the object storqge cluster
                             type: string
                           retries:
-                            description: 'Set a custom number of retries for object storage requests. Default: 10'
+                            description: 'Set a custom number of retries for object
+                              storage requests. Default: 10'
                             type: integer
                           reverse:
                             description: 'Reverse object storage paths. Default: true'
@@ -300,15 +356,18 @@ spec:
                           secret:
                             type: string
                           timeout:
-                            description: 'Set a custom timeout for object storage requests. Default: 5m'
+                            description: 'Set a custom timeout for object storage
+                              requests. Default: 5m'
                             type: string
                           token:
                             type: string
                           uploadACL:
-                            description: 'Sets a custom upload ACL for object store uploads. Default: "bucket-owner-full-control"'
+                            description: 'Sets a custom upload ACL for object store
+                              uploads. Default: "bucket-owner-full-control"'
                             type: string
                           vault:
-                            description: AmazonStorageVault exposes options to configure Amazon vault
+                            description: AmazonStorageVault exposes options to configure
+                              Amazon vault
                             properties:
                               address:
                                 type: string
@@ -318,11 +377,13 @@ spec:
                                 type: string
                             type: object
                           verifySSL:
-                            description: Skip SSL certificate verification. Typically used for enabling self-signed certificates
+                            description: Skip SSL certificate verification. Typically
+                              used for enabling self-signed certificates
                             type: boolean
                         type: object
                       backend:
-                        description: Sets the type of storage backend. Should be one of "google", "amazon", "minio", "microsoft" or "local"
+                        description: Sets the type of storage backend. Should be one
+                          of "google", "amazon", "minio", "microsoft" or "local"
                         enum:
                         - amazon
                         - minio
@@ -345,7 +406,8 @@ spec:
                         description: Kubernetes hostPath
                         properties:
                           hostPath:
-                            description: 'Location on the worker node to be mounted into the pod. Default: "/var/pachyderm/"'
+                            description: 'Location on the worker node to be mounted
+                              into the pod. Default: "/var/pachyderm/"'
                             type: string
                         type: object
                       microsoft:
@@ -365,13 +427,16 @@ spec:
                             description: Name of minio bucket to store pachd objects
                             type: string
                           endpoint:
-                            description: 'The hostname and port that are used to access the minio object store Example: "minio-server:9000"'
+                            description: 'The hostname and port that are used to access
+                              the minio object store Example: "minio-server:9000"'
                             type: string
                           id:
-                            description: The user access ID that is used to access minio object store.
+                            description: The user access ID that is used to access
+                              minio object store.
                             type: string
                           secret:
-                            description: The associated password that is used with the user access ID
+                            description: The associated password that is used with
+                              the user access ID
                             type: string
                           secure:
                             type: string
@@ -380,12 +445,15 @@ spec:
                         type: object
                       putFileConcurrencyLimit:
                         default: 100
-                        description: 'The maximum number of files to upload or fetch from remote sources (HTTP, blob storage) using PutFile concurrently. Default: 100'
+                        description: 'The maximum number of files to upload or fetch
+                          from remote sources (HTTP, blob storage) using PutFile concurrently.
+                          Default: 100'
                         format: int32
                         type: integer
                       uploadFileConcurrencyLimit:
                         default: 100
-                        description: 'The maximum number of concurrent object storage uploads per Pachd instance. Default: 100'
+                        description: 'The maximum number of concurrent object storage
+                          uploads per Pachd instance. Default: 100'
                         format: int32
                         type: integer
                     required:
@@ -396,20 +464,24 @@ spec:
                 description: Allows user to customize worker instance(s)
                 properties:
                   image:
-                    description: Optional image overrides. Used to specify alternative images to use to deploy dash
+                    description: Optional image overrides. Used to specify alternative
+                      images to use to deploy dash
                     properties:
                       pullPolicy:
-                        description: Determines when images should be pulled. It accepts, "IfNotPresent","Never" or "Always"
+                        description: Determines when images should be pulled. It accepts,
+                          "IfNotPresent","Never" or "Always"
                         enum:
                         - IfNotPresent
                         - Always
                         - Never
                         type: string
                       repository:
-                        description: This option dictates the particular image to pull
+                        description: This option dictates the particular image to
+                          pull
                         type: string
                       tag:
-                        description: Used with the image registry to choose a specific image in a cointainer registry to pull
+                        description: Used with the image registry to choose a specific
+                          image in a cointainer registry to pull
                         type: string
                     type: object
                   serviceAccountName:
@@ -421,7 +493,8 @@ spec:
             description: PachydermStatus defines the observed state of Pachyderm
             properties:
               phase:
-                description: PachydermPhase defines the data type used to report the status of a Pachyderm resource
+                description: PachydermPhase defines the data type used to report the
+                  status of a Pachyderm resource
                 type: string
             required:
             - phase

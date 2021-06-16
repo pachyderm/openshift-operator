@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	aimlv1beta1 "github.com/OchiengEd/pachyderm-operator/api/v1beta1"
+	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 

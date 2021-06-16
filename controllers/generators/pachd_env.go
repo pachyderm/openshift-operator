@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	aimlv1beta1 "github.com/OchiengEd/pachyderm-operator/api/v1beta1"
+	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )

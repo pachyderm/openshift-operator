@@ -1,4 +1,4 @@
-module github.com/OchiengEd/pachyderm-operator
+module github.com/opdev/pachyderm-operator
 
 go 1.15
 

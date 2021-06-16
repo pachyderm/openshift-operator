@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"reflect"
 
-	aimlv1beta1 "github.com/OchiengEd/pachyderm-operator/api/v1beta1"
 	goyaml "github.com/go-yaml/yaml"
+	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -389,9 +389,8 @@ func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 // accepts string and returns a slice of type bytes
 func toBytes(value string) []byte {
 	if aimlv1beta1.IsBase64Encoded(value) {
-		if out, err := base64.StdEncoding.DecodeString(value); err == nil {
-			return out
-		}
+		out, _ := base64.StdEncoding.DecodeString(value)
+		return out
 	}
 	return []byte(value)
 }

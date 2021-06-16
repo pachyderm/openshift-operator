@@ -7,7 +7,8 @@ metadata:
     categories: AI/Machine Learning
     containerImage: quay.io/opdev/pachyderm-operator:latest
     createdAt: "2021-05-20T08:05:00Z"
-    description: Pachyderm provides version control for data. Think, "git for data", but better.
+    description: Pachyderm provides version control for data. Think, "git for data",
+      but better.
     repository: https://github.com/opdev/pachyderm-operator
     support: Pachyderm, Inc.
   name: pachyderm-operator.v0.0.0

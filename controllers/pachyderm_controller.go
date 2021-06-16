@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	aimlv1beta1 "github.com/OchiengEd/pachyderm-operator/api/v1beta1"
-	"github.com/OchiengEd/pachyderm-operator/controllers/generators"
+	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
+	"github.com/opdev/pachyderm-operator/controllers/generators"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -609,7 +609,7 @@ func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, compone
 	if storageClassName != "etcd-storage-class" {
 		userStorageClass := &storagev1.StorageClass{}
 		userSCKey := types.NamespacedName{
-			Name:      storageClassName,
+			Name: storageClassName,
 		}
 		if err := r.Get(ctx, userSCKey, userStorageClass); err != nil {
 			return err

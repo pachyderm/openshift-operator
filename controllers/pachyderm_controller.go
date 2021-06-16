@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"net"
 	"reflect"
@@ -658,8 +657,4 @@ func (r *PachydermReconciler) isServiceReady(ctx context.Context, service types.
 	}
 
 	return len(addresses) > 0
-}
-
-func base64Encode(input []byte) []byte {
-	return []byte(base64.StdEncoding.EncodeToString(input))
 }

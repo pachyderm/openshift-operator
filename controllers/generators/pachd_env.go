@@ -84,7 +84,7 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 		if pachdOpts.Metrics != nil {
 			envs = append(envs, corev1.EnvVar{
 				Name:  "METRICS",
-				Value: fmt.Sprintf("%t", pachdOpts.Metrics.Enabled),
+				Value: fmt.Sprintf("%t", !pachdOpts.Metrics.Disable),
 			})
 		}
 

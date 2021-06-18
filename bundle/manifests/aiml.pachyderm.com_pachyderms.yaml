@@ -37,10 +37,8 @@ spec:
               dash:
                 description: Allows the user to customize the dashd instance(s)
                 properties:
-                  enabled:
-                    default: true
-                    description: Option to disable the Pachyderm dashboard. Defaults
-                      to true
+                  disable:
+                    description: If true, this option disables the Pachyderm dashboard.
                     type: boolean
                   image:
                     description: Optional image overrides. Used to specify alternative
@@ -244,10 +242,9 @@ spec:
                   metrics:
                     description: Allows user to customize metrics options
                     properties:
-                      enabled:
-                        default: true
-                        description: Option to allow user to disable metrics endpoint.
-                          Defaults to true
+                      disable:
+                        description: If true, this option allows user to disable metrics
+                          endpoint.
                         type: boolean
                       endpoint:
                         default: /metrics
@@ -464,6 +461,9 @@ spec:
                     - backend
                     type: object
                 type: object
+              version:
+                description: Allows user to change version of Pachyderm to deploy
+                type: string
               worker:
                 description: Allows user to customize worker instance(s)
                 properties:

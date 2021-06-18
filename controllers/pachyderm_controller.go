@@ -334,13 +334,15 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 		return false
 	}
 
-	// check status of dash
-	dashSvc := types.NamespacedName{
-		Name:      "dash",
-		Namespace: pd.Namespace,
-	}
-	if !r.isServiceReady(ctx, dashSvc) {
-		return false
+	if !pd.Spec.Dashd.Disable {
+		// check status of dash
+		dashSvc := types.NamespacedName{
+			Name:      "dash",
+			Namespace: pd.Namespace,
+		}
+		if !r.isServiceReady(ctx, dashSvc) {
+			return false
+		}
 	}
 
 	// pachd-peer connection test
@@ -603,19 +605,20 @@ func (r *PachydermReconciler) deployPachd(ctx context.Context, components genera
 func (r *PachydermReconciler) deployDash(ctx context.Context, components generators.PachydermComponents) error {
 	pd := components.Parent()
 
-	dash := components.DashDeployment()
-	if err := controllerutil.SetControllerReference(pd, dash, r.Scheme); err != nil {
-		return err
-	}
-
-	if err := r.Create(ctx, dash); err != nil {
-		if errors.IsAlreadyExists(err) {
-			// TODO: add update logic
-			return nil
+	if !pd.Spec.Dashd.Disable {
+		dash := components.DashDeployment()
+		if err := controllerutil.SetControllerReference(pd, dash, r.Scheme); err != nil {
+			return err
 		}
-		return err
-	}
 
+		if err := r.Create(ctx, dash); err != nil {
+			if errors.IsAlreadyExists(err) {
+				// TODO: add update logic
+				return nil
+			}
+			return err
+		}
+	}
 	return nil
 }
 

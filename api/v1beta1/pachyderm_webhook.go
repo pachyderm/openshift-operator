@@ -18,13 +18,20 @@ package v1beta1
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+
+	"sort"
 
 	"github.com/creasty/defaults"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"golang.org/x/mod/semver"
 )
 
 // log is for logging in this package.
@@ -53,6 +60,10 @@ func (r *Pachyderm) Default() {
 	// populate the hostPath
 	if r.Spec.Pachd.Storage.Backend == "local" {
 		r.prepareLocalStorage()
+	}
+
+	if r.Spec.Version == "" {
+		r.Spec.Version = getDefaultVersion()
 	}
 }
 
@@ -159,4 +170,47 @@ func encodeCount(input string) int {
 		result = string(out)
 	}
 	return count
+}
+
+func isContainer() bool {
+	fs, err := os.Stat("/run/secrets/kubernetes.io/serviceaccount")
+	return (fs.IsDir() && err == nil)
+}
+
+func getVersions() ([]string, error) {
+	var versionsDir string = "/manifests"
+	if !isContainer() {
+		return []string{}, errors.New("not running in container")
+
+	}
+
+	files, err := ioutil.ReadDir(versionsDir)
+	if err != nil {
+		fmt.Println("error:", err.Error())
+	}
+
+	versions := []string{}
+	for _, f := range files {
+		if f.IsDir() {
+			if version := fmt.Sprintf("v%s", f.Name()); semver.IsValid(version) {
+				versions = append(versions, version)
+			}
+		}
+	}
+
+	return versions, nil
+}
+
+// getDefaultVersion returns the newest Pachyderm version based on semver version
+func getDefaultVersion() string {
+	versions, err := getVersions()
+	if err != nil {
+		return ""
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		return (semver.Compare(versions[i], versions[j]) == -1)
+	})
+
+	return versions[len(versions)-1]
 }

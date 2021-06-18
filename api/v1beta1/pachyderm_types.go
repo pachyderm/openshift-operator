@@ -23,6 +23,8 @@ import (
 
 // PachydermSpec defines the desired state of Pachyderm
 type PachydermSpec struct {
+	// Allows user to change version of Pachyderm to deploy
+	Version string `json:"version,omitempty"`
 	// Allows the user to customize the etcd key-value store
 	Etcd EtcdOptions `json:"etcd,omitempty"`
 	// Allows the user to customize the pachd instance(s)
@@ -44,10 +46,8 @@ type WorkerOptions struct {
 
 // DashOptions provides options to configure the dashd component
 type DashOptions struct {
-	// Option to disable the Pachyderm dashboard.
-	// Defaults to true
-	// +kubebuilder:default:=true
-	Enabled bool `json:"enabled,omitempty"`
+	// If true, this option disables the Pachyderm dashboard.
+	Disable bool `json:"disable,omitempty"`
 	// Optional image overrides.
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
@@ -146,10 +146,8 @@ type PachdOptions struct {
 
 // MetricsOptions allows the user to enable/disable pachyderm metrics
 type MetricsOptions struct {
-	// Option to allow user to disable metrics endpoint.
-	// Defaults to true
-	// +kubebuilder:default:=true
-	Enabled bool `json:"enabled,omitempty"`
+	// If true, this option allows user to disable metrics endpoint.
+	Disable bool `json:"disable,omitempty"`
 
 	// Option to customize pachd metrics endpoint.
 	// Defaults to /metrics

@@ -4,10 +4,10 @@ metadata:
   name: pachyderm-sample
 spec:
   dash: 
-    enabled: true
+    disable: false
   pachd:
     metrics:
-      enabled: true
+      disable: false
     storage:
       backend: local
       local:

@@ -86,13 +86,13 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 				Name:  "METRICS",
 				Value: fmt.Sprintf("%t", !pachdOpts.Metrics.Disable),
 			})
-		}
 
-		if pachdOpts.Metrics.Endpoint != "" {
-			envs = append(envs, corev1.EnvVar{
-				Name:  "METRICS_ENDPOINT",
-				Value: pachdOpts.Metrics.Endpoint,
-			})
+			if pachdOpts.Metrics.Endpoint != "" {
+				envs = append(envs, corev1.EnvVar{
+					Name:  "METRICS_ENDPOINT",
+					Value: pachdOpts.Metrics.Endpoint,
+				})
+			}
 		}
 
 		// log level

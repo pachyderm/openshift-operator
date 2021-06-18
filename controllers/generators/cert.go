@@ -82,9 +82,7 @@ func newClientCertificate(key *rsa.PrivateKey, hosts []string) (*x509.Certificat
 	cert := getCertTemplate(clientCertType)
 
 	if len(hosts) > 0 {
-		for _, hostname := range hosts {
-			cert.DNSNames = append(cert.DNSNames, hostname)
-		}
+		cert.DNSNames = append(cert.DNSNames, hosts...)
 	}
 
 	certificateDER, err := x509.CreateCertificate(rand.Reader, &cert, &cert, &key.PublicKey, key)
@@ -97,12 +95,12 @@ func newClientCertificate(key *rsa.PrivateKey, hosts []string) (*x509.Certificat
 
 // CACertificate will be used to sing other certificates
 // Returns: certificate, key, error
-func newCACertificate(key *rsa.PrivateKey) (*x509.Certificate, error) {
-	certCA := getCertTemplate(caCertType)
-	certDER, err := x509.CreateCertificate(rand.Reader, &certCA, &certCA, &key.PublicKey, key)
-	if err != nil {
-		return nil, err
-	}
+// func newCACertificate(key *rsa.PrivateKey) (*x509.Certificate, error) {
+// 	certCA := getCertTemplate(caCertType)
+// 	certDER, err := x509.CreateCertificate(rand.Reader, &certCA, &certCA, &key.PublicKey, key)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return x509.ParseCertificate(certDER)
-}
+// 	return x509.ParseCertificate(certDER)
+// }

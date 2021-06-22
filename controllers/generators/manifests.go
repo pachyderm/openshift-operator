@@ -2,7 +2,9 @@ package generators
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
@@ -371,9 +374,14 @@ func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 	}
 
 	if pd.Spec.Pachd.Storage.Backend == "google" {
+		credentials, err := getGCSCredentialSecret(pd)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+
 		secret.Data = map[string][]byte{
 			"google-bucket": toBytes(pd.Spec.Pachd.Storage.Google.Bucket),
-			"google-cred":   toBytes(pd.Spec.Pachd.Storage.Google.CredentialSecret),
+			"google-cred":   credentials,
 		}
 	}
 
@@ -384,6 +392,30 @@ func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 			"microsoft-id":        toBytes(pd.Spec.Pachd.Storage.Microsoft.ID),
 		}
 	}
+}
+
+func getGCSCredentialSecret(pd *aimlv1beta1.Pachyderm) ([]byte, error) {
+	clientset, err := kubeClientset()
+	if err != nil {
+		fmt.Println("error:", err.Error())
+	}
+
+	secret, err := clientset.
+		CoreV1().
+		Secrets(pd.Namespace).
+		Get(context.Background(),
+			pd.Spec.Pachd.Storage.Google.CredentialSecret,
+			metav1.GetOptions{})
+	if err != nil {
+		return []byte{}, err
+	}
+
+	credentials, ok := secret.Data["credentials.json"]
+	if !ok {
+		return []byte{}, errors.New("credentials.json key not found")
+	}
+
+	return credentials, nil
 }
 
 // accepts string and returns a slice of type bytes

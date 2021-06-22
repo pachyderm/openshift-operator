@@ -168,7 +168,7 @@ type ObjectStorageOptions struct {
 	UploadFileConcurrencyLimit int32 `json:"uploadFileConcurrencyLimit,omitempty"`
 	// Sets the type of storage backend.
 	// Should be one of "google", "amazon", "minio", "microsoft" or "local"
-	// +kubebuilder:validation:Enum:=amazon;minio;microsoft;local
+	// +kubebuilder:validation:Enum:=amazon;minio;microsoft;local;google
 	Backend string `json:"backend"`
 	// Configures the Amazon storage backend
 	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`

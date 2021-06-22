@@ -390,6 +390,7 @@ spec:
                         - minio
                         - microsoft
                         - local
+                        - google
                         type: string
                       google:
                         description: Configures the Google storage backend

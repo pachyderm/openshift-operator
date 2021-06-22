@@ -76,6 +76,10 @@ var _ webhook.Validator = &Pachyderm{}
 func (r *Pachyderm) ValidateCreate() error {
 	pachydermlog.Info("validate create", "name", r.Name)
 
+	if r.isUsingGCS() && r.Spec.Pachd.Storage.Google.CredentialSecret == "" {
+		return errors.New("spec.pachd.storage.google.credentialSecret can not be empty")
+	}
+
 	return nil
 }
 
@@ -93,6 +97,11 @@ func (r *Pachyderm) ValidateDelete() error {
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
+}
+
+// returns true if Pachd storage is using Google Container storage
+func (r *Pachyderm) isUsingGCS() bool {
+	return r.Spec.Pachd.Storage.Google != nil && r.Spec.Pachd.Storage.Backend == "google"
 }
 
 func (r *Pachyderm) prepareLocalStorage() {

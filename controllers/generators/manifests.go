@@ -250,6 +250,12 @@ func (c *PachydermComponents) parseStatefulSet(obj *unstructured.Unstructured, n
 		}
 	}
 
+	for _, vclaim := range sts.Spec.VolumeClaimTemplates {
+		vclaim.ObjectMeta.Annotations = map[string]string{
+			"volume.beta.kubernetes.io/storage-class": EtcdStorageClassName(c.pachyderm),
+		}
+	}
+
 	return nil
 }
 

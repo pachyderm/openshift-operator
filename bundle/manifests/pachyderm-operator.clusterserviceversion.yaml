@@ -38,7 +38,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/opdev/pachyderm-operator
     support: Pachyderm, Inc.
-  name: pachyderm-operator.v0.0.1
+  name: pachyderm-operator.v0.0.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -427,7 +427,7 @@ spec:
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com
-  version: 0.0.1
+  version: 0.0.2
   webhookdefinitions:
   - admissionReviewVersions:
     - v1

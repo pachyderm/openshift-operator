@@ -2,8 +2,6 @@ package generators
 
 import (
 	"fmt"
-	"path/filepath"
-	"reflect"
 	"strings"
 
 	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
@@ -12,192 +10,185 @@ import (
 )
 
 func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
-	envs := []corev1.EnvVar{}
-	pachdOpts := pd.Spec.Pachd
-
-	if !reflect.DeepEqual(pachdOpts, aimlv1beta1.PachdOptions{}) {
-		// enable loki logging
-		envs = append(envs, corev1.EnvVar{
+	envs := []corev1.EnvVar{
+		{
+			Name:  "POSTGRES_HOST",
+			Value: pd.Spec.Pachd.Postgres.Host,
+		},
+		{
+			Name:  "POSTGRES_PORT",
+			Value: fmt.Sprintf("%d", pd.Spec.Pachd.Postgres.Port),
+		},
+		{
+			Name:  "POSTGRES_SERVICE_SSL",
+			Value: pd.Spec.Pachd.Postgres.SSL,
+		},
+		{ // enable loki logging
 			Name:  "LOKI_LOGGING",
-			Value: fmt.Sprintf("%t", pachdOpts.LokiLogging),
-		})
-
-		// pachd root
-		envs = append(envs, corev1.EnvVar{
+			Value: fmt.Sprintf("%t", pd.Spec.Pachd.LokiLogging),
+		},
+		{ // pachd root
 			Name:  "PACH_ROOT",
 			Value: "/pach",
-		})
-
-		// etcd prefix
-		envs = append(envs, corev1.EnvVar{
+		},
+		{ // etcd prefix
 			Name:  "ETCD_PREFIX",
 			Value: "",
-		})
+		},
+		{ // storage backend
+			Name:  "STORAGE_BACKEND",
+			Value: strings.ToUpper(pd.Spec.Pachd.Storage.Backend),
+		},
+		{
+			Name:  "STORAGE_PUT_FILE_CONCURRENCY_LIMIT",
+			Value: fmt.Sprintf("%d", pd.Spec.Pachd.Storage.PutFileConcurrencyLimit),
+		},
+		{
+			Name:  "STORAGE_UPLOAD_CONCURRENCY_LIMIT",
+			Value: fmt.Sprintf("%d", pd.Spec.Pachd.Storage.PutFileConcurrencyLimit),
+		},
+	}
 
-		// number of shards
-		envs = append(envs, corev1.EnvVar{
-			Name:  "NUM_SHARDS",
-			Value: fmt.Sprintf("%d", pachdOpts.NumShards),
-		})
-
-		if pd.Spec.Worker != nil {
-			// worker image
-			envs = append(envs, corev1.EnvVar{
+	if pd.Spec.Worker != nil {
+		// TODO: auto set the WORKER_IMAGE and WORKER_SIDECAR_IMAGE
+		//  environment variables automatically
+		workerOptions := []corev1.EnvVar{
+			{
 				Name:  "WORKER_IMAGE",
 				Value: getWorkerImage(pd),
-			})
-
-			// worker sidecar image
-			envs = append(envs, corev1.EnvVar{
+			},
+			{
 				Name:  "WORKER_SIDECAR_IMAGE",
-				Value: "",
-			})
-
-			// worker image pull secret
-			envs = append(envs, corev1.EnvVar{
+				Value: "pachyderm/pachd:2.0.0-alpha.25",
+			},
+			{
 				Name:  "WORKER_IMAGE_PULL_POLICY",
 				Value: pd.Spec.Worker.Image.PullPolicy,
-			})
-
-			// worker service account
-			envs = append(envs, corev1.EnvVar{
+			},
+			{
 				Name:  "WORKER_SERVICE_ACCOUNT",
 				Value: pd.Spec.Worker.ServiceAccountName,
-			})
-		}
-
-		if pachdOpts.Image != nil {
-			// image pull secret
-			envs = append(envs, corev1.EnvVar{
-				Name:  "IMAGE_PULL_SECRET",
-				Value: pachdOpts.Image.PullPolicy,
-			})
-		}
-
-		// pachd version
-		envs = append(envs, corev1.EnvVar{
-			Name:  "PACHD_VERSION",
-			Value: "",
-		})
-
-		// metrics
-		if pachdOpts.Metrics != nil {
-			envs = append(envs, corev1.EnvVar{
-				Name:  "METRICS",
-				Value: fmt.Sprintf("%t", !pachdOpts.Metrics.Disable),
-			})
-
-			if pachdOpts.Metrics.Endpoint != "" {
-				envs = append(envs, corev1.EnvVar{
-					Name:  "METRICS_ENDPOINT",
-					Value: pachdOpts.Metrics.Endpoint,
-				})
-			}
-		}
-
-		// log level
-		envs = append(envs, corev1.EnvVar{
-			Name:  "LOG_LEVEL",
-			Value: pachdOpts.LogLevel,
-		})
-
-		// block cache bytes
-		envs = append(envs, corev1.EnvVar{
-			Name:  "BLOCK_CACHE_BYTES",
-			Value: pachdOpts.BlockCacheBytes,
-		})
-
-		// expose Docker socket
-		envs = append(envs, corev1.EnvVar{
-			Name:  "NO_EXPOSE_DOCKER_SOCKET",
-			Value: fmt.Sprintf("%t", pachdOpts.ExposeDockerSocket),
-		})
-
-		// disable pachyderm auth for testing
-		envs = append(envs, corev1.EnvVar{
-			Name:  "PACHYDERM_AUTHENTICATION_DISABLED_FOR_TESTING",
-			Value: fmt.Sprintf("%t", pachdOpts.AuthenticationDisabledForTesting),
-		})
-
-		// pachd namespace
-		envs = append(envs, corev1.EnvVar{
-			Name: "PACH_NAMESPACE",
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "metadata.namespace",
-				},
 			},
-		})
-
-		// pachd memory request
-		// TODO: handle error
-		divisor, _ := resource.ParseQuantity("0")
-		envs = append(envs, corev1.EnvVar{
-			Name: "PACHD_MEMORY_REQUEST",
-			ValueFrom: &corev1.EnvVarSource{
-				ResourceFieldRef: &corev1.ResourceFieldSelector{
-					ContainerName: "pachd",
-					Divisor:       divisor,
-					Resource:      "requests.memory",
-				},
-			},
-		})
-
-		// expose object API
-		envs = append(envs, corev1.EnvVar{
-			Name:  "EXPOSE_OBJECT_API",
-			Value: fmt.Sprintf("%t", pachdOpts.ExposeObjectAPI),
-		})
-
-		// require critical servers only
-		envs = append(envs, corev1.EnvVar{
-			Name:  "REQUIRE_CRITICAL_SERVERS_ONLY",
-			Value: fmt.Sprintf("%t", pachdOpts.RequireCriticalServers),
-		})
-
-		// pachd pod name
-		envs = append(envs, corev1.EnvVar{
-			Name: "PACHD_POD_NAME",
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "metadata.name",
-				},
-			},
-		})
-
-		// Pachyderm Pipeline System(PPS)
-		// worker GRPC port
-		envs = append(envs, corev1.EnvVar{
-			Name:  "PPS_WORKER_GRPC_PORT",
-			Value: fmt.Sprintf("%d", pachdOpts.PPSWorkerGRPCPort),
-		})
-
-		// storage version
-		envs = append(envs, corev1.EnvVar{
-			Name:  "STORAGE_V2",
-			Value: "false",
-		})
-	} // .spec.pachd
-
-	// setup pachd storage
-	storageEnv := setupPachdStorage(pd)
-	if len(storageEnv) > 0 {
-		envs = append(envs, storageEnv...)
+		}
+		envs = append(envs, workerOptions...)
 	}
+
+	if pd.Spec.Pachd.Image != nil {
+		// image pull secret
+		envs = append(envs, corev1.EnvVar{
+			Name:  "IMAGE_PULL_SECRET",
+			Value: pd.Spec.Pachd.Image.PullPolicy,
+		})
+	}
+
+	// metrics
+	if pd.Spec.Pachd.Metrics != nil {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "METRICS",
+			Value: fmt.Sprintf("%t", !pd.Spec.Pachd.Metrics.Disable),
+		})
+
+		if pd.Spec.Pachd.Metrics.Endpoint != "" {
+			// TODO: check if this is still supported
+			envs = append(envs, corev1.EnvVar{
+				Name:  "METRICS_ENDPOINT",
+				Value: pd.Spec.Pachd.Metrics.Endpoint,
+			})
+		}
+	}
+
+	// log level
+	envs = append(envs, corev1.EnvVar{
+		Name:  "LOG_LEVEL",
+		Value: pd.Spec.Pachd.LogLevel,
+	})
+
+	// expose Docker socket
+	envs = append(envs, corev1.EnvVar{
+		Name:  "NO_EXPOSE_DOCKER_SOCKET",
+		Value: fmt.Sprintf("%t", pd.Spec.Pachd.ExposeDockerSocket),
+	})
+
+	// TODO: check if this is still supported
+	// block cache bytes
+	// envs = append(envs, corev1.EnvVar{
+	// 	Name:  "BLOCK_CACHE_BYTES",
+	// 	Value: pd.Spec.Pachd.BlockCacheBytes,
+	// })
+
+	// TODO: check if this is still supported
+	// disable pachyderm auth for testing
+	// envs = append(envs, corev1.EnvVar{
+	// 	Name:  "PACHYDERM_AUTHENTICATION_DISABLED_FOR_TESTING",
+	// 	Value: fmt.Sprintf("%t", pd.Spec.Pachd.AuthenticationDisabledForTesting),
+	// })
+
+	// pachd namespace
+	envs = append(envs, corev1.EnvVar{
+		Name: "PACH_NAMESPACE",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				APIVersion: "v1",
+				FieldPath:  "metadata.namespace",
+			},
+		},
+	})
+
+	// pachd memory request
+	// TODO: handle error
+	divisor, _ := resource.ParseQuantity("0")
+	envs = append(envs, corev1.EnvVar{
+		Name: "PACHD_MEMORY_REQUEST",
+		ValueFrom: &corev1.EnvVarSource{
+			ResourceFieldRef: &corev1.ResourceFieldSelector{
+				ContainerName: "pachd",
+				Divisor:       divisor,
+				Resource:      "requests.memory",
+			},
+		},
+	})
+
+	// TODO: check if this is still supported
+	// expose object API
+	// envs = append(envs, corev1.EnvVar{
+	// 	Name:  "EXPOSE_OBJECT_API",
+	// 	Value: fmt.Sprintf("%t", pd.Spec.Pachd.ExposeObjectAPI),
+	// })
+
+	// require critical servers only
+	envs = append(envs, corev1.EnvVar{
+		Name:  "REQUIRE_CRITICAL_SERVERS_ONLY",
+		Value: fmt.Sprintf("%t", pd.Spec.Pachd.RequireCriticalServers),
+	})
+
+	// pachd pod name
+	envs = append(envs, corev1.EnvVar{
+		Name: "PACHD_POD_NAME",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				APIVersion: "v1",
+				FieldPath:  "metadata.name",
+			},
+		},
+	})
+
+	// Pachyderm Pipeline System(PPS)
+	// worker GRPC port
+	envs = append(envs, corev1.EnvVar{
+		Name:  "PPS_WORKER_GRPC_PORT",
+		Value: fmt.Sprintf("%d", pd.Spec.Pachd.PPSWorkerGRPCPort),
+	})
 
 	return envs
 }
 
 func getWorkerImage(pd *aimlv1beta1.Pachyderm) string {
-	workerOpt := pd.Spec.Worker
 
-	if workerOpt != nil {
-		if workerOpt.Image != nil {
+	if pd.Spec.Worker != nil {
+		if pd.Spec.Worker.Image != nil {
 			workerImg := []string{
-				workerOpt.Image.Repository,
-				workerOpt.Image.ImageTag,
+				pd.Spec.Worker.Image.Repository,
+				pd.Spec.Worker.Image.ImageTag,
 			}
 			return strings.Join(workerImg, ":")
 		}
@@ -205,419 +196,4 @@ func getWorkerImage(pd *aimlv1beta1.Pachyderm) string {
 
 	// load default worker images
 	return ""
-}
-
-func setupPachdStorage(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
-	pachdOptions := pd.Spec.Pachd
-	storageEnv := []corev1.EnvVar{
-		{
-			Name:  "STORAGE_PUT_FILE_CONCURRENCY_LIMIT",
-			Value: fmt.Sprintf("%d", pachdOptions.Storage.PutFileConcurrencyLimit),
-		},
-		{
-			Name:  "STORAGE_UPLOAD_CONCURRENCY_LIMIT",
-			Value: fmt.Sprintf("%d", pachdOptions.Storage.PutFileConcurrencyLimit),
-		},
-		{
-			Name:  "STORAGE_BACKEND",
-			Value: strings.ToUpper(pachdOptions.Storage.Backend),
-		},
-	}
-
-	if !reflect.DeepEqual(pachdOptions, aimlv1beta1.PachdOptions{}) {
-		switch pachdOptions.Storage.Backend {
-		case "amazon":
-			if pachdOptions.Storage.Amazon != nil {
-				var optional bool = true
-				// setup Amazon server configs
-				amzn := []corev1.EnvVar{
-					{
-						Name: "AMAZON_REGION",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-region",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_BUCKET",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-bucket",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_ID",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-id",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_SECRET",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-secret",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_TOKEN",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-token",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_VAULT_ADDR",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-vault-addr",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_VAULT_ROLE",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-vault-role",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_VAULT_TOKEN",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-vault-token",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "AMAZON_DISTRIBUTION",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "amazon-distribution",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "CUSTOM_ENDPOINT",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "custom-endpoint",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "RETRIES",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "retries",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "TIMEOUT",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "timeout",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "UPLOAD_ACL",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "upload-acl",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "REVERSE",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "reverse",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "PART_SIZE",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "part-size",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "MAX_UPLOAD_PARTS",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "max-upload-parts",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "DISABLE_SSL",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "disable-ssl",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "NO_VERIFY_SSL",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "no-verify-ssl",
-								Optional: &optional,
-							},
-						},
-					},
-					{
-						Name: "OBJ_LOG_OPTS",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "pachyderm-storage-secret",
-								},
-								Key:      "log-options",
-								Optional: &optional,
-							},
-						},
-					},
-				}
-
-				// append amazon storage options
-				storageEnv = append(storageEnv, amzn...)
-			}
-		case "google":
-			var optional bool = true
-			google := []corev1.EnvVar{
-				{
-					Name: "GOOGLE_BUCKET",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "google-bucket",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "GOOGLE_CRED",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "google-cred",
-							Optional: &optional,
-						},
-					},
-				},
-			}
-			storageEnv = append(storageEnv, google...)
-		case "local":
-			storageEnv = append(storageEnv, corev1.EnvVar{
-				Name:  "STORAGE_HOST_PATH",
-				Value: filepath.Join(pd.Spec.Pachd.Storage.Local.HostPath, "pachd"),
-			})
-		case "minio":
-			var optional bool = true
-			minio := []corev1.EnvVar{
-				{
-					Name: "MINIO_BUCKET",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "minio-bucket",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MINIO_ENDPOINT",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "minio-endpoint",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MINIO_ID",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "minio-id",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MINIO_SECRET",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "minio-secret",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MINIO_SECURE",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "minio-secure",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MINIO_SIGNATURE",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "minio-signature",
-							Optional: &optional,
-						},
-					},
-				},
-			}
-			storageEnv = append(storageEnv, minio...)
-		case "microsoft":
-			var optional bool = true
-			ms := []corev1.EnvVar{
-				{
-					Name: "MICROSOFT_CONTAINER",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "microsoft-container",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MICROSOFT_ID",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "microsoft-id",
-							Optional: &optional,
-						},
-					},
-				},
-				{
-					Name: "MICROSOFT_SECRET",
-					ValueFrom: &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "pachyderm-storage-secret",
-							},
-							Key:      "microsoft-secret",
-							Optional: &optional,
-						},
-					},
-				},
-			}
-			storageEnv = append(storageEnv, ms...)
-		}
-	}
-
-	return storageEnv
 }

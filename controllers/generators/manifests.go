@@ -2,9 +2,7 @@ package generators
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,15 +16,39 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 )
 
-const (
-	version string = "0.5.0"
-)
+// PachydermComponents is a structure that contains a slice of
+// all the Kubernetes resources that make up a Pachyderm deployment
+type PachydermComponents struct {
+	gcsCredentials      []byte
+	pachyderm           *aimlv1beta1.Pachyderm
+	dashDeploy          *appsv1.Deployment
+	pachdDeploy         *appsv1.Deployment
+	etcdStatefulSet     *appsv1.StatefulSet
+	postgreStatefulSet  *appsv1.StatefulSet
+	Pod                 *corev1.Pod
+	ClusterRoleBindings []rbacv1.ClusterRoleBinding
+	ClusterRoles        []rbacv1.ClusterRole
+	RoleBindings        []rbacv1.RoleBinding
+	Roles               []rbacv1.Role
+	ServiceAccounts     []corev1.ServiceAccount
+	Services            []corev1.Service
+	secrets             []*corev1.Secret
+	configMaps          []*corev1.ConfigMap
+	storageClass        storagev1.StorageClass
+}
+
+func (c *PachydermComponents) SetGoogleCredentials(credentials []byte) {
+	c.gcsCredentials = credentials
+}
+
+func (c *PachydermComponents) getGCSCredentials() []byte {
+	return c.gcsCredentials
+}
 
 // PachydermError defines custom error
 // type used by the operator
@@ -36,18 +58,18 @@ func (e PachydermError) Error() string {
 	return string(e)
 }
 
-func getManifestPath() string {
-	manifestDir := filepath.Join("/", "manifests", version, "manifests.yaml")
+func getManifestPath(version string) string {
+	manifestPath := filepath.Join("/", "manifests", version[1:], "manifests.yaml")
 
 	// Check operator is not running in Openshift
 	if !isKubernetes() {
 		wd, err := os.Getwd()
 		if err != nil {
-			return manifestDir
+			return manifestPath
 		}
-		manifestDir = filepath.Join(wd, "hack", "manifests", version, "manifests.yaml")
+		manifestPath = filepath.Join(wd, "hack", "manifests", version, "manifests.yaml")
 	}
-	return manifestDir
+	return manifestPath
 }
 
 // isKubernetes() function checks if the pod is
@@ -67,11 +89,11 @@ func isKubernetes() bool {
 	return fileInfo.IsDir() && ok
 }
 
-func loadManifests() ([][]byte, error) {
+func loadManifests(version string) ([][]byte, error) {
 	var objects [][]byte
 
 	// Read manifests from file
-	manifestPath := getManifestPath()
+	manifestPath := getManifestPath(version)
 	data, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		return nil, err
@@ -94,28 +116,10 @@ func loadManifests() ([][]byte, error) {
 	return objects, nil
 }
 
-// PachydermComponents is a structure that contains a slice of
-// all the Kubernetes resources that make up a Pachyderm deployment
-type PachydermComponents struct {
-	pachyderm           *aimlv1beta1.Pachyderm
-	dashDeploy          *appsv1.Deployment
-	pachdDeploy         *appsv1.Deployment
-	etcdStatefulSet     *appsv1.StatefulSet
-	Pod                 *corev1.Pod
-	ClusterRoleBindings []rbacv1.ClusterRoleBinding
-	ClusterRoles        []rbacv1.ClusterRole
-	RoleBindings        []rbacv1.RoleBinding
-	Roles               []rbacv1.Role
-	ServiceAccounts     []corev1.ServiceAccount
-	Services            []corev1.Service
-	secrets             []*corev1.Secret
-	storageClass        storagev1.StorageClass
-}
+func getPachydermComponents(pd *aimlv1beta1.Pachyderm) *PachydermComponents {
+	components := &PachydermComponents{}
 
-func getPachydermComponents(pd *aimlv1beta1.Pachyderm) PachydermComponents {
-	components := PachydermComponents{}
-
-	manifests, err := loadManifests()
+	manifests, err := loadManifests(pd.Spec.Version)
 	if err != nil {
 		fmt.Println("error reading manifests.", err.Error())
 	}
@@ -136,7 +140,7 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 			}
 		case "StatefulSet":
 			if err := components.parseStatefulSet(obj, pd.Namespace); err != nil {
-				fmt.Println("error parsing deployment.", err.Error())
+				fmt.Println("error parsing statefulset.", err.Error())
 			}
 		case "Pod":
 			if err := components.parsePod(obj, pd.Namespace); err != nil {
@@ -156,6 +160,13 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 			}
 			secret.Namespace = pd.Namespace
 			components.secrets = append(components.secrets, &secret)
+		case "ConfigMap":
+			var cm corev1.ConfigMap
+			if err := toTypedResource(obj, &cm); err != nil {
+				fmt.Println("error converting to config map.", err.Error())
+			}
+			cm.Namespace = pd.Namespace
+			components.configMaps = append(components.configMaps, &cm)
 		case "StorageClass":
 			var sc storagev1.StorageClass
 			if err := toTypedResource(obj, &sc); err != nil {
@@ -166,14 +177,6 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) PachydermComponents {
 			var clusterrole rbacv1.ClusterRole
 			if err := toTypedResource(obj, &clusterrole); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
-			}
-			if clusterrole.Name == "pachyderm" {
-				clusterrole.Rules = append(clusterrole.Rules, rbacv1.PolicyRule{
-					APIGroups:     []string{"security.openshift.io"},
-					Resources:     []string{"securitycontextconstraints"},
-					ResourceNames: []string{"anyuid"},
-					Verbs:         []string{"use"},
-				})
 			}
 			components.ClusterRoles = append(components.ClusterRoles, clusterrole)
 		case "ClusterRoleBinding":
@@ -244,15 +247,11 @@ func (c *PachydermComponents) parseStatefulSet(obj *unstructured.Unstructured, n
 
 	if !reflect.DeepEqual(sts, appsv1.StatefulSet{}) {
 		sts.Namespace = namespace
-
-		if sts.Name == "etcd" {
+		switch sts.Name {
+		case "etcd":
 			c.etcdStatefulSet = &sts
-		}
-	}
-
-	for _, vclaim := range sts.Spec.VolumeClaimTemplates {
-		vclaim.ObjectMeta.Annotations = map[string]string{
-			"volume.beta.kubernetes.io/storage-class": EtcdStorageClassName(c.pachyderm),
+		case "postgres":
+			c.postgreStatefulSet = &sts
 		}
 	}
 
@@ -340,7 +339,7 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 
 	for _, secret := range c.secrets {
 		if secret.Name == "pachyderm-storage-secret" {
-			setupStorageSecret(secret, pd)
+			c.setupStorageSecret(secret)
 		}
 
 		if secret.Name == "pachd-tls-cert" {
@@ -351,20 +350,37 @@ func (c *PachydermComponents) Secrets() []*corev1.Secret {
 	return c.secrets
 }
 
-func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
+func (c *PachydermComponents) ConfgigMaps() []*corev1.ConfigMap {
+	for _, cm := range c.configMaps {
+		cm.Namespace = c.pachyderm.Namespace
+	}
+	return c.configMaps
+}
 
+func (c *PachydermComponents) setupStorageSecret(secret *corev1.Secret) {
+	pd := c.pachyderm
 	if pd.Spec.Pachd.Storage.Backend == "local" {
 		secret.Data = map[string][]byte{}
 	}
 
 	if pd.Spec.Pachd.Storage.Backend == "amazon" {
 		secret.Data = map[string][]byte{
-			"amazon-bucket":   toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket),
-			"amazon-secret":   toBytes(pd.Spec.Pachd.Storage.Amazon.Secret),
-			"custom-endpoint": toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint),
-			"amazon-region":   toBytes(pd.Spec.Pachd.Storage.Amazon.Region),
-			"amazon-token":    toBytes(pd.Spec.Pachd.Storage.Amazon.Token),
-			"amazon-id":       toBytes(pd.Spec.Pachd.Storage.Amazon.ID),
+			"AMAZON_BUCKET":       toBytes(pd.Spec.Pachd.Storage.Amazon.Bucket),
+			"AMAZON_SECRET":       toBytes(pd.Spec.Pachd.Storage.Amazon.Secret),
+			"AMAZON_REGION":       toBytes(pd.Spec.Pachd.Storage.Amazon.Region),
+			"AMAZON_TOKEN":        toBytes(pd.Spec.Pachd.Storage.Amazon.Token),
+			"AMAZON_ID":           toBytes(pd.Spec.Pachd.Storage.Amazon.ID),
+			"AMAZON_DISTRIBUTION": toBytes(pd.Spec.Pachd.Storage.Amazon.CloudFrontDistribution),
+			"CUSTOM_ENDPOINT":     toBytes(pd.Spec.Pachd.Storage.Amazon.CustomEndpoint),
+			"DISABLE_SSL":         toBytes(fmt.Sprintf("%t", pd.Spec.Pachd.Storage.Amazon.DisableSSL)),
+			"OBJ_LOG_OPTS":        toBytes(pd.Spec.Pachd.Storage.Amazon.LogOptions),
+			"MAX_UPLOAD_PARTS":    toBytes(fmt.Sprintf("%d", pd.Spec.Pachd.Storage.Amazon.MaxUploadParts)),
+			"NO_VERIFY_SSL":       toBytes(fmt.Sprintf("%t", pd.Spec.Pachd.Storage.Amazon.VerifySSL)),
+			"PART_SIZE":           toBytes(fmt.Sprintf("%d", pd.Spec.Pachd.Storage.Amazon.PartSize)),
+			"RETRIES":             toBytes(fmt.Sprintf("%d", pd.Spec.Pachd.Storage.Amazon.Retries)),
+			"REVERSE":             toBytes(fmt.Sprintf("%t", pd.Spec.Pachd.Storage.Amazon.Reverse)),
+			"TIMEOUT":             toBytes(pd.Spec.Pachd.Storage.Amazon.Timeout),
+			"UPLOAD_ACL":          toBytes(pd.Spec.Pachd.Storage.Amazon.UploadACL),
 		}
 	}
 
@@ -380,14 +396,9 @@ func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 	}
 
 	if pd.Spec.Pachd.Storage.Backend == "google" {
-		credentials, err := getGCSCredentialSecret(pd)
-		if err != nil {
-			fmt.Println("error:", err)
-		}
-
 		secret.Data = map[string][]byte{
 			"google-bucket": toBytes(pd.Spec.Pachd.Storage.Google.Bucket),
-			"google-cred":   credentials,
+			"google-cred":   c.getGCSCredentials(),
 		}
 	}
 
@@ -400,29 +411,29 @@ func setupStorageSecret(secret *corev1.Secret, pd *aimlv1beta1.Pachyderm) {
 	}
 }
 
-func getGCSCredentialSecret(pd *aimlv1beta1.Pachyderm) ([]byte, error) {
-	clientset, err := kubeClientset()
-	if err != nil {
-		fmt.Println("error:", err.Error())
-	}
+// func getGCSCredentialSecret(pd *aimlv1beta1.Pachyderm) ([]byte, error) {
+// 	clientset, err := kubeClientset()
+// 	if err != nil {
+// 		fmt.Println("error:", err.Error())
+// 	}
 
-	secret, err := clientset.
-		CoreV1().
-		Secrets(pd.Namespace).
-		Get(context.Background(),
-			pd.Spec.Pachd.Storage.Google.CredentialSecret,
-			metav1.GetOptions{})
-	if err != nil {
-		return []byte{}, err
-	}
+// 	secret, err := clientset.
+// 		CoreV1().
+// 		Secrets(pd.Namespace).
+// 		Get(context.Background(),
+// 			pd.Spec.Pachd.Storage.Google.CredentialSecret,
+// 			metav1.GetOptions{})
+// 	if err != nil {
+// 		return []byte{}, err
+// 	}
 
-	credentials, ok := secret.Data["credentials.json"]
-	if !ok {
-		return []byte{}, errors.New("credentials.json key not found")
-	}
+// 	credentials, ok := secret.Data["credentials.json"]
+// 	if !ok {
+// 		return []byte{}, errors.New("credentials.json key not found")
+// 	}
 
-	return credentials, nil
-}
+// 	return credentials, nil
+// }
 
 // accepts string and returns a slice of type bytes
 func toBytes(value string) []byte {
@@ -468,10 +479,8 @@ func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
 	}
 
 	// set etcd storage class
-	for _, volumeClaim := range c.etcdStatefulSet.Spec.VolumeClaimTemplates {
-		if volumeClaim.Name == "etcd-storage" {
-			volumeClaim.Annotations["volume.beta.kubernetes.io/storage-class"] = EtcdStorageClassName(pd)
-		}
+	for i := range c.etcdStatefulSet.Spec.VolumeClaimTemplates {
+		c.etcdStatefulSet.Spec.VolumeClaimTemplates[i].Namespace = pd.Namespace
 	}
 
 	return c.etcdStatefulSet
@@ -485,11 +494,6 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == "pachd" {
 			deploy.Spec.Template.Spec.Containers[i].Env = pachdEnvVarirables(c.pachyderm)
-
-			var rootUID int64 = 0
-			deploy.Spec.Template.Spec.Containers[i].SecurityContext = &corev1.SecurityContext{
-				RunAsUser: &rootUID,
-			}
 		}
 	}
 
@@ -515,25 +519,17 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 
 // DashDeployment returns the dash deployment resource
 func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
-
-	// use pachyderm service account
-	c.dashDeploy.Spec.Template.Spec.ServiceAccountName = "pachyderm"
-
-	var rootUID int64 = 0
-	for i := range c.dashDeploy.Spec.Template.Spec.Containers {
-		if c.dashDeploy.Spec.Template.Spec.Containers[i].Name == "dash" {
-			c.dashDeploy.Spec.Template.Spec.Containers[i].SecurityContext = &corev1.SecurityContext{
-				RunAsUser: &rootUID,
-			}
-		}
-	}
-
 	return c.dashDeploy
+}
+
+// PostgreStatefulset returns the postgresql statefulset resource
+func (c *PachydermComponents) PostgreStatefulset() *appsv1.StatefulSet {
+	return c.postgreStatefulSet
 }
 
 // Prepare takes a pachyderm custom resource and returns
 // child resources based on the pachyderm custom resource
-func Prepare(pd *aimlv1beta1.Pachyderm) PachydermComponents {
+func Prepare(pd *aimlv1beta1.Pachyderm) *PachydermComponents {
 	components := getPachydermComponents(pd)
 	// set pachyderm resource as parent
 	components.pachyderm = pd

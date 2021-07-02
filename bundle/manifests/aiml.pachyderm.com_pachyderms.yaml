@@ -232,6 +232,7 @@ spec:
                         type: string
                     type: object
                   logLevel:
+                    default: info
                     description: The log level option determines the severity of logs
                       that are of interest to the user
                     type: string
@@ -247,9 +248,8 @@ spec:
                           endpoint.
                         type: boolean
                       endpoint:
-                        default: /metrics
-                        description: Option to customize pachd metrics endpoint. Defaults
-                          to /metrics
+                        description: Option to customize pachd metrics endpoint. When
+                          not set, defaults to /metrics
                         type: string
                     type: object
                   numShards:
@@ -259,7 +259,26 @@ spec:
                       performance. Default: 16'
                     format: int32
                     type: integer
+                  postgresql:
+                    description: Postgresql server connection credentials
+                    properties:
+                      host:
+                        default: postgres
+                        type: string
+                      password:
+                        type: string
+                      port:
+                        default: 5432
+                        format: int32
+                        type: integer
+                      ssl:
+                        default: disable
+                        type: string
+                      user:
+                        type: string
+                    type: object
                   ppsWorkerGRPCPort:
+                    default: 1080
                     description: Pachyderm Pipeline System(PPS) worker GRPC port
                     type: integer
                   requireCriticalServersOnly:
@@ -317,6 +336,7 @@ spec:
                             description: Name of the S3 bucket to hold objects
                             type: string
                           cloudFrontDistribution:
+                            description: AWS cloudfront distribution
                             type: string
                           customEndpoint:
                             description: Custom endpoint for connecting to S3 object
@@ -326,6 +346,7 @@ spec:
                             description: Disable SSL.
                             type: boolean
                           iamRole:
+                            description: IAM identity with the desired permissions
                             type: string
                           id:
                             description: Set an ID for the cluster deployment. Defaults
@@ -367,8 +388,7 @@ spec:
                               uploads. Default: "bucket-owner-full-control"'
                             type: string
                           vault:
-                            description: AmazonStorageVault exposes options to configure
-                              Amazon vault
+                            description: Container for storing archives
                             properties:
                               address:
                                 type: string
@@ -462,6 +482,54 @@ spec:
                     - backend
                     type: object
                 type: object
+              postgresql:
+                description: Allows user to customize Postgresql database
+                properties:
+                  disabled:
+                    type: boolean
+                  resources:
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                        type: object
+                    type: object
+                  service:
+                    description: ServiceOverrides allows user to customize k8s service
+                      type and annotations
+                    properties:
+                      annotations:
+                        items:
+                          type: string
+                        type: array
+                      type:
+                        type: string
+                    required:
+                    - type
+                    type: object
+                  storageClass:
+                    type: string
+                type: object
               version:
                 description: Allows user to change version of Pachyderm to deploy
                 type: string
@@ -490,6 +558,7 @@ spec:
                         type: string
                     type: object
                   serviceAccountName:
+                    default: pachyderm-worker
                     description: Name of worker service account
                     type: string
                 type: object

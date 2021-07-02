@@ -44,7 +44,7 @@ import (
 )
 
 const (
-	finalizer string = "operator.pachyderm.com"
+	pachydermFinalizer string = "finalizer.pachyderm.com"
 
 	// ErrEtcdNotReady is returned when Etcd is not ready
 	ErrEtcdNotReady generators.PachydermError = "waiting for etcd"
@@ -143,8 +143,44 @@ func filterEvents() predicate.Funcs {
 	}
 }
 
+func (r *PachydermReconciler) validatePachyderm(ctx context.Context, components *generators.PachydermComponents) error {
+	pd := components.Parent()
+	if pd.Spec.Pachd.Storage.Google != nil {
+		credentials, err := r.googleCredentialsJSON(ctx, components.Parent())
+		if err != nil {
+			return err
+		}
+
+		components.SetGoogleCredentials(credentials)
+	}
+
+	return nil
+}
+
+func (r *PachydermReconciler) googleCredentialsJSON(ctx context.Context, pd *aimlv1beta1.Pachyderm) ([]byte, error) {
+	gcsKey := types.NamespacedName{
+		Namespace: pd.Namespace,
+		Name:      pd.Spec.Pachd.Storage.Google.CredentialSecret,
+	}
+	credentialSecret := &corev1.Secret{}
+	if err := r.Get(ctx, gcsKey, credentialSecret); err != nil {
+		return []byte{}, err
+	}
+
+	if credentialsJSON, ok := credentialSecret.Data["credentials.json"]; ok {
+		return credentialsJSON, nil
+	}
+
+	return []byte{}, nil
+}
+
 func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
 	components := generators.Prepare(pd)
+
+	// perform pre-checks
+	if err := r.validatePachyderm(ctx, components); err != nil {
+		return err
+	}
 
 	// Deploy service accounts
 	if err := r.reconcileServiceAccounts(ctx, components); err != nil {
@@ -176,6 +212,11 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return err
 	}
 
+	// Deploy configmaps
+	if err := r.reconcileConfigMaps(ctx, components); err != nil {
+		return err
+	}
+
 	// Deploy services
 	if err := r.reconcileServices(ctx, components); err != nil {
 		return err
@@ -187,6 +228,10 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 	}
 
 	if err := r.deployEtcd(ctx, components); err != nil {
+		return err
+	}
+
+	if err := r.deployPostgres(ctx, components); err != nil {
 		return err
 	}
 
@@ -366,17 +411,17 @@ func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1
 	currentFinalizers := pd.Finalizers
 
 	// add finalizer for new Pachyderm resource
-	if pd.DeletionTimestamp == nil && len(pd.ObjectMeta.Finalizers) == 0 {
-		pd.ObjectMeta.Finalizers = []string{finalizer}
+	if pd.DeletionTimestamp == nil && !controllerutil.ContainsFinalizer(pd, pachydermFinalizer) {
+		controllerutil.AddFinalizer(pd, pachydermFinalizer)
 	}
 
 	// perform clean up and delete finalizer otherwise
-	if len(pd.ObjectMeta.Finalizers) > 0 && pd.DeletionTimestamp != nil {
+	if pd.DeletionTimestamp != nil && controllerutil.ContainsFinalizer(pd, pachydermFinalizer) {
 		if err := r.cleanupPachydermResources(ctx, pd); err != nil {
 			return err
 		}
 		// remove finalizer if clean up is successful
-		pd.Finalizers = []string{}
+		controllerutil.RemoveFinalizer(pd, pachydermFinalizer)
 	}
 
 	if reflect.DeepEqual(pd.Finalizers, currentFinalizers) {
@@ -387,7 +432,7 @@ func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1
 }
 
 // TODO(OchiengEd): remove owner reference and use finalizers to clean up service accounts
-func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, components *generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	for _, sa := range components.ServiceAccounts {
@@ -409,7 +454,7 @@ func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, comp
 }
 
 // TODO(OchiengEd): remove owner reference and use finalizers to clean up roles
-func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components *generators.PachydermComponents) error {
 
 	for _, role := range components.Roles {
 		// add owner references
@@ -429,7 +474,7 @@ func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components gen
 	return nil
 }
 
-func (r *PachydermReconciler) reconcileClusterRoles(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileClusterRoles(ctx context.Context, components *generators.PachydermComponents) error {
 
 	for _, clusterrole := range components.ClusterRoles {
 
@@ -444,7 +489,7 @@ func (r *PachydermReconciler) reconcileClusterRoles(ctx context.Context, compone
 	return nil
 }
 
-func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, components *generators.PachydermComponents) error {
 
 	for _, rolebinding := range components.RoleBindings {
 		// add owner references
@@ -464,7 +509,7 @@ func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, compone
 	return nil
 }
 
-func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, components *generators.PachydermComponents) error {
 	for _, crb := range components.ClusterRoleBindings {
 
 		if err := r.Create(ctx, &crb); err != nil {
@@ -479,7 +524,7 @@ func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, 
 	return nil
 }
 
-func (r *PachydermReconciler) reconcileServices(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileServices(ctx context.Context, components *generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	for _, svc := range components.Services {
@@ -517,7 +562,7 @@ func (r *PachydermReconciler) reconcileServices(ctx context.Context, components 
 	return nil
 }
 
-func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components *generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	for _, secret := range components.Secrets() {
@@ -557,7 +602,47 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components g
 	return nil
 }
 
-func (r *PachydermReconciler) deployEtcd(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileConfigMaps(ctx context.Context, components *generators.PachydermComponents) error {
+	pd := components.Parent()
+
+	for _, cm := range components.ConfgigMaps() {
+		// set owner reference
+		if err := controllerutil.SetControllerReference(pd, cm, r.Scheme); err != nil {
+			return err
+		}
+
+		if err := r.Create(ctx, cm); err != nil {
+			if errors.IsAlreadyExists(err) {
+				// Check if the secret contents have changed
+				currentConfigMap := &corev1.ConfigMap{}
+				cmKey := types.NamespacedName{
+					Name:      cm.Name,
+					Namespace: pd.Namespace,
+				}
+
+				if err := r.Get(ctx, cmKey, currentConfigMap); err != nil {
+					return err
+				}
+
+				if !reflect.DeepEqual(cm.Data, currentConfigMap.Data) {
+					currentConfigMap.Data = cm.Data
+
+					if err := r.Update(ctx, currentConfigMap); err != nil {
+						return err
+					}
+				}
+				// configmap exists
+				return nil
+			}
+
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *PachydermReconciler) deployEtcd(ctx context.Context, components *generators.PachydermComponents) error {
 	etcd := components.EtcdStatefulSet()
 	if err := controllerutil.SetControllerReference(components.Parent(), etcd, r.Scheme); err != nil {
 		return err
@@ -574,7 +659,24 @@ func (r *PachydermReconciler) deployEtcd(ctx context.Context, components generat
 	return nil
 }
 
-func (r *PachydermReconciler) deployPachd(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) deployPostgres(ctx context.Context, components *generators.PachydermComponents) error {
+	postgres := components.PostgreStatefulset()
+	if err := controllerutil.SetControllerReference(components.Parent(), postgres, r.Scheme); err != nil {
+		return err
+	}
+
+	if err := r.Create(ctx, postgres); err != nil {
+		if errors.IsAlreadyExists(err) {
+			// TODO: add update logic
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (r *PachydermReconciler) deployPachd(ctx context.Context, components *generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	// Check Etcd is ready before deploying pachd
@@ -602,7 +704,7 @@ func (r *PachydermReconciler) deployPachd(ctx context.Context, components genera
 	return nil
 }
 
-func (r *PachydermReconciler) deployDash(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) deployDash(ctx context.Context, components *generators.PachydermComponents) error {
 	pd := components.Parent()
 
 	if !pd.Spec.Dashd.Disable {
@@ -622,7 +724,7 @@ func (r *PachydermReconciler) deployDash(ctx context.Context, components generat
 	return nil
 }
 
-func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components generators.PachydermComponents) error {
+func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components *generators.PachydermComponents) error {
 	pachyderm := components.Parent()
 	storageClassName := generators.EtcdStorageClassName(pachyderm)
 	if storageClassName != "etcd-storage-class" {
@@ -639,7 +741,6 @@ func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, compone
 	sc := components.StorageClass()
 	if err := r.Create(ctx, sc); err != nil {
 		if errors.IsAlreadyExists(err) {
-			// TODO: implement update logic
 			return nil
 		}
 	}

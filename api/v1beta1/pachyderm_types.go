@@ -33,6 +33,8 @@ type PachydermSpec struct {
 	Dashd DashOptions `json:"dash,omitempty"`
 	// Allows user to customize worker instance(s)
 	Worker *WorkerOptions `json:"worker,omitempty"`
+	// Allows user to customize Postgresql database
+	Postgres PostgresOptions `json:"postgresql,omitempty"`
 }
 
 // WorkerOptions allows the user to configure workers
@@ -41,6 +43,7 @@ type WorkerOptions struct {
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
 	// Name of worker service account
+	// +kubebuilder:default:=pachyderm-worker
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
@@ -123,6 +126,7 @@ type PachdOptions struct {
 	Image *ImageOverride `json:"image,omitempty"`
 	// The log level option determines the severity of logs
 	// that are of interest to the user
+	// +kubebuilder:default:=info
 	LogLevel string `json:"logLevel,omitempty"`
 	// Optional value to determine the format of the logs
 	// Default: false
@@ -130,6 +134,7 @@ type PachdOptions struct {
 	// When true, allows user to disable authentication during testing
 	AuthenticationDisabledForTesting bool `json:"authenticationDisabledForTesting,omitempty"`
 	// Pachyderm Pipeline System(PPS) worker GRPC port
+	// +kubebuilder:default:=1080
 	PPSWorkerGRPCPort int `json:"ppsWorkerGRPCPort,omitempty"`
 	// Expose the Docker socket to worker containers.
 	// When false, limits the worker container privileges preventing them from
@@ -142,6 +147,28 @@ type PachdOptions struct {
 	// Allows user to customize metrics options
 	Metrics            *MetricsOptions `json:"metrics,omitempty"`
 	ServiceAccountName string          `json:"serviceAccountName,omitempty"`
+	// Postgresql server connection credentials
+	Postgres PachdPostgresConfig `json:"postgresql,omitempty"`
+}
+
+// PostgresOptions allows user to customize Postgresql
+type PostgresOptions struct {
+	Disabled     bool                        `json:"disabled,omitempty"`
+	StorageClass string                      `json:"storageClass,omitempty"`
+	Service      ServiceOverrides            `json:"service,omitempty"`
+	Resources    corev1.ResourceRequirements `json:"resources,omitempty"`
+}
+
+// PachdPostgresConfig
+type PachdPostgresConfig struct {
+	// +kubebuilder:default:=postgres
+	Host string `json:"host,omitempty"`
+	// +kubebuilder:default:=5432
+	Port int32 `json:"port,omitempty"`
+	// +kubebuilder:default:=disable
+	SSL      string `json:"ssl,omitempty"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 // MetricsOptions allows the user to enable/disable pachyderm metrics
@@ -150,8 +177,7 @@ type MetricsOptions struct {
 	Disable bool `json:"disable,omitempty"`
 
 	// Option to customize pachd metrics endpoint.
-	// Defaults to /metrics
-	// +kubebuilder:default:=/metrics
+	// When not set, defaults to /metrics
 	Endpoint string `json:"endpoint,omitempty"`
 }
 
@@ -195,13 +221,15 @@ type GoogleStorageOptions struct {
 // configure Amazon s3 storage
 type AmazonStorageOptions struct {
 	// Name of the S3 bucket to hold objects
-	Bucket                 string `json:"bucket,omitempty"`
+	Bucket string `json:"bucket,omitempty"`
+	// AWS cloudfront distribution
 	CloudFrontDistribution string `json:"cloudFrontDistribution,omitempty"`
 	// Custom endpoint for connecting to S3 object store
 	CustomEndpoint string `json:"customEndpoint,omitempty"`
 	// Disable SSL.
-	DisableSSL bool   `json:"disableSSL,omitempty"`
-	IAMRole    string `json:"iamRole,omitempty"`
+	DisableSSL bool `json:"disableSSL,omitempty"`
+	// IAM identity with the desired permissions
+	IAMRole string `json:"iamRole,omitempty"`
 	// Set an ID for the cluster deployment.
 	// Defaults to a random value.
 	ID string `json:"id,omitempty"`
@@ -231,8 +259,9 @@ type AmazonStorageOptions struct {
 	Token   string `json:"token,omitempty"`
 	// Sets a custom upload ACL for object store uploads.
 	// Default: "bucket-owner-full-control"
-	UploadACL string              `json:"uploadACL,omitempty" default:"bucket-owner-full-control"`
-	Vault     *AmazonStorageVault `json:"vault,omitempty"`
+	UploadACL string `json:"uploadACL,omitempty" default:"bucket-owner-full-control"`
+	// Container for storing archives
+	Vault *AmazonStorageVault `json:"vault,omitempty"`
 }
 
 // AmazonStorageVault exposes options to configure

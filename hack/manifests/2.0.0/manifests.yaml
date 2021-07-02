@@ -1,0 +1,640 @@
+---
+# Source: pachyderm/templates/pachd/rbac/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: "pachyderm"
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/rbac/worker-serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm-worker
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/storage-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    app: pachyderm-storage-secret
+    suite: pachyderm
+  name: pachyderm-storage-secret
+  namespace: default
+data:
+  AMAZON_BUCKET: "***REMOVED***"
+  AMAZON_DISTRIBUTION: ""
+  AMAZON_ID: "***REMOVED***"
+  AMAZON_REGION: "***REMOVED***"
+  AMAZON_SECRET: "***REMOVED***"
+  AMAZON_TOKEN: ""
+  CUSTOM_ENDPOINT: ""
+  DISABLE_SSL: "ZmFsc2U="
+  OBJ_LOG_OPTS: ""
+  MAX_UPLOAD_PARTS: "MTAwMDA="
+  NO_VERIFY_SSL: "ZmFsc2U="
+  PART_SIZE: "NTI0Mjg4MA=="
+  RETRIES: "MTA="
+  REVERSE: "dHJ1ZQ=="
+  TIMEOUT: "NW0="
+  UPLOAD_ACL: "YnVja2V0LW93bmVyLWZ1bGwtY29udHJvbA=="
+---
+# Source: pachyderm/templates/postgresql/configmap.yaml
+apiVersion: v1
+data:
+  init-db.sh: |2
+
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE DATABASE dex;
+        GRANT ALL PRIVILEGES ON DATABASE dex TO postgres;
+    EOSQL
+kind: ConfigMap
+metadata:
+  labels:
+    app: postgres
+    suite: pachyderm
+  name: postgres-init-cm
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/rbac/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - pods
+  - pods/log
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  - deletecollection
+---
+# Source: pachyderm/templates/pachd/rbac/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm
+  namespace: default
+roleRef:
+  apiGroup: ""
+  kind: ClusterRole
+  name: pachyderm
+subjects:
+- kind: ServiceAccount
+  name: "pachyderm"
+  namespace: default
+---
+# Source: pachyderm/templates/pachd/rbac/worker-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm-worker
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - update
+  - create
+  - delete
+---
+# Source: pachyderm/templates/pachd/rbac/worker-rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: ""
+    suite: pachyderm
+  name: pachyderm-worker
+  namespace: default
+roleRef:
+  apiGroup: ""
+  kind: Role
+  name: pachyderm-worker
+subjects:
+- kind: ServiceAccount
+  name: pachyderm-worker
+  namespace: default
+---
+# Source: pachyderm/templates/dash/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dash
+    suite: pachyderm
+  name: dash
+  namespace: default
+spec:
+  ports:
+  - name: dash-http
+    port: 4000
+  selector:
+    app: dash
+    suite: pachyderm
+  type: ClusterIP
+---
+# Source: pachyderm/templates/etcd/headless-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd-headless
+  namespace: default
+spec:
+  clusterIP: None
+  ports:
+  - name: peer-port
+    port: 2380
+  selector:
+    app: etcd
+---
+# Source: pachyderm/templates/etcd/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd
+  namespace: default
+spec:
+  ports:
+  - name: client-port
+    port: 2379
+    targetPort: client-port
+  selector:
+    app: etcd
+  type: ClusterIP
+---
+# Source: pachyderm/templates/pachd/peer-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pachd
+    suite: pachyderm
+  name: pachd-peer
+  namespace: default
+spec:
+  ports:
+  - name: api-grpc-peer-port
+    port: 30653
+    targetPort: peer-port
+  selector:
+    app: pachd
+  type: ClusterIP
+---
+# Source: pachyderm/templates/pachd/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "1656"
+    prometheus.io/scrape: "true"
+  labels:
+    app: pachd
+    suite: pachyderm
+  name: pachd
+  namespace: default
+spec:
+  ports:
+  - name: api-grpc-port
+    port: 30650
+    protocol: TCP
+    targetPort: api-grpc-port
+  - name: trace-port
+    port: 30651
+    protocol: TCP
+    targetPort: trace-port
+  - name: oidc-port
+    port: 30657
+    targetPort: oidc-port
+  - name: identity-port
+    port: 30658
+    targetPort: identity-port
+  - name: s3gateway-port
+    port: 30600
+    targetPort: s3gateway-port
+  - name: prom-metrics
+    port: 1656
+    protocol: TCP
+    targetPort: prom-metrics
+  selector:
+    app: pachd
+  type: ClusterIP
+---
+# Source: pachyderm/templates/postgresql/headless-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postgres
+    suite: pachyderm
+  name: postgres-headless
+  namespace: default
+spec:
+  clusterIP: None
+  ports:
+  - name: client-port
+    port: 5432
+    targetPort: 0
+  selector:
+    app: postgres
+---
+# Source: pachyderm/templates/postgresql/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postgres
+    suite: pachyderm
+  name: postgres
+  namespace: default
+spec:
+  ports:
+  - name: client-port
+    port: 5432
+    targetPort: client-port
+  selector:
+    app: postgres
+  type: ClusterIP
+---
+# Source: pachyderm/templates/dash/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dash
+    suite: pachyderm
+  name: dash
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: dash
+      suite: pachyderm
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: dash
+        suite: pachyderm
+      name: dash
+      namespace: default
+    spec:
+      containers:
+      - image: "pachyderm/haberdashery:b6769ac1ad4561d76e9382bc24ac271bc7686956"
+        imagePullPolicy: IfNotPresent
+        name: dash
+        ports:
+        - containerPort: 4000
+          name: dash-http
+        env:
+        - name: ISSUER_URI
+          value: ""
+        - name: OAUTH_REDIRECT_URI
+          value: ""
+        - name: OAUTH_CLIENT_ID
+          value: ""
+        - name: OAUTH_CLIENT_SECRET
+          value: ""
+        - name: GRAPHQL_PORT
+          value: "4000"
+        - name: OAUTH_PACHD_CLIENT_ID
+          value: ""
+        - name: PACHD_ADDRESS
+          value: "pachd-peer.default.svc.cluster.local:30653"
+---
+# Source: pachyderm/templates/pachd/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pachd
+    suite: pachyderm
+  name: pachd
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pachd
+      suite: pachyderm
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        checksum/storage-secret: 858b89c87d1d6466eb5c4026e0f8489443600278a3922fb978a1ca451ab86252
+      labels:
+        app: pachd
+        suite: pachyderm
+      name: pachd
+      namespace: default
+    spec:
+      containers:
+      - command:
+        - /pachd
+        env:
+        - name: POSTGRES_HOST
+          value: "postgres"
+        - name: POSTGRES_PORT
+          value:  "5432"
+        - name: POSTGRES_SERVICE_SSL
+          value: "disable"
+        - name: LOKI_LOGGING
+          value: "false"
+        - name: PACH_ROOT
+          value: "/pach"
+        - name: ETCD_PREFIX
+          #value:
+        - name: STORAGE_BACKEND
+          value: "AMAZON"
+        - name: WORKER_IMAGE
+          value: "pachyderm/worker:2.0.0-alpha.25"
+        - name: IMAGE_PULL_SECRET
+          value: ""
+        - name: WORKER_SIDECAR_IMAGE
+          value: "pachyderm/pachd:2.0.0-alpha.25"
+        - name: WORKER_IMAGE_PULL_POLICY
+          value: "IfNotPresent"
+        - name: WORKER_SERVICE_ACCOUNT
+          value: "pachyderm-worker"
+        - name: METRICS
+          value: "true"
+        - name: LOG_LEVEL
+          value: info
+        - name: NO_EXPOSE_DOCKER_SOCKET
+          value: "true"
+        - name: PACH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: PACHD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              containerName: pachd
+              divisor: "0"
+              resource: requests.memory
+        - name: REQUIRE_CRITICAL_SERVERS_ONLY
+          value: "false"
+        - name: PACHD_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: PPS_WORKER_GRPC_PORT
+          value: "1080"
+        - name: STORAGE_UPLOAD_CONCURRENCY_LIMIT
+          value: "100"
+        - name: STORAGE_PUT_FILE_CONCURRENCY_LIMIT
+          value: "100"
+        envFrom:
+          - secretRef:
+              name: pachyderm-storage-secret
+        image: "pachyderm/pachd:2.0.0-alpha.25"
+        imagePullPolicy: IfNotPresent
+        name: pachd
+        ports:
+        - containerPort: 1600
+          name: s3gateway-port
+          protocol: TCP
+        - containerPort: 1650
+          name: api-grpc-port
+          protocol: TCP
+        - containerPort: 1651
+          name: trace-port # Confirm for 2.0
+        - containerPort: 1653
+          name: peer-port
+          protocol: TCP
+        - containerPort: 1657
+          name: oidc-port
+          protocol: TCP
+        - containerPort: 1658
+          name: identity-port
+          protocol: TCP
+        - containerPort: 1656 #Confirm for 2.0
+          name: prom-metrics
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /pachd
+            - --readiness
+        volumeMounts:
+        - mountPath: /pach
+          name: pach-disk
+        - mountPath: /pachyderm-storage-secret
+          name: pachyderm-storage-secret
+      serviceAccountName: "pachyderm"
+      volumes:
+      - name: pach-disk
+      - name: pachyderm-storage-secret
+        secret:
+          secretName: pachyderm-storage-secret
+---
+# Source: pachyderm/templates/etcd/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: etcd
+    suite: pachyderm
+  name: etcd
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+      suite: pachyderm
+  serviceName: etcd-headless
+  template:
+    metadata:
+      labels:
+        app: etcd
+        suite: pachyderm
+      name: etcd
+      namespace: default
+    spec:
+      containers:
+      - args:
+        - '"/usr/local/bin/etcd" "--listen-client-urls=http://0.0.0.0:2379" "--advertise-client-urls=http://0.0.0.0:2379"
+          "--data-dir=/var/data/etcd" "--auto-compaction-retention=1" "--max-txn-ops=10000"
+          "--max-request-bytes=52428800" "--quota-backend-bytes=8589934592" "--listen-peer-urls=http://0.0.0.0:2380"
+          "--initial-cluster-token=pach-cluster" "--initial-advertise-peer-urls=http://${ETCD_NAME}.etcd-headless.${NAMESPACE}.svc.cluster.local:2380"
+          "--initial-cluster=etcd-0=http://etcd-0.etcd-headless.${NAMESPACE}.svc.cluster.local:2380"'
+        command:
+        - /bin/sh
+        - -c
+        env:
+        - name: ETCD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        image: "pachyderm/etcd:v3.3.5"
+        imagePullPolicy: IfNotPresent
+        name: etcd
+        ports:
+        - containerPort: 2379
+          name: client-port
+        - containerPort: 2380
+          name: peer-port
+        volumeMounts:
+        - mountPath: /var/data/etcd
+          name: etcd-storage 
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app: etcd
+        suite: pachyderm
+      name: etcd-storage
+      namespace: default
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi  # Default
+---
+# Source: pachyderm/templates/postgresql/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: postgres
+    suite: pachyderm
+  name: postgres
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      suite: pachyderm
+  serviceName: postgres-headless
+  template:
+    metadata:
+      labels:
+        app: postgres
+        suite: pachyderm
+      name: postgres
+      namespace: default
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_DB
+          value: pgc
+        - name: POSTGRES_HOST_AUTH_METHOD
+          # TODO: Remove trust as auth method
+          value: trust
+        image: postgres:13.0-alpine
+        imagePullPolicy: IfNotPresent
+        name: postgres
+        ports:
+        - containerPort: 5432
+          name: client-port
+        volumeMounts:
+        - mountPath: /var/lib/postgresql
+          name: postgres-storage
+        - mountPath: /docker-entrypoint-initdb.d
+          name: postgres-init
+      volumes:
+      - configMap:
+          name: postgres-init-cm
+        name: postgres-init
+  volumeClaimTemplates:
+  - metadata:
+      labels:
+        app: postgres
+        suite: pachyderm
+      name: postgres-storage
+      namespace: default
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi  # Default
+---
+# Source: pachyderm/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pachyderm-test-connection
+  labels:
+    suite: pachyderm
+    app: pach-test
+  namespace: default
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: nc
+      image: "alpine"
+      command: ['/bin/sh', '-c', '--']
+      args: ['while ! nc -vz pachd-peer 30653 ; do sleep 1 ; done']
+  restartPolicy: Never

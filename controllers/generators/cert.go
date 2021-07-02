@@ -92,15 +92,3 @@ func newClientCertificate(key *rsa.PrivateKey, hosts []string) (*x509.Certificat
 
 	return x509.ParseCertificate(certificateDER)
 }
-
-// CACertificate will be used to sing other certificates
-// Returns: certificate, key, error
-// func newCACertificate(key *rsa.PrivateKey) (*x509.Certificate, error) {
-// 	certCA := getCertTemplate(caCertType)
-// 	certDER, err := x509.CreateCertificate(rand.Reader, &certCA, &certCA, &key.PublicKey, key)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return x509.ParseCertificate(certDER)
-// }

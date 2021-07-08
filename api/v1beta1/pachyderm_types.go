@@ -250,9 +250,10 @@ type AmazonStorageOptions struct {
 	// Default: 10
 	Retries int `json:"retries,omitempty" default:"10"`
 	// Reverse object storage paths.
-	// Default: true
-	Reverse bool   `json:"reverse,omitempty" default:"true"`
-	Secret  string `json:"secret,omitempty"`
+	// +kubebuilder:default:=true
+	Reverse *bool `json:"reverse,omitempty"`
+	// The secret access key for the S3 bucket
+	Secret string `json:"secret,omitempty"`
 	// Set a custom timeout for object storage requests.
 	// Default: 5m
 	Timeout string `json:"timeout,omitempty" default:"5m"`

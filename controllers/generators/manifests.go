@@ -378,7 +378,7 @@ func (c *PachydermComponents) setupStorageSecret(secret *corev1.Secret) {
 			"NO_VERIFY_SSL":       toBytes(fmt.Sprintf("%t", pd.Spec.Pachd.Storage.Amazon.VerifySSL)),
 			"PART_SIZE":           toBytes(fmt.Sprintf("%d", pd.Spec.Pachd.Storage.Amazon.PartSize)),
 			"RETRIES":             toBytes(fmt.Sprintf("%d", pd.Spec.Pachd.Storage.Amazon.Retries)),
-			"REVERSE":             toBytes(fmt.Sprintf("%t", pd.Spec.Pachd.Storage.Amazon.Reverse)),
+			"REVERSE":             toBytes(fmt.Sprintf("%t", *pd.Spec.Pachd.Storage.Amazon.Reverse)),
 			"TIMEOUT":             toBytes(pd.Spec.Pachd.Storage.Amazon.Timeout),
 			"UPLOAD_ACL":          toBytes(pd.Spec.Pachd.Storage.Amazon.UploadACL),
 		}

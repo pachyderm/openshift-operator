@@ -373,9 +373,11 @@ spec:
                               storage requests. Default: 10'
                             type: integer
                           reverse:
-                            description: 'Reverse object storage paths. Default: true'
+                            default: true
+                            description: Reverse object storage paths.
                             type: boolean
                           secret:
+                            description: The secret access key for the S3 bucket
                             type: string
                           timeout:
                             description: 'Set a custom timeout for object storage

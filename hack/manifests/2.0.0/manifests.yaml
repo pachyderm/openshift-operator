@@ -29,11 +29,11 @@ metadata:
   name: pachyderm-storage-secret
   namespace: default
 data:
-  AMAZON_BUCKET: "***REMOVED***"
+  AMAZON_BUCKET: ""
   AMAZON_DISTRIBUTION: ""
-  AMAZON_ID: "***REMOVED***"
-  AMAZON_REGION: "***REMOVED***"
-  AMAZON_SECRET: "***REMOVED***"
+  AMAZON_ID: ""
+  AMAZON_REGION: ""
+  AMAZON_SECRET: ""
   AMAZON_TOKEN: ""
   CUSTOM_ENDPOINT: ""
   DISABLE_SSL: "ZmFsc2U="

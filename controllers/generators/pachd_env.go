@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
+func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
+	pd := c.Pachyderm()
+
 	envs := []corev1.EnvVar{
 		{
 			Name:  "POSTGRES_HOST",
@@ -47,6 +48,10 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 			Name:  "STORAGE_UPLOAD_CONCURRENCY_LIMIT",
 			Value: fmt.Sprintf("%d", pd.Spec.Pachd.Storage.PutFileConcurrencyLimit),
 		},
+		{
+			Name:  "WORKER_USES_ROOT",
+			Value: "false",
+		},
 	}
 
 	if pd.Spec.Worker != nil {
@@ -55,11 +60,11 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 		workerOptions := []corev1.EnvVar{
 			{
 				Name:  "WORKER_IMAGE",
-				Value: getWorkerImage(pd),
+				Value: c.workerImage(),
 			},
 			{
 				Name:  "WORKER_SIDECAR_IMAGE",
-				Value: "pachyderm/pachd:2.0.0-alpha.25",
+				Value: c.workerSidecarImage(),
 			},
 			{
 				Name:  "WORKER_IMAGE_PULL_POLICY",
@@ -182,18 +187,25 @@ func pachdEnvVarirables(pd *aimlv1beta1.Pachyderm) []corev1.EnvVar {
 	return envs
 }
 
-func getWorkerImage(pd *aimlv1beta1.Pachyderm) string {
+func (c *PachydermComponents) workerImage() string {
+	pd := c.Pachyderm()
+	workerImg := strings.Split(c.workerImageName, ":")
 
 	if pd.Spec.Worker != nil {
 		if pd.Spec.Worker.Image != nil {
-			workerImg := []string{
-				pd.Spec.Worker.Image.Repository,
-				pd.Spec.Worker.Image.ImageTag,
+			if pd.Spec.Worker.Image.Repository != "" {
+				workerImg[0] = pd.Spec.Worker.Image.Repository
 			}
-			return strings.Join(workerImg, ":")
+			if pd.Spec.Worker.Image.ImageTag != "" {
+				workerImg[1] = pd.Spec.Worker.Image.ImageTag
+			}
 		}
 	}
 
-	// load default worker images
-	return ""
+	return strings.Join(workerImg, ":")
+}
+
+func (c *PachydermComponents) workerSidecarImage() string {
+	// load default worker sidecar images
+	return c.workerSidecarName
 }

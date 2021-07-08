@@ -144,9 +144,9 @@ func filterEvents() predicate.Funcs {
 }
 
 func (r *PachydermReconciler) validatePachyderm(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 	if pd.Spec.Pachd.Storage.Google != nil {
-		credentials, err := r.googleCredentialsJSON(ctx, components.Parent())
+		credentials, err := r.googleCredentialsJSON(ctx, components.Pachyderm())
 		if err != nil {
 			return err
 		}
@@ -433,7 +433,7 @@ func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1
 
 // TODO(OchiengEd): remove owner reference and use finalizers to clean up service accounts
 func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 
 	for _, sa := range components.ServiceAccounts {
 		// add owner references
@@ -458,7 +458,7 @@ func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components *ge
 
 	for _, role := range components.Roles {
 		// add owner references
-		if err := controllerutil.SetControllerReference(components.Parent(), &role, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(components.Pachyderm(), &role, r.Scheme); err != nil {
 			return err
 		}
 
@@ -493,7 +493,7 @@ func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, compone
 
 	for _, rolebinding := range components.RoleBindings {
 		// add owner references
-		if err := controllerutil.SetControllerReference(components.Parent(), &rolebinding, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(components.Pachyderm(), &rolebinding, r.Scheme); err != nil {
 			return err
 		}
 
@@ -525,7 +525,7 @@ func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, 
 }
 
 func (r *PachydermReconciler) reconcileServices(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 
 	for _, svc := range components.Services {
 		// add owner references
@@ -563,7 +563,7 @@ func (r *PachydermReconciler) reconcileServices(ctx context.Context, components 
 }
 
 func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 
 	for _, secret := range components.Secrets() {
 		// set owner reference
@@ -603,7 +603,7 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components *
 }
 
 func (r *PachydermReconciler) reconcileConfigMaps(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 
 	for _, cm := range components.ConfgigMaps() {
 		// set owner reference
@@ -644,7 +644,7 @@ func (r *PachydermReconciler) reconcileConfigMaps(ctx context.Context, component
 
 func (r *PachydermReconciler) deployEtcd(ctx context.Context, components *generators.PachydermComponents) error {
 	etcd := components.EtcdStatefulSet()
-	if err := controllerutil.SetControllerReference(components.Parent(), etcd, r.Scheme); err != nil {
+	if err := controllerutil.SetControllerReference(components.Pachyderm(), etcd, r.Scheme); err != nil {
 		return err
 	}
 
@@ -661,7 +661,7 @@ func (r *PachydermReconciler) deployEtcd(ctx context.Context, components *genera
 
 func (r *PachydermReconciler) deployPostgres(ctx context.Context, components *generators.PachydermComponents) error {
 	postgres := components.PostgreStatefulset()
-	if err := controllerutil.SetControllerReference(components.Parent(), postgres, r.Scheme); err != nil {
+	if err := controllerutil.SetControllerReference(components.Pachyderm(), postgres, r.Scheme); err != nil {
 		return err
 	}
 
@@ -677,7 +677,7 @@ func (r *PachydermReconciler) deployPostgres(ctx context.Context, components *ge
 }
 
 func (r *PachydermReconciler) deployPachd(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 
 	// Check Etcd is ready before deploying pachd
 	etcdSvc := types.NamespacedName{
@@ -705,7 +705,7 @@ func (r *PachydermReconciler) deployPachd(ctx context.Context, components *gener
 }
 
 func (r *PachydermReconciler) deployDash(ctx context.Context, components *generators.PachydermComponents) error {
-	pd := components.Parent()
+	pd := components.Pachyderm()
 
 	if !pd.Spec.Dashd.Disable {
 		dash := components.DashDeployment()
@@ -725,7 +725,7 @@ func (r *PachydermReconciler) deployDash(ctx context.Context, components *genera
 }
 
 func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components *generators.PachydermComponents) error {
-	pachyderm := components.Parent()
+	pachyderm := components.Pachyderm()
 	storageClassName := generators.EtcdStorageClassName(pachyderm)
 	if storageClassName != "etcd-storage-class" {
 		userStorageClass := &storagev1.StorageClass{}

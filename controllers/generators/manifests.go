@@ -24,6 +24,10 @@ import (
 // PachydermComponents is a structure that contains a slice of
 // all the Kubernetes resources that make up a Pachyderm deployment
 type PachydermComponents struct {
+	// worker image name
+	workerImageName string
+	// worker sidecar image name
+	workerSidecarName   string
 	gcsCredentials      []byte
 	pachyderm           *aimlv1beta1.Pachyderm
 	dashDeploy          *appsv1.Deployment
@@ -212,7 +216,30 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) *PachydermComponents {
 		}
 	}
 
+	components.readDefaultImages()
+
 	return components
+}
+
+func (c *PachydermComponents) readDefaultImages() {
+	var pachdEnvs []corev1.EnvVar
+	for _, container := range c.pachdDeploy.Spec.Template.Spec.Containers {
+		if container.Name == "pachd" {
+			pachdEnvs = container.Env
+		}
+	}
+
+	if len(pachdEnvs) > 0 {
+		for _, env := range pachdEnvs {
+			if env.Name == "WORKER_IMAGE" {
+				c.workerImageName = env.Value
+			}
+
+			if env.Name == "WORKER_SIDECAR_IMAGE" {
+				c.workerSidecarName = env.Value
+			}
+		}
+	}
 }
 
 func toTypedResource(unstructured *unstructured.Unstructured, object interface{}) error {
@@ -270,7 +297,7 @@ func (c *PachydermComponents) parsePod(obj *unstructured.Unstructured, namespace
 }
 
 // Parent returns the pachyderm resource used to configure components
-func (c *PachydermComponents) Parent() *aimlv1beta1.Pachyderm {
+func (c *PachydermComponents) Pachyderm() *aimlv1beta1.Pachyderm {
 	return c.pachyderm
 }
 
@@ -489,11 +516,11 @@ func (c *PachydermComponents) EtcdStatefulSet() *appsv1.StatefulSet {
 // PachdDeployment returns the pachd deployment resource
 func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 	deploy := c.pachdDeploy
-	pachyderm := c.Parent()
+	pachyderm := c.Pachyderm()
 
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == "pachd" {
-			deploy.Spec.Template.Spec.Containers[i].Env = pachdEnvVarirables(c.pachyderm)
+			deploy.Spec.Template.Spec.Containers[i].Env = c.pachdEnvVarirables()
 		}
 	}
 

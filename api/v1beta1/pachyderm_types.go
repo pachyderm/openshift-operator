@@ -133,9 +133,10 @@ type PachdOptions struct {
 	LokiLogging bool `json:"lokiLogging,omitempty"`
 	// When true, allows user to disable authentication during testing
 	AuthenticationDisabledForTesting bool `json:"authenticationDisabledForTesting,omitempty"`
-	// Pachyderm Pipeline System(PPS) worker GRPC port
-	// +kubebuilder:default:=1080
-	PPSWorkerGRPCPort int `json:"ppsWorkerGRPCPort,omitempty"`
+	// Pachyderm Pipeline System(PPS) worker GRPC port.
+	// Defaults to port 1080
+	// +kubebuilder:default=1080
+	PPSWorkerGRPCPort int32 `json:"ppsWorkerGRPCPort,omitempty"`
 	// Expose the Docker socket to worker containers.
 	// When false, limits the worker container privileges preventing them from
 	// automatically setting the container's working dir and user

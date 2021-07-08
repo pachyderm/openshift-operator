@@ -279,7 +279,9 @@ spec:
                     type: object
                   ppsWorkerGRPCPort:
                     default: 1080
-                    description: Pachyderm Pipeline System(PPS) worker GRPC port
+                    description: Pachyderm Pipeline System(PPS) worker GRPC port.
+                      Defaults to port 1080
+                    format: int32
                     type: integer
                   requireCriticalServersOnly:
                     description: Require only critical Pachd servers to startup and

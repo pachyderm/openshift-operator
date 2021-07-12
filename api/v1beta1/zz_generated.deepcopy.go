@@ -364,11 +364,7 @@ func (in *PachydermSpec) DeepCopyInto(out *PachydermSpec) {
 	in.Etcd.DeepCopyInto(&out.Etcd)
 	in.Pachd.DeepCopyInto(&out.Pachd)
 	in.Dashd.DeepCopyInto(&out.Dashd)
-	if in.Worker != nil {
-		in, out := &in.Worker, &out.Worker
-		*out = new(WorkerOptions)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Worker.DeepCopyInto(&out.Worker)
 	in.Postgres.DeepCopyInto(&out.Postgres)
 }
 

@@ -47,6 +47,7 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
+                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -122,6 +123,7 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
+                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -217,6 +219,7 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
+                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -547,6 +550,7 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
+                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:

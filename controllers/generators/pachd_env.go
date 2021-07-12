@@ -52,30 +52,22 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 			Name:  "WORKER_USES_ROOT",
 			Value: "false",
 		},
-	}
-
-	if pd.Spec.Worker != nil {
-		// TODO: auto set the WORKER_IMAGE and WORKER_SIDECAR_IMAGE
-		//  environment variables automatically
-		workerOptions := []corev1.EnvVar{
-			{
-				Name:  "WORKER_IMAGE",
-				Value: c.workerImage(),
-			},
-			{
-				Name:  "WORKER_SIDECAR_IMAGE",
-				Value: c.workerSidecarImage(),
-			},
-			{
-				Name:  "WORKER_IMAGE_PULL_POLICY",
-				Value: pd.Spec.Worker.Image.PullPolicy,
-			},
-			{
-				Name:  "WORKER_SERVICE_ACCOUNT",
-				Value: pd.Spec.Worker.ServiceAccountName,
-			},
-		}
-		envs = append(envs, workerOptions...)
+		{
+			Name:  "WORKER_IMAGE",
+			Value: c.workerImage(),
+		},
+		{
+			Name:  "WORKER_SIDECAR_IMAGE",
+			Value: c.workerSidecarImage(),
+		},
+		{
+			Name:  "WORKER_IMAGE_PULL_POLICY",
+			Value: pd.Spec.Worker.Image.PullPolicy,
+		},
+		{
+			Name:  "WORKER_SERVICE_ACCOUNT",
+			Value: pd.Spec.Worker.ServiceAccountName,
+		},
 	}
 
 	if pd.Spec.Pachd.Image != nil {
@@ -189,16 +181,15 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 
 func (c *PachydermComponents) workerImage() string {
 	pd := c.Pachyderm()
+
 	workerImg := strings.Split(c.workerImageName, ":")
 
-	if pd.Spec.Worker != nil {
-		if pd.Spec.Worker.Image != nil {
-			if pd.Spec.Worker.Image.Repository != "" {
-				workerImg[0] = pd.Spec.Worker.Image.Repository
-			}
-			if pd.Spec.Worker.Image.ImageTag != "" {
-				workerImg[1] = pd.Spec.Worker.Image.ImageTag
-			}
+	if pd.Spec.Worker.Image != nil {
+		if pd.Spec.Worker.Image.Repository != "" {
+			workerImg[0] = pd.Spec.Worker.Image.Repository
+		}
+		if pd.Spec.Worker.Image.ImageTag != "" {
+			workerImg[1] = pd.Spec.Worker.Image.ImageTag
 		}
 	}
 

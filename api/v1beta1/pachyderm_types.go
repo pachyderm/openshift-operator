@@ -32,7 +32,7 @@ type PachydermSpec struct {
 	// Allows the user to customize the dashd instance(s)
 	Dashd DashOptions `json:"dash,omitempty"`
 	// Allows user to customize worker instance(s)
-	Worker *WorkerOptions `json:"worker,omitempty"`
+	Worker WorkerOptions `json:"worker,omitempty"`
 	// Allows user to customize Postgresql database
 	Postgres PostgresOptions `json:"postgresql,omitempty"`
 }
@@ -73,6 +73,7 @@ type ImageOverride struct {
 	// Determines when images should be pulled.
 	// It accepts, "IfNotPresent","Never" or "Always"
 	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
+	// +kubebuilder:default:=IfNotPresent
 	PullPolicy string `json:"pullPolicy,omitempty"`
 }
 

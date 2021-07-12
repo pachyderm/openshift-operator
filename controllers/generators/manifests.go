@@ -24,9 +24,9 @@ import (
 // PachydermComponents is a structure that contains a slice of
 // all the Kubernetes resources that make up a Pachyderm deployment
 type PachydermComponents struct {
-	// worker image name
+	// auto-detected worker image name
 	workerImageName string
-	// worker sidecar image name
+	// auto-detected worker sidecar image name
 	workerSidecarName   string
 	gcsCredentials      []byte
 	pachyderm           *aimlv1beta1.Pachyderm

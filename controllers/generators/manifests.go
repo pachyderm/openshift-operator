@@ -413,54 +413,30 @@ func (c *PachydermComponents) setupStorageSecret(secret *corev1.Secret) {
 
 	if pd.Spec.Pachd.Storage.Backend == "minio" {
 		secret.Data = map[string][]byte{
-			"minio-bucket":    toBytes(pd.Spec.Pachd.Storage.Minio.Bucket),
-			"minio-endpoint":  toBytes(pd.Spec.Pachd.Storage.Minio.Endpoint),
-			"minio-id":        toBytes(pd.Spec.Pachd.Storage.Minio.ID),
-			"minio-secret":    toBytes(pd.Spec.Pachd.Storage.Minio.Secret),
-			"minio-secure":    toBytes(pd.Spec.Pachd.Storage.Minio.Secure),
-			"minio-signature": toBytes(pd.Spec.Pachd.Storage.Minio.Signature),
+			"MINIO_BUCKET":    toBytes(pd.Spec.Pachd.Storage.Minio.Bucket),
+			"MINIO_ENDPOINT":  toBytes(pd.Spec.Pachd.Storage.Minio.Endpoint),
+			"MINIO_ID":        toBytes(pd.Spec.Pachd.Storage.Minio.ID),
+			"MINIO_SECRET":    toBytes(pd.Spec.Pachd.Storage.Minio.Secret),
+			"MINIO_SECURE":    toBytes(pd.Spec.Pachd.Storage.Minio.Secure),
+			"MINIO_SIGNATURE": toBytes(pd.Spec.Pachd.Storage.Minio.Signature),
 		}
 	}
 
 	if pd.Spec.Pachd.Storage.Backend == "google" {
 		secret.Data = map[string][]byte{
-			"google-bucket": toBytes(pd.Spec.Pachd.Storage.Google.Bucket),
-			"google-cred":   c.getGCSCredentials(),
+			"GOOGLE_BUCKET": toBytes(pd.Spec.Pachd.Storage.Google.Bucket),
+			"GOOGLE_CRED":   c.getGCSCredentials(),
 		}
 	}
 
 	if pd.Spec.Pachd.Storage.Backend == "microsoft" {
 		secret.Data = map[string][]byte{
-			"microsoft-container": toBytes(pd.Spec.Pachd.Storage.Microsoft.Container),
-			"microsoft-secret":    toBytes(pd.Spec.Pachd.Storage.Microsoft.Secret),
-			"microsoft-id":        toBytes(pd.Spec.Pachd.Storage.Microsoft.ID),
+			"MICROSOFT_CONTAINER": toBytes(pd.Spec.Pachd.Storage.Microsoft.Container),
+			"MICROSOFT_SECRET":    toBytes(pd.Spec.Pachd.Storage.Microsoft.Secret),
+			"MICROSOFT_ID":        toBytes(pd.Spec.Pachd.Storage.Microsoft.ID),
 		}
 	}
 }
-
-// func getGCSCredentialSecret(pd *aimlv1beta1.Pachyderm) ([]byte, error) {
-// 	clientset, err := kubeClientset()
-// 	if err != nil {
-// 		fmt.Println("error:", err.Error())
-// 	}
-
-// 	secret, err := clientset.
-// 		CoreV1().
-// 		Secrets(pd.Namespace).
-// 		Get(context.Background(),
-// 			pd.Spec.Pachd.Storage.Google.CredentialSecret,
-// 			metav1.GetOptions{})
-// 	if err != nil {
-// 		return []byte{}, err
-// 	}
-
-// 	credentials, ok := secret.Data["credentials.json"]
-// 	if !ok {
-// 		return []byte{}, errors.New("credentials.json key not found")
-// 	}
-
-// 	return credentials, nil
-// }
 
 // accepts string and returns a slice of type bytes
 func toBytes(value string) []byte {
@@ -546,6 +522,12 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 
 // DashDeployment returns the dash deployment resource
 func (c *PachydermComponents) DashDeployment() *appsv1.Deployment {
+
+	for i, container := range c.dashDeploy.Spec.Template.Spec.Containers {
+		if container.Name == "dash" {
+			c.dashDeploy.Spec.Template.Spec.Containers[i].Env = c.dashEnvironmentVars()
+		}
+	}
 	return c.dashDeploy
 }
 

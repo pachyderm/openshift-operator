@@ -47,7 +47,6 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -123,7 +122,6 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -205,21 +203,11 @@ spec:
                     description: Set an ID for the cluster deployment. Defaults to
                       a random value if none is provided
                     type: string
-                  exposeDockerSocket:
-                    description: Expose the Docker socket to worker containers. When
-                      false, limits the worker container privileges preventing them
-                      from automatically setting the container's working dir and user
-                    type: boolean
-                  exposeObjectAPI:
-                    description: If set, instructs pachd to serve its object/block
-                      API on its public port. Do not  use in production
-                    type: boolean
                   image:
                     description: Optional image overrides. Used to specify alternative
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -245,6 +233,10 @@ spec:
                     description: 'Optional value to determine the format of the logs
                       Default: false'
                     type: boolean
+                  memoryRequest:
+                    default: 1T
+                    description: Pachd memory request
+                    type: string
                   metrics:
                     description: Allows user to customize metrics options
                     properties:
@@ -380,7 +372,6 @@ spec:
                               storage requests. Default: 10'
                             type: integer
                           reverse:
-                            default: true
                             description: Reverse object storage paths.
                             type: boolean
                           secret:
@@ -550,7 +541,6 @@ spec:
                       images to use to deploy dash
                     properties:
                       pullPolicy:
-                        default: IfNotPresent
                         description: Determines when images should be pulled. It accepts,
                           "IfNotPresent","Never" or "Always"
                         enum:
@@ -569,7 +559,8 @@ spec:
                     type: object
                   serviceAccountName:
                     default: pachyderm-worker
-                    description: Name of worker service account
+                    description: Name of worker service account. Defaults to pachyderm-worker
+                      service account
                     type: string
                 type: object
             type: object

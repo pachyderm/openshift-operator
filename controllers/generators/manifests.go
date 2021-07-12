@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	goyaml "github.com/go-yaml/yaml"
 	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
@@ -497,6 +498,17 @@ func (c *PachydermComponents) PachdDeployment() *appsv1.Deployment {
 	for i, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == "pachd" {
 			deploy.Spec.Template.Spec.Containers[i].Env = c.pachdEnvVarirables()
+
+			if pachyderm.Spec.Pachd.Image != nil {
+				pachdImage := strings.Split(container.Image, ":")
+				if pachyderm.Spec.Pachd.Image.Repository != "" {
+					pachdImage[0] = pachyderm.Spec.Pachd.Image.Repository
+				}
+				if pachyderm.Spec.Pachd.Image.ImageTag != "" {
+					pachdImage[1] = pachyderm.Spec.Pachd.Image.ImageTag
+				}
+				deploy.Spec.Template.Spec.Containers[i].Image = strings.Join(pachdImage, ":")
+			}
 		}
 	}
 

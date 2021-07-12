@@ -266,11 +266,7 @@ func (in *PachdOptions) DeepCopyInto(out *PachdOptions) {
 		*out = new(ServiceOverrides)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Metrics != nil {
-		in, out := &in.Metrics, &out.Metrics
-		*out = new(MetricsOptions)
-		**out = **in
-	}
+	out.Metrics = in.Metrics
 	out.Postgres = in.Postgres
 }
 

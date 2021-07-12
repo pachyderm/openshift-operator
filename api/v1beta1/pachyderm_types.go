@@ -42,7 +42,8 @@ type WorkerOptions struct {
 	// Optional image overrides.
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
-	// Name of worker service account
+	// Name of worker service account.
+	// Defaults to pachyderm-worker service account
 	// +kubebuilder:default:=pachyderm-worker
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
@@ -73,7 +74,6 @@ type ImageOverride struct {
 	// Determines when images should be pulled.
 	// It accepts, "IfNotPresent","Never" or "Always"
 	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
-	// +kubebuilder:default:=IfNotPresent
 	PullPolicy string `json:"pullPolicy,omitempty"`
 }
 
@@ -103,6 +103,7 @@ type EtcdOptions struct {
 	Service     *ServiceOverrides `json:"service,omitempty"`
 }
 
+// TODO: renove obsolete options such as NumShards, BlockCacheBytes, etc
 // PachdOptions allows the user to customize pachd
 type PachdOptions struct {
 	// Set an ID for the cluster deployment.
@@ -116,6 +117,9 @@ type PachdOptions struct {
 	// Size of Pachd's in-memory cache for PFS file.
 	// Size is specified in bytes, with allowed SI suffixes (M, K, G, Mi, Ki, Gi, etc)
 	BlockCacheBytes string `json:"blockCacheBytes,omitempty"`
+	// Pachd memory request
+	// +kubebuilder:default:="1T"
+	MemoryRequest string `json:"memoryRequest,omitempty"`
 	// Resource requests and limits for Pachd
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 	// Require only critical Pachd servers to startup and run without errors.
@@ -137,18 +141,11 @@ type PachdOptions struct {
 	// Pachyderm Pipeline System(PPS) worker GRPC port.
 	// Defaults to port 1080
 	// +kubebuilder:default=1080
-	PPSWorkerGRPCPort int32 `json:"ppsWorkerGRPCPort,omitempty"`
-	// Expose the Docker socket to worker containers.
-	// When false, limits the worker container privileges preventing them from
-	// automatically setting the container's working dir and user
-	ExposeDockerSocket bool `json:"exposeDockerSocket,omitempty"`
-	// If set, instructs pachd to serve its object/block API on its public port.
-	// Do not  use in production
-	ExposeObjectAPI bool              `json:"exposeObjectAPI,omitempty"`
-	Service         *ServiceOverrides `json:"service,omitempty"`
+	PPSWorkerGRPCPort int32             `json:"ppsWorkerGRPCPort,omitempty"`
+	Service           *ServiceOverrides `json:"service,omitempty"`
 	// Allows user to customize metrics options
-	Metrics            *MetricsOptions `json:"metrics,omitempty"`
-	ServiceAccountName string          `json:"serviceAccountName,omitempty"`
+	Metrics            MetricsOptions `json:"metrics,omitempty"`
+	ServiceAccountName string         `json:"serviceAccountName,omitempty"`
 	// Postgresql server connection credentials
 	Postgres PachdPostgresConfig `json:"postgresql,omitempty"`
 }
@@ -252,8 +249,7 @@ type AmazonStorageOptions struct {
 	// Default: 10
 	Retries int `json:"retries,omitempty" default:"10"`
 	// Reverse object storage paths.
-	// +kubebuilder:default:=true
-	Reverse *bool `json:"reverse,omitempty"`
+	Reverse *bool `json:"reverse,omitempty" default:"true"`
 	// The secret access key for the S3 bucket
 	Secret string `json:"secret,omitempty"`
 	// Set a custom timeout for object storage requests.

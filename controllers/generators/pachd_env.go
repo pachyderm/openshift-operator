@@ -11,6 +11,11 @@ import (
 func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 	pd := c.Pachyderm()
 
+	divisor, err := resource.ParseQuantity("0")
+	if err != nil {
+		fmt.Println("error getting divisor:", err.Error())
+	}
+
 	envs := []corev1.EnvVar{
 		{
 			Name:  "POSTGRES_HOST",
@@ -61,89 +66,75 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 			Value: c.workerSidecarImage(),
 		},
 		{
-			Name:  "WORKER_IMAGE_PULL_POLICY",
-			Value: pd.Spec.Worker.Image.PullPolicy,
-		},
-		{
 			Name:  "WORKER_SERVICE_ACCOUNT",
 			Value: pd.Spec.Worker.ServiceAccountName,
 		},
-	}
-
-	if pd.Spec.Pachd.Image != nil {
-		// image pull secret
-		envs = append(envs, corev1.EnvVar{
+		// TODO: implement way to provide image pull secret
+		{
 			Name:  "IMAGE_PULL_SECRET",
-			Value: pd.Spec.Pachd.Image.PullPolicy,
-		})
-	}
-
-	// metrics
-	if pd.Spec.Pachd.Metrics != nil {
-		envs = append(envs, corev1.EnvVar{
+			Value: "",
+		},
+		{
+			Name:  "LOG_LEVEL",
+			Value: pd.Spec.Pachd.LogLevel,
+		},
+		{
+			Name:  "PPS_WORKER_GRPC_PORT",
+			Value: fmt.Sprintf("%d", pd.Spec.Pachd.PPSWorkerGRPCPort),
+		},
+		{
+			Name:  "REQUIRE_CRITICAL_SERVERS_ONLY",
+			Value: fmt.Sprintf("%t", pd.Spec.Pachd.RequireCriticalServers),
+		},
+		{
 			Name:  "METRICS",
 			Value: fmt.Sprintf("%t", !pd.Spec.Pachd.Metrics.Disable),
-		})
-
-		if pd.Spec.Pachd.Metrics.Endpoint != "" {
-			// TODO: check if this is still supported
-			envs = append(envs, corev1.EnvVar{
-				Name:  "METRICS_ENDPOINT",
-				Value: pd.Spec.Pachd.Metrics.Endpoint,
-			})
-		}
+		},
+		{
+			Name: "PACH_NAMESPACE",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
+				},
+			},
+		},
+		{
+			Name: "PACHD_POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+		{
+			Name: "PACHD_MEMORY_REQUEST",
+			ValueFrom: &corev1.EnvVarSource{
+				ResourceFieldRef: &corev1.ResourceFieldSelector{
+					ContainerName: "pachd",
+					Divisor:       divisor,
+					Resource:      "requests.memory",
+				},
+			},
+		},
 	}
 
-	// log level
-	envs = append(envs, corev1.EnvVar{
-		Name:  "LOG_LEVEL",
-		Value: pd.Spec.Pachd.LogLevel,
-	})
+	if pd.Spec.Worker.Image != nil {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "WORKER_IMAGE_PULL_POLICY",
+			Value: imagePullPolicyChecker(pd.Spec.Worker.Image.PullPolicy),
+		})
+	}
 
-	// expose Docker socket
-	envs = append(envs, corev1.EnvVar{
-		Name:  "NO_EXPOSE_DOCKER_SOCKET",
-		Value: fmt.Sprintf("%t", pd.Spec.Pachd.ExposeDockerSocket),
-	})
-
-	// TODO: check if this is still supported
-	// block cache bytes
-	// envs = append(envs, corev1.EnvVar{
-	// 	Name:  "BLOCK_CACHE_BYTES",
-	// 	Value: pd.Spec.Pachd.BlockCacheBytes,
-	// })
-
-	// TODO: check if this is still supported
-	// disable pachyderm auth for testing
-	// envs = append(envs, corev1.EnvVar{
-	// 	Name:  "PACHYDERM_AUTHENTICATION_DISABLED_FOR_TESTING",
-	// 	Value: fmt.Sprintf("%t", pd.Spec.Pachd.AuthenticationDisabledForTesting),
-	// })
-
-	// pachd namespace
-	envs = append(envs, corev1.EnvVar{
-		Name: "PACH_NAMESPACE",
-		ValueFrom: &corev1.EnvVarSource{
-			FieldRef: &corev1.ObjectFieldSelector{
-				APIVersion: "v1",
-				FieldPath:  "metadata.namespace",
-			},
-		},
-	})
-
-	// pachd memory request
-	// TODO: handle error
-	divisor, _ := resource.ParseQuantity("0")
-	envs = append(envs, corev1.EnvVar{
-		Name: "PACHD_MEMORY_REQUEST",
-		ValueFrom: &corev1.EnvVarSource{
-			ResourceFieldRef: &corev1.ResourceFieldSelector{
-				ContainerName: "pachd",
-				Divisor:       divisor,
-				Resource:      "requests.memory",
-			},
-		},
-	})
+	// metrics endpoint
+	if pd.Spec.Pachd.Metrics.Endpoint != "" {
+		// TODO: check if this is still supported
+		envs = append(envs, corev1.EnvVar{
+			Name:  "METRICS_ENDPOINT",
+			Value: pd.Spec.Pachd.Metrics.Endpoint,
+		})
+	}
 
 	// TODO: check if this is still supported
 	// expose object API
@@ -151,30 +142,6 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 	// 	Name:  "EXPOSE_OBJECT_API",
 	// 	Value: fmt.Sprintf("%t", pd.Spec.Pachd.ExposeObjectAPI),
 	// })
-
-	// require critical servers only
-	envs = append(envs, corev1.EnvVar{
-		Name:  "REQUIRE_CRITICAL_SERVERS_ONLY",
-		Value: fmt.Sprintf("%t", pd.Spec.Pachd.RequireCriticalServers),
-	})
-
-	// pachd pod name
-	envs = append(envs, corev1.EnvVar{
-		Name: "PACHD_POD_NAME",
-		ValueFrom: &corev1.EnvVarSource{
-			FieldRef: &corev1.ObjectFieldSelector{
-				APIVersion: "v1",
-				FieldPath:  "metadata.name",
-			},
-		},
-	})
-
-	// Pachyderm Pipeline System(PPS)
-	// worker GRPC port
-	envs = append(envs, corev1.EnvVar{
-		Name:  "PPS_WORKER_GRPC_PORT",
-		Value: fmt.Sprintf("%d", pd.Spec.Pachd.PPSWorkerGRPCPort),
-	})
 
 	return envs
 }
@@ -199,4 +166,11 @@ func (c *PachydermComponents) workerImage() string {
 func (c *PachydermComponents) workerSidecarImage() string {
 	// load default worker sidecar images
 	return c.workerSidecarName
+}
+
+func imagePullPolicyChecker(pullPolicy string) string {
+	if pullPolicy != "" {
+		return pullPolicy
+	}
+	return "IfNotPresent"
 }

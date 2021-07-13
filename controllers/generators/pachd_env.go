@@ -69,10 +69,9 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 			Name:  "WORKER_SERVICE_ACCOUNT",
 			Value: pd.Spec.Worker.ServiceAccountName,
 		},
-		// TODO: implement way to provide image pull secret
 		{
 			Name:  "IMAGE_PULL_SECRET",
-			Value: "",
+			Value: c.imagePullSecret(),
 		},
 		{
 			Name:  "LOG_LEVEL",
@@ -136,13 +135,6 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 		})
 	}
 
-	// TODO: check if this is still supported
-	// expose object API
-	// envs = append(envs, corev1.EnvVar{
-	// 	Name:  "EXPOSE_OBJECT_API",
-	// 	Value: fmt.Sprintf("%t", pd.Spec.Pachd.ExposeObjectAPI),
-	// })
-
 	return envs
 }
 
@@ -173,4 +165,12 @@ func imagePullPolicyChecker(pullPolicy string) string {
 		return pullPolicy
 	}
 	return "IfNotPresent"
+}
+
+func (c *PachydermComponents) imagePullSecret() string {
+	pd := c.Pachyderm()
+	if pd.Spec.ImagePullSecret != nil {
+		return *pd.Spec.ImagePullSecret
+	}
+	return ""
 }

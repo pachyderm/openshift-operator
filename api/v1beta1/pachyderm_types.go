@@ -35,6 +35,8 @@ type PachydermSpec struct {
 	Worker WorkerOptions `json:"worker,omitempty"`
 	// Allows user to customize Postgresql database
 	Postgres PostgresOptions `json:"postgresql,omitempty"`
+	// Allow user to provide an image pull secret
+	ImagePullSecret *string `json:"imagePullSecret,omitempty"`
 }
 
 // WorkerOptions allows the user to configure workers

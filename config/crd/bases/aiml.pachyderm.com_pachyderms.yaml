@@ -187,6 +187,9 @@ spec:
                       "100Gi"'
                     type: string
                 type: object
+              imagePullSecret:
+                description: Allow user to provide an image pull secret
+                type: string
               pachd:
                 description: Allows the user to customize the pachd instance(s)
                 properties:

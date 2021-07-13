@@ -66,6 +66,10 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 			Value: c.workerSidecarImage(),
 		},
 		{
+			Name:  "WORKER_IMAGE_PULL_POLICY",
+			Value: c.workerImagePullPolicy(),
+		},
+		{
 			Name:  "WORKER_SERVICE_ACCOUNT",
 			Value: pd.Spec.Worker.ServiceAccountName,
 		},
@@ -119,13 +123,6 @@ func (c *PachydermComponents) pachdEnvVarirables() []corev1.EnvVar {
 		},
 	}
 
-	if pd.Spec.Worker.Image != nil {
-		envs = append(envs, corev1.EnvVar{
-			Name:  "WORKER_IMAGE_PULL_POLICY",
-			Value: imagePullPolicyChecker(pd.Spec.Worker.Image.PullPolicy),
-		})
-	}
-
 	// metrics endpoint
 	if pd.Spec.Pachd.Metrics.Endpoint != "" {
 		// TODO: check if this is still supported
@@ -160,9 +157,11 @@ func (c *PachydermComponents) workerSidecarImage() string {
 	return c.workerSidecarName
 }
 
-func imagePullPolicyChecker(pullPolicy string) string {
-	if pullPolicy != "" {
-		return pullPolicy
+func (c *PachydermComponents) workerImagePullPolicy() string {
+	pd := c.Pachyderm()
+	if pd.Spec.Worker.Image != nil &&
+		pd.Spec.Worker.Image.PullPolicy != "" {
+		return pd.Spec.Worker.Image.PullPolicy
 	}
 	return "IfNotPresent"
 }

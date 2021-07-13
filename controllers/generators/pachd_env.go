@@ -159,9 +159,10 @@ func (c *PachydermComponents) workerSidecarImage() string {
 
 func (c *PachydermComponents) workerImagePullPolicy() string {
 	pd := c.Pachyderm()
-	if pd.Spec.Worker.Image != nil &&
-		pd.Spec.Worker.Image.PullPolicy != "" {
-		return pd.Spec.Worker.Image.PullPolicy
+	if pd.Spec.Worker.Image != nil {
+		if pd.Spec.Worker.Image.PullPolicy != "" {
+			return pd.Spec.Worker.Image.PullPolicy
+		}
 	}
 	return "IfNotPresent"
 }

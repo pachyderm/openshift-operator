@@ -40,7 +40,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	storagev1 "k8s.io/api/storage/v1"
 )
 
 const (
@@ -259,7 +258,7 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 	if len(pds.Items) <= 1 {
 		// delete roles
 		for _, role := range components.Roles {
-			if err := r.Delete(ctx, &role); err != nil {
+			if err := r.Delete(ctx, role); err != nil {
 				if errors.IsNotFound(err) {
 					return nil
 				}
@@ -269,7 +268,7 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 
 		// delete role bindings
 		for _, rb := range components.RoleBindings {
-			if err := r.Delete(ctx, &rb); err != nil {
+			if err := r.Delete(ctx, rb); err != nil {
 				if errors.IsNotFound(err) {
 					return nil
 				}
@@ -279,7 +278,7 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 
 		// delete service accounts
 		for _, sa := range components.ServiceAccounts {
-			if err := r.Delete(ctx, &sa); err != nil {
+			if err := r.Delete(ctx, sa); err != nil {
 				if errors.IsNotFound(err) {
 					return nil
 				}
@@ -299,7 +298,7 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 	if len(pds.Items) <= 1 {
 		// delete cluster role bindings
 		for _, crb := range components.ClusterRoleBindings {
-			if err := r.Delete(ctx, &crb); err != nil {
+			if err := r.Delete(ctx, crb); err != nil {
 				if errors.IsNotFound(err) {
 					return nil
 				}
@@ -308,8 +307,8 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		}
 
 		// delete cluster roles
-		for _, cr := range components.ClusterRoles {
-			if err := r.Delete(ctx, &cr); err != nil {
+		for _, clusterRole := range components.ClusterRoles {
+			if err := r.Delete(ctx, clusterRole); err != nil {
 				if errors.IsNotFound(err) {
 					return nil
 				}
@@ -437,11 +436,11 @@ func (r *PachydermReconciler) reconcileServiceAccounts(ctx context.Context, comp
 
 	for _, sa := range components.ServiceAccounts {
 		// add owner references
-		if err := controllerutil.SetControllerReference(pd, &sa, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(pd, sa, r.Scheme); err != nil {
 			return err
 		}
 
-		if err := r.Create(ctx, &sa); err != nil {
+		if err := r.Create(ctx, sa); err != nil {
 			if errors.IsAlreadyExists(err) {
 				return nil
 			}
@@ -458,11 +457,11 @@ func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components *ge
 
 	for _, role := range components.Roles {
 		// add owner references
-		if err := controllerutil.SetControllerReference(components.Pachyderm(), &role, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(components.Pachyderm(), role, r.Scheme); err != nil {
 			return err
 		}
 
-		if err := r.Create(ctx, &role); err != nil {
+		if err := r.Create(ctx, role); err != nil {
 			if errors.IsAlreadyExists(err) {
 				return nil
 			}
@@ -476,9 +475,9 @@ func (r *PachydermReconciler) reconcileRoles(ctx context.Context, components *ge
 
 func (r *PachydermReconciler) reconcileClusterRoles(ctx context.Context, components *generators.PachydermComponents) error {
 
-	for _, clusterrole := range components.ClusterRoles {
+	for _, clusterRole := range components.ClusterRoles {
 
-		if err := r.Create(ctx, &clusterrole); err != nil {
+		if err := r.Create(ctx, clusterRole); err != nil {
 			if errors.IsAlreadyExists(err) {
 				return nil
 			}
@@ -493,11 +492,11 @@ func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, compone
 
 	for _, rolebinding := range components.RoleBindings {
 		// add owner references
-		if err := controllerutil.SetControllerReference(components.Pachyderm(), &rolebinding, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(components.Pachyderm(), rolebinding, r.Scheme); err != nil {
 			return err
 		}
 
-		if err := r.Create(ctx, &rolebinding); err != nil {
+		if err := r.Create(ctx, rolebinding); err != nil {
 			if errors.IsAlreadyExists(err) {
 				return nil
 			}
@@ -512,7 +511,7 @@ func (r *PachydermReconciler) reconcileRoleBindings(ctx context.Context, compone
 func (r *PachydermReconciler) reconcileClusterRoleBindings(ctx context.Context, components *generators.PachydermComponents) error {
 	for _, crb := range components.ClusterRoleBindings {
 
-		if err := r.Create(ctx, &crb); err != nil {
+		if err := r.Create(ctx, crb); err != nil {
 			if errors.IsAlreadyExists(err) {
 				return nil
 			}
@@ -529,11 +528,11 @@ func (r *PachydermReconciler) reconcileServices(ctx context.Context, components 
 
 	for _, svc := range components.Services {
 		// add owner references
-		if err := controllerutil.SetControllerReference(pd, &svc, r.Scheme); err != nil {
+		if err := controllerutil.SetControllerReference(pd, svc, r.Scheme); err != nil {
 			return err
 		}
 
-		if err := r.Create(ctx, &svc); err != nil {
+		if err := r.Create(ctx, svc); err != nil {
 			if errors.IsAlreadyExists(err) {
 				// Check if the secret contents have changed
 				current := &corev1.Service{}
@@ -546,7 +545,7 @@ func (r *PachydermReconciler) reconcileServices(ctx context.Context, components 
 					return err
 				}
 
-				if serviceChanged(current, &svc) {
+				if serviceChanged(current, svc) {
 					if err := r.Update(ctx, current); err != nil {
 						return err
 					}
@@ -725,23 +724,17 @@ func (r *PachydermReconciler) deployDash(ctx context.Context, components *genera
 }
 
 func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components *generators.PachydermComponents) error {
-	pachyderm := components.Pachyderm()
-	storageClassName := generators.EtcdStorageClassName(pachyderm)
-	if storageClassName != "etcd-storage-class" {
-		userStorageClass := &storagev1.StorageClass{}
-		userSCKey := types.NamespacedName{
-			Name: storageClassName,
-		}
-		if err := r.Get(ctx, userSCKey, userStorageClass); err != nil {
-			return err
-		}
+	// if no storage class needs to be created,
+	// return nil
+	if len(components.StorageClasses()) < 1 {
 		return nil
 	}
 
-	sc := components.StorageClass()
-	if err := r.Create(ctx, sc); err != nil {
-		if errors.IsAlreadyExists(err) {
-			return nil
+	for _, sc := range components.StorageClasses() {
+		if err := r.Create(ctx, sc); err != nil {
+			if errors.IsAlreadyExists(err) {
+				return nil
+			}
 		}
 	}
 

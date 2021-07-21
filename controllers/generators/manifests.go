@@ -36,15 +36,15 @@ type PachydermComponents struct {
 	etcdStatefulSet     *appsv1.StatefulSet
 	postgreStatefulSet  *appsv1.StatefulSet
 	Pod                 *corev1.Pod
-	ClusterRoleBindings []rbacv1.ClusterRoleBinding
-	ClusterRoles        []rbacv1.ClusterRole
-	RoleBindings        []rbacv1.RoleBinding
-	Roles               []rbacv1.Role
-	ServiceAccounts     []corev1.ServiceAccount
-	Services            []corev1.Service
+	ClusterRoleBindings []*rbacv1.ClusterRoleBinding
+	ClusterRoles        []*rbacv1.ClusterRole
+	RoleBindings        []*rbacv1.RoleBinding
+	Roles               []*rbacv1.Role
+	ServiceAccounts     []*corev1.ServiceAccount
+	Services            []*corev1.Service
 	secrets             []*corev1.Secret
 	configMaps          []*corev1.ConfigMap
-	storageClass        storagev1.StorageClass
+	storageClasses      []*storagev1.StorageClass
 }
 
 func (c *PachydermComponents) SetGoogleCredentials(credentials []byte) {
@@ -152,41 +152,41 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) *PachydermComponents {
 				fmt.Println("error parsing pod.", err.Error())
 			}
 		case "ServiceAccount":
-			var sa corev1.ServiceAccount
-			if err := toTypedResource(obj, &sa); err != nil {
+			sa := &corev1.ServiceAccount{}
+			if err := toTypedResource(obj, sa); err != nil {
 				fmt.Println("error converting to service account.", err.Error())
 			}
 			sa.Namespace = pd.Namespace
 			components.ServiceAccounts = append(components.ServiceAccounts, sa)
 		case "Secret":
-			var secret corev1.Secret
-			if err := toTypedResource(obj, &secret); err != nil {
+			secret := &corev1.Secret{}
+			if err := toTypedResource(obj, secret); err != nil {
 				fmt.Println("error converting to secret.", err.Error())
 			}
 			secret.Namespace = pd.Namespace
-			components.secrets = append(components.secrets, &secret)
+			components.secrets = append(components.secrets, secret)
 		case "ConfigMap":
-			var cm corev1.ConfigMap
-			if err := toTypedResource(obj, &cm); err != nil {
+			cm := &corev1.ConfigMap{}
+			if err := toTypedResource(obj, cm); err != nil {
 				fmt.Println("error converting to config map.", err.Error())
 			}
 			cm.Namespace = pd.Namespace
-			components.configMaps = append(components.configMaps, &cm)
+			components.configMaps = append(components.configMaps, cm)
 		case "StorageClass":
-			var sc storagev1.StorageClass
-			if err := toTypedResource(obj, &sc); err != nil {
+			sc := &storagev1.StorageClass{}
+			if err := toTypedResource(obj, sc); err != nil {
 				fmt.Println("error converting to secret.", err.Error())
 			}
-			components.storageClass = sc
+			components.storageClasses = append(components.storageClasses, sc)
 		case "ClusterRole":
-			var clusterrole rbacv1.ClusterRole
-			if err := toTypedResource(obj, &clusterrole); err != nil {
+			clusterrole := &rbacv1.ClusterRole{}
+			if err := toTypedResource(obj, clusterrole); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
 			components.ClusterRoles = append(components.ClusterRoles, clusterrole)
 		case "ClusterRoleBinding":
-			var clusterRoleBinding rbacv1.ClusterRoleBinding
-			if err := toTypedResource(obj, &clusterRoleBinding); err != nil {
+			clusterRoleBinding := &rbacv1.ClusterRoleBinding{}
+			if err := toTypedResource(obj, clusterRoleBinding); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
 			for i := range clusterRoleBinding.Subjects {
@@ -194,22 +194,22 @@ func getPachydermComponents(pd *aimlv1beta1.Pachyderm) *PachydermComponents {
 			}
 			components.ClusterRoleBindings = append(components.ClusterRoleBindings, clusterRoleBinding)
 		case "Role":
-			var role rbacv1.Role
-			if err := toTypedResource(obj, &role); err != nil {
+			role := &rbacv1.Role{}
+			if err := toTypedResource(obj, role); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
 			role.Namespace = pd.Namespace
 			components.Roles = append(components.Roles, role)
 		case "RoleBinding":
-			var roleBinding rbacv1.RoleBinding
-			if err := toTypedResource(obj, &roleBinding); err != nil {
+			roleBinding := &rbacv1.RoleBinding{}
+			if err := toTypedResource(obj, roleBinding); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
 			roleBinding.Namespace = pd.Namespace
 			components.RoleBindings = append(components.RoleBindings, roleBinding)
 		case "Service":
-			var svc corev1.Service
-			if err := toTypedResource(obj, &svc); err != nil {
+			svc := &corev1.Service{}
+			if err := toTypedResource(obj, svc); err != nil {
 				fmt.Println("error converting to cluster role.", err.Error())
 			}
 			svc.Namespace = pd.Namespace
@@ -302,63 +302,62 @@ func (c *PachydermComponents) Pachyderm() *aimlv1beta1.Pachyderm {
 	return c.pachyderm
 }
 
-// EtcdStorageClassName return aname of storage class to be used by etcd
-func EtcdStorageClassName(pd *aimlv1beta1.Pachyderm) string {
-	var storageClass string = "etcd-storage-class"
-	if pd.Spec.Etcd.StorageClass != "" {
-		storageClass = pd.Spec.Etcd.StorageClass
-	}
-	return storageClass
-}
-
 // StorageClass returns a new etcd storage class
 // if an existing one is not used or provided
-func (c *PachydermComponents) StorageClass() *storagev1.StorageClass {
+func (c *PachydermComponents) StorageClasses() []*storagev1.StorageClass {
+	var storageClasses []*storagev1.StorageClass
 	pd := c.pachyderm
 	var allowExpansion bool = true
 
-	if !reflect.DeepEqual(pd.Spec.Etcd, aimlv1beta1.EtcdOptions{}) &&
-		pd.Spec.Etcd.StorageClass != "" {
-		return nil
-	}
-
 	// if storage class is not provided,
 	// create a new storage class
-	sc := &c.storageClass
-	sc.AllowVolumeExpansion = &allowExpansion
+	for _, sc := range c.storageClasses {
+		sc.AllowVolumeExpansion = &allowExpansion
 
-	if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) {
-		switch pd.Spec.Pachd.Storage.Backend {
-		case "google":
-			sc.Provisioner = "kubernetes.io/gce-pd"
-			sc.Parameters = map[string]string{
-				"type": "pd-ssd",
+		if !reflect.DeepEqual(pd.Spec.Pachd, aimlv1beta1.PachdOptions{}) {
+			// check if the etcd-storage-class and postgresql-storage-class
+			// need to be created
+			if pd.Spec.Etcd.StorageClass == "" ||
+				pd.Spec.Postgres.StorageClass == "" {
+				storageClassProvisioner(pd, sc)
+				storageClasses = append(storageClasses, sc)
 			}
-		case "amazon":
-			// https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
-			sc.Provisioner = "ebs.csi.aws.com"
-			sc.Parameters = map[string]string{
-				"type": "gp3",
-			}
-		case "microsoft":
-			sc.Provisioner = ""
-			sc.Parameters = map[string]string{
-				"type": "",
-			}
-		case "minio":
-			sc.Provisioner = ""
-			sc.Parameters = map[string]string{
-				"type": "",
-			}
-		default:
-			sc.Provisioner = "ebs.csi.aws.com"
-			sc.Parameters = map[string]string{
-				"type": "gp3",
-			}
+
 		}
 	}
 
-	return &c.storageClass
+	return storageClasses
+}
+
+func storageClassProvisioner(pd *aimlv1beta1.Pachyderm, sc *storagev1.StorageClass) {
+	switch pd.Spec.Pachd.Storage.Backend {
+	case "google":
+		sc.Provisioner = "kubernetes.io/gce-pd"
+		sc.Parameters = map[string]string{
+			"type": "pd-ssd",
+		}
+	case "amazon":
+		// https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html
+		sc.Provisioner = "ebs.csi.aws.com"
+		sc.Parameters = map[string]string{
+			"type": "gp3",
+		}
+	case "microsoft":
+		sc.Provisioner = ""
+		sc.Parameters = map[string]string{
+			"type": "",
+		}
+	case "minio":
+		sc.Provisioner = ""
+		sc.Parameters = map[string]string{
+			"type": "",
+		}
+	default:
+		sc.Provisioner = "ebs.csi.aws.com"
+		sc.Parameters = map[string]string{
+			"type": "gp3",
+		}
+	}
 }
 
 // Secrets returns secrets used by the pachyderm resource

@@ -1,0 +1,7 @@
+apiVersion: aiml.pachyderm.com/v1beta1
+kind: PachydermVault
+metadata:
+  name: pachydermvault-sample
+spec:
+  # Add fields here
+  foo: bar

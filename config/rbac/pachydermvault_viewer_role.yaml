@@ -1,0 +1,20 @@
+# permissions for end users to view pachydermvaults.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pachydermvault-viewer-role
+rules:
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermvaults
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermvaults/status
+  verbs:
+  - get

@@ -33,6 +33,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermvaults
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermvaults/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermvaults/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - apps
   resources:
   - deployments

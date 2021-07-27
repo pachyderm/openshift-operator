@@ -1,4 +1,5 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
 - aiml_v1beta1_pachyderm.yaml
+- aiml_v1beta1_pachydermvault.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

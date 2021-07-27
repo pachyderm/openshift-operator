@@ -26,6 +26,16 @@ metadata:
               }
             }
           }
+        },
+        {
+          "apiVersion": "aiml.pachyderm.com/v1beta1",
+          "kind": "PachydermVault",
+          "metadata": {
+            "name": "pachydermvault-sample"
+          },
+          "spec": {
+            "foo": "bar"
+          }
         }
       ]
     capabilities: Basic Install
@@ -48,6 +58,11 @@ spec:
       displayName: Pachyderm
       kind: Pachyderm
       name: pachyderms.aiml.pachyderm.com
+      version: v1beta1
+    - description: PachydermVault is the Schema for the pachydermvaults API
+      displayName: Pachyderm Vault
+      kind: PachydermVault
+      name: pachydermvaults.aiml.pachyderm.com
       version: v1beta1
   description: |
     The Pachyderm operator aims to make deploying and managing Pachyderm instances on Openshift or Kubernetes easier.
@@ -94,6 +109,32 @@ spec:
           - aiml.pachyderm.com
           resources:
           - pachyderms/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermvaults
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermvaults/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermvaults/status
           verbs:
           - get
           - patch

@@ -1,4 +1,4 @@
-module github.com/opdev/pachyderm-operator
+module github.com/pachyderm/openshift-operator
 
 go 1.15
 

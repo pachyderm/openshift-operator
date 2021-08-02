@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	goyaml "github.com/go-yaml/yaml"
-	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
+	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"

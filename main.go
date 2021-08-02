@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	aimlv1beta1 "github.com/opdev/pachyderm-operator/api/v1beta1"
-	"github.com/opdev/pachyderm-operator/controllers"
+	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
+	"github.com/pachyderm/openshift-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 

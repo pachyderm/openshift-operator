@@ -1,0 +1,90 @@
+name: Go
+
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - README.md
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      KUBEBUILDER_BIN: ${GITHUB_WORKSPACE}/testbin/bin
+      VERSION: 0.0.1
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    
+    - name: Set up operator-sdk
+      run: curl -Lo /usr/local/bin/operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v1.10.0/operator-sdk_linux_amd64
+
+    - name: Make operator-sdk executable
+      run: chmod +x /usr/local/bin/operator-sdk
+
+    - name: Set up Qemu
+      uses: docker/setup-qemu-action@v1
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # - name: Login to DockerHub
+    #   uses: docker/login-action@v1 
+    #   with:
+    #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+    #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push operator image
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        push: false
+        tags: pachyderm/pachyderm-operator:latest
+
+    - name: Generate bundle manifest resources
+      run: make bundle
+
+    - name: Build and push operator bundle image
+      id: bundle_build
+      uses: docker/build-push-action@v2
+      with:
+        push: false
+        file: bundle.Dockerfile
+        tags: pachyderm/pachyderm-bundle:v${{ env.VERSION }}
+
+    - name: Set up kubebuilder envtest directory
+      run: mkdir -p ${{ env.KUBEBUILDER_BIN }}
+
+    - name: Add etcd binary to kubebuilder assets
+      run: |
+        curl -LO https://github.com/etcd-io/etcd/releases/download/v3.5.0/etcd-v3.5.0-linux-amd64.tar.gz
+        tar xvzf etcd-v3.5.0-linux-amd64.tar.gz -C /tmp
+        mv /tmp/etcd-v3.5.0-linux-amd64/etcd ${{ env.KUBEBUILDER_BIN }}/etcd
+      env:
+        ETCD_VERSION: 3.5.0
+
+    - name: Download kubectl binary
+      run: curl -Lo ${{ env.KUBEBUILDER_BIN }}/kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+    - name: Download kube-apiserver binary
+      run:  curl -Lo ${{ env.KUBEBUILDER_BIN }}/kube-apiserver "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)bin/linux/amd64/kube-apiserver"
+
+    - name: Make test binaries executable
+      run: |
+        chmod +x ${{ env.KUBEBUILDER_BIN }}/kubectl
+        chmod +x ${{ env.KUBEBUILDER_BIN }}/kube-apiserver
+        chmod +x ${{ env.KUBEBUILDER_BIN }}/etcd
+    
+    # - name: Run tests
+    #   run: KUBEBUILDER_ASSETS=${{ env.KUBEBUILDER_BIN }} KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=40 make test

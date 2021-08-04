@@ -31,12 +31,14 @@ metadata:
         },
         {
           "apiVersion": "aiml.pachyderm.com/v1beta1",
-          "kind": "PachydermVault",
+          "kind": "PachydermExport",
           "metadata": {
-            "name": "pachydermvault-sample"
+            "name": "pachydermexport-sample"
           },
           "spec": {
-            "foo": "bar"
+            "backup": {
+              "target": "pachyderm-sample"
+            }
           }
         }
       ]
@@ -56,15 +58,15 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: PachydermExport is the Schema for the pachydermexports API
+      displayName: Pachyderm Export
+      kind: PachydermExport
+      name: pachydermexports.aiml.pachyderm.com
+      version: v1beta1
     - description: Pachyderm is the Schema for the pachyderms API
       displayName: Pachyderm
       kind: Pachyderm
       name: pachyderms.aiml.pachyderm.com
-      version: v1beta1
-    - description: PachydermVault is the Schema for the pachydermvaults API
-      displayName: Pachyderm Vault
-      kind: PachydermVault
-      name: pachydermvaults.aiml.pachyderm.com
       version: v1beta1
   description: |
     The Pachyderm operator aims to make deploying and managing Pachyderm instances on Openshift or Kubernetes easier.
@@ -92,6 +94,32 @@ spec:
         - apiGroups:
           - aiml.pachyderm.com
           resources:
+          - pachydermexports
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermexports/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermexports/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
           - pachyderms
           verbs:
           - create
@@ -116,32 +144,6 @@ spec:
           - patch
           - update
         - apiGroups:
-          - aiml.pachyderm.com
-          resources:
-          - pachydermvaults
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - aiml.pachyderm.com
-          resources:
-          - pachydermvaults/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - aiml.pachyderm.com
-          resources:
-          - pachydermvaults/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
           - apps
           resources:
           - deployments
@@ -157,6 +159,18 @@ spec:
           - apps
           resources:
           - statefulsets
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - batch
+          resources:
+          - jobs
           verbs:
           - create
           - delete
@@ -193,6 +207,13 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods/exec
+          verbs:
+          - create
+          - get
         - apiGroups:
           - ""
           resources:
@@ -386,6 +407,11 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
+                env:
+                - name: NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
                 image: quay.io/opdev/pachyderm-operator:latest
                 livenessProbe:
                   httpGet:

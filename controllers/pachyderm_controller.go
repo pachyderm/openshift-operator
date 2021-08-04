@@ -96,9 +96,10 @@ func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		if errors.IsResourceExpired(err) {
-			return ctrl.Result{Requeue: true}, nil
-		}
+		// TODO: refactor reconcile status to update most recent pachyderm object
+		// if strings.Contains(err.Error(), "please apply your changes to the latest version and try again") {
+		// 	return ctrl.Result{}, nil
+		// }
 		return ctrl.Result{}, err
 	}
 
@@ -365,33 +366,25 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 
 	if err := r.Get(ctx, pdKey, current); err != nil {
 		if errors.IsNotFound(err) {
-			// TODO: do something
 			return nil
 		}
 		return err
 	}
 
 	if pd.DeletionTimestamp != nil && pd.Status.Phase != aimlv1beta1.PhaseDeleting {
-		current.Status.Phase = aimlv1beta1.PhaseDeleting
+		pd.Status.Phase = aimlv1beta1.PhaseDeleting
 	}
 
 	if reflect.DeepEqual(current.Status, aimlv1beta1.PachydermStatus{}) &&
 		pd.DeletionTimestamp == nil {
-		current.Status.Phase = aimlv1beta1.PhaseInitializing
+		pd.Status.Phase = aimlv1beta1.PhaseInitializing
 	}
 
 	if r.isPachydermRunning(ctx, pd) && pd.DeletionTimestamp == nil {
-		current.Status.Phase = aimlv1beta1.PhaseRunning
+		pd.Status.Phase = aimlv1beta1.PhaseRunning
 	}
 
-	if err := r.Status().Patch(ctx, current, client.MergeFrom(pd)); err != nil {
-		if errors.IsResourceExpired(err) {
-			return nil
-		}
-		return err
-	}
-
-	return nil
+	return r.Status().Patch(ctx, current, client.MergeFrom(pd))
 }
 
 func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {

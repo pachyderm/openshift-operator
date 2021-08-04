@@ -98,11 +98,11 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	if err = (&controllers.PachydermVaultReconciler{
+	if err = (&controllers.PachydermExportReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "PachydermVault")
+		setupLog.Error(err, "unable to create controller", "controller", "PachydermExport")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

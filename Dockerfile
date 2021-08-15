@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.15 as builder
+FROM golang:1.16 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -29,7 +29,7 @@ LABEL name=pachyderm-operator \
 
 ENV USER_ID=1001
 ADD LICENSE /license/apache2
-ADD hack/manifests /manifests
+ADD hack/charts /charts
 
 WORKDIR /
 COPY --from=builder /workspace/manager .

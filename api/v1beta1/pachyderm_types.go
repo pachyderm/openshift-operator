@@ -58,7 +58,7 @@ type DashOptions struct {
 	// Used to specify alternative images to use to deploy dash
 	Image *ImageOverride `json:"image,omitempty"`
 	// Optional resource requirements required to run the dash pods.
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 	// The address to use as the host in the dash ingress.
 	// Used as the host of a rule
 	URL     string            `json:"url,omitempty"`
@@ -105,25 +105,13 @@ type EtcdOptions struct {
 	Service     *ServiceOverrides `json:"service,omitempty"`
 }
 
-// TODO: renove obsolete options such as NumShards, BlockCacheBytes, etc
 // PachdOptions allows the user to customize pachd
 type PachdOptions struct {
 	// Set an ID for the cluster deployment.
 	// Defaults to a random value if none is provided
 	ClusterID string `json:"clusterDeploymentID,omitempty"`
-	// Sets the maximum number of pachd nodes allowed in the cluster.
-	// Increasing this number blindly could lead to degraded performance.
-	// Default: 16
-	// +kubebuilder:default:=16
-	NumShards int32 `json:"numShards,omitempty"`
-	// Size of Pachd's in-memory cache for PFS file.
-	// Size is specified in bytes, with allowed SI suffixes (M, K, G, Mi, Ki, Gi, etc)
-	BlockCacheBytes string `json:"blockCacheBytes,omitempty"`
-	// Pachd memory request
-	// +kubebuilder:default:="1T"
-	MemoryRequest string `json:"memoryRequest,omitempty"`
 	// Resource requests and limits for Pachd
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 	// Require only critical Pachd servers to startup and run without errors.
 	RequireCriticalServers bool `json:"requireCriticalServersOnly,omitempty"`
 	// Object storage options for Pachd
@@ -138,13 +126,12 @@ type PachdOptions struct {
 	// Optional value to determine the format of the logs
 	// Default: false
 	LokiLogging bool `json:"lokiLogging,omitempty"`
-	// When true, allows user to disable authentication during testing
-	AuthenticationDisabledForTesting bool `json:"authenticationDisabledForTesting,omitempty"`
 	// Pachyderm Pipeline System(PPS) worker GRPC port.
 	// Defaults to port 1080
 	// +kubebuilder:default=1080
-	PPSWorkerGRPCPort int32             `json:"ppsWorkerGRPCPort,omitempty"`
-	Service           *ServiceOverrides `json:"service,omitempty"`
+	PPSWorkerGRPCPort int32 `json:"ppsWorkerGRPCPort,omitempty"`
+	// Service overrides for pachd
+	Service *ServiceOverrides `json:"service,omitempty"`
 	// Allows user to customize metrics options
 	Metrics            MetricsOptions `json:"metrics,omitempty"`
 	ServiceAccountName string         `json:"serviceAccountName,omitempty"`
@@ -154,10 +141,10 @@ type PachdOptions struct {
 
 // PostgresOptions allows user to customize Postgresql
 type PostgresOptions struct {
-	Disabled     bool                        `json:"disabled,omitempty"`
-	StorageClass string                      `json:"storageClass,omitempty"`
-	Service      ServiceOverrides            `json:"service,omitempty"`
-	Resources    corev1.ResourceRequirements `json:"resources,omitempty"`
+	Disable      bool                         `json:"disable,omitempty"`
+	StorageClass string                       `json:"storageClass,omitempty"`
+	Service      ServiceOverrides             `json:"service,omitempty"`
+	Resources    *corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // PachdPostgresConfig
@@ -194,8 +181,8 @@ type ObjectStorageOptions struct {
 	// +kubebuilder:default:=100
 	UploadFileConcurrencyLimit int32 `json:"uploadFileConcurrencyLimit,omitempty"`
 	// Sets the type of storage backend.
-	// Should be one of "google", "amazon", "minio", "microsoft" or "local"
-	// +kubebuilder:validation:Enum:=amazon;minio;microsoft;local;google
+	// Should be one of "GOOGLE", "AMAZON", "MINIO", "MICROSOFT" or "LOCAL"
+	// +kubebuilder:validation:Enum:=AMAZON;MINIO;MICROSOFT;GOOGLE;LOCAL
 	Backend string `json:"backend"`
 	// Configures the Amazon storage backend
 	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`

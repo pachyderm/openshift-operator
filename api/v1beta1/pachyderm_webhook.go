@@ -52,13 +52,13 @@ var _ webhook.Defaulter = &Pachyderm{}
 func (r *Pachyderm) Default() {
 	pachydermlog.Info("default", "name", r.Name)
 
-	if r.Spec.Pachd.Storage.Backend == "amazon" {
+	if r.Spec.Pachd.Storage.Backend == "AMAZON" {
 		r.prepareAmazonStorage()
 	}
 
 	// if backend is "local" but, spec.pachd.storage.local is nil
 	// populate the hostPath
-	if r.Spec.Pachd.Storage.Backend == "local" {
+	if r.Spec.Pachd.Storage.Backend == "LOCAL" {
 		r.prepareLocalStorage()
 	}
 
@@ -101,7 +101,7 @@ func (r *Pachyderm) ValidateDelete() error {
 
 // returns true if Pachd storage is using Google Container storage
 func (r *Pachyderm) isUsingGCS() bool {
-	return r.Spec.Pachd.Storage.Google != nil && r.Spec.Pachd.Storage.Backend == "google"
+	return r.Spec.Pachd.Storage.Google != nil && r.Spec.Pachd.Storage.Backend == "GOOGLE"
 }
 
 func (r *Pachyderm) prepareLocalStorage() {
@@ -187,7 +187,7 @@ func isContainer() bool {
 }
 
 func getVersions() ([]string, error) {
-	var versionsDir string = "/manifests"
+	var versionsDir string = "/charts"
 	if !isContainer() {
 		return []string{}, errors.New("not running in container")
 

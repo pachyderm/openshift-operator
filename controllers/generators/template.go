@@ -20,12 +20,19 @@ import (
 
 func templateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"resources": resourceList,
+		"resources":    resourceList,
+		"dynamicNodes": etcdDynamicNodes,
 	}
 }
 
 func getValues(pd *aimlv1beta1.Pachyderm, directory *ChartDirectory) (chartutil.Values, error) {
 	var values bytes.Buffer
+	catalog, err := getDefaultCertifiedImages(directory.Images)
+	if err != nil {
+		return nil, err
+	}
+	catalog.inject(pd)
+
 	tmpl := template.Must(template.New(filepath.Base(directory.Values)).
 		Funcs(templateFuncs()).ParseFiles(directory.Values))
 	if err := tmpl.Execute(&values, pd); err != nil {
@@ -83,6 +90,9 @@ type ChartDirectory struct {
 	Values string
 	// Name of .tgz file containing chart
 	Chart string
+	// Images is the name of the file
+	// containing default certified images
+	Images string
 }
 
 func getChartDirectory(version string) (*ChartDirectory, error) {
@@ -104,19 +114,23 @@ func getChartDirectory(version string) (*ChartDirectory, error) {
 		return nil, err
 	}
 
-	var chartName, valuesFile string
+	var chartName, valuesFile, imagesFile string
 	for _, f := range entry {
-		if strings.Contains(f.Name(), "values.y") {
+		if strings.Contains(f.Name(), "values.yaml") {
 			valuesFile = f.Name()
 		}
 		if strings.Contains(f.Name(), ".tgz") {
 			chartName = f.Name()
+		}
+		if strings.Contains(f.Name(), "images.json") {
+			imagesFile = f.Name()
 		}
 	}
 
 	return &ChartDirectory{
 		Chart:  filepath.Join(chartDir, chartName),
 		Values: filepath.Join(chartDir, valuesFile),
+		Images: filepath.Join(chartDir, imagesFile),
 	}, nil
 }
 
@@ -139,4 +153,11 @@ func resourceList(resources corev1.ResourceList) map[string]string {
 	}
 
 	return response
+}
+
+func etcdDynamicNodes(nodes int32) int32 {
+	if nodes == 0 {
+		return 1
+	}
+	return nodes
 }

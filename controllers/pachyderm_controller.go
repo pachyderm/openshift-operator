@@ -605,7 +605,7 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components *
 func (r *PachydermReconciler) reconcileConfigMaps(ctx context.Context, components *generators.PachydermCluster) error {
 	pd := components.Pachyderm()
 
-	for _, cm := range components.ConfgigMaps() {
+	for _, cm := range components.ConfigMaps() {
 		// set owner reference
 		if err := controllerutil.SetControllerReference(pd, cm, r.Scheme); err != nil {
 			return err

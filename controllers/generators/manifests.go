@@ -3,6 +3,7 @@ package generators
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -202,7 +203,7 @@ func (c *PachydermCluster) Secrets() []*corev1.Secret {
 	return c.secrets
 }
 
-func (c *PachydermCluster) ConfgigMaps() []*corev1.ConfigMap {
+func (c *PachydermCluster) ConfigMaps() []*corev1.ConfigMap {
 	return c.configMaps
 }
 
@@ -224,7 +225,17 @@ func (c *PachydermCluster) DashDeployment() *appsv1.Deployment {
 
 // PostgreStatefulset returns the postgresql statefulset resource
 func (c *PachydermCluster) PostgreStatefulset() *appsv1.StatefulSet {
-	return c.postgreStatefulSet
+	options := postgresqlImage(c.pachyderm)
+	pgsql := c.postgreStatefulSet
+	for i, container := range pgsql.Spec.Template.Spec.Containers {
+		if container.Name == "postgres" {
+			pgsql.Spec.Template.Spec.Containers[i].Image = strings.Join(
+				[]string{options.Repository, options.ImageTag}, ":")
+			pgsql.Spec.Template.Spec.Containers[i].ImagePullPolicy = corev1.PullPolicy(options.PullPolicy)
+		}
+	}
+
+	return pgsql
 }
 
 // PrepareCluster takes a pachyderm custom resource and returns

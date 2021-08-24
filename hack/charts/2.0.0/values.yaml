@@ -11,7 +11,6 @@ imagePullSecret: ""
 # settings (storage classes, etc). It must be one of GOOGLE, AMAZON,
 # MINIO, MICROSOFT, CUSTOM or LOCAL.
 deployTarget: ""
-test: {{ resources .Spec.Dashd.Resources.Requests }}
 
 dash:
   # enabled controls whether the dash manifests are created or not.
@@ -20,17 +19,9 @@ dash:
     # repository is the image repo to pull from; together with tag it
     # replicates the --dash-image & --registry arguments to pachctl
     # deploy.
-    {{if .Spec.Dashd.Image }}
-    repository: {{if eq .Spec.Dashd.Image.Repository "" }}"pachyderm/haberdashery"{{ else }}"{{ .Spec.Dashd.Image.Repository }}"{{ end }}
-    pullPolicy: {{if eq .Spec.Dashd.Image.PullPolicy "" }}"IfNotPresent"{{ else }}"{{ .Spec.Dashd.Image.PullPolicy }}"{{ end }}
-    tag: {{if eq .Spec.Dashd.Image.ImageTag "" }}"b6769ac1ad4561d76e9382bc24ac271bc7686956"{{ else }}"{{ .Spec.Dashd.Image.ImageTag }}"{{ end }} 
-    {{ else }}
-    repository: "pachyderm/haberdashery"
-    pullPolicy: "IfNotPresent"
-    # tag is the image repo to pull from; together with repository it
-    # replicates the --dash-image argument to pachctl deploy.
-    tag: "b6769ac1ad4561d76e9382bc24ac271bc7686956"
-    {{ end }}
+    repository: {{ .Spec.Dashd.Image.Repository }}
+    pullPolicy: {{ .Spec.Dashd.Image.PullPolicy }}
+    tag: {{ .Spec.Dashd.Image.ImageTag }}
   # podLabels specifies labels to add to the dash pod.
   podLabels: {}
   # resources specifies the resource request and limits.
@@ -89,17 +80,11 @@ etcd:
   # dynamicNodes sets the number of nodes in the etcd StatefulSet.  It
   # is analogous to the --dynamic-etcd-nodes argument to pachctl
   # deploy.
-  dynamicNodes: {{ .Spec.Etcd.DynamicNodes }}
+  dynamicNodes: {{ dynamicNodes .Spec.Etcd.DynamicNodes }}
   image:
-    {{if .Spec.Etcd.Image }}
-    repository: {{if eq .Spec.Etcd.Image.Repository "" }}"pachyderm/etcd"{{ else }}"{{ .Spec.Etcd.Image.Repository }}"{{ end }}
-    pullPolicy: {{if eq .Spec.Etcd.Image.PullPolicy "" }}"IfNotPresent"{{ else }}"{{ .Spec.Etcd.Image.PullPolicy }}"{{ end }}
-    tag: {{if eq .Spec.Etcd.Image.ImageTag "" }}"v3.3.5"{{ else }}"{{ .Spec.Etcd.Image.ImageTag }}"{{ end }} 
-    {{ else }}
-    repository: "pachyderm/etcd"
-    tag: "v3.3.5"
-    pullPolicy: "IfNotPresent"
-    {{ end }}
+    repository: {{ .Spec.Etcd.Image.Repository }}
+    pullPolicy: {{ .Spec.Etcd.Image.PullPolicy }}
+    tag: {{ .Spec.Etcd.Image.ImageTag }}
   # podLabels specifies labels to add to the etcd pod.
   podLabels: {}
   # resources specifies the resource request and limits
@@ -160,10 +145,10 @@ enterpriseServer:
   # podLabels specifies labels to add to the pachd pod.
   podLabels: {}
   image:
-    repository: "pachyderm/pachd"
-    pullPolicy: "IfNotPresent"
+    repository: {{ .Spec.Pachd.Image.Repository }}
+    pullPolicy: {{ .Spec.Pachd.Image.PullPolicy }}
     # tag defaults to the chart’s specified appVersion.
-    tag: ""
+    tag: {{ .Spec.Pachd.Image.ImageTag }}
 
 pachd:
   enabled: true
@@ -173,10 +158,10 @@ pachd:
   # goMaxProcs is passed as GOMAXPROCS to the pachd container.
   goMaxProcs: 0
   image:
-    repository: "pachyderm/pachd"
-    pullPolicy: "IfNotPresent"
+    repository: {{ .Spec.Pachd.Image.Repository }}
+    pullPolicy: {{ .Spec.Pachd.Image.PullPolicy }}
     # tag defaults to the chart’s specified appVersion.
-    tag: ""
+    tag: {{ .Spec.Pachd.Image.ImageTag }}
   logLevel: {{ .Spec.Pachd.LogLevel }}
   # lokiLogging enables Loki logging if set.
   lokiLogging: {{ .Spec.Pachd.LokiLogging }}
@@ -382,8 +367,9 @@ rbac:
 
 worker:
   image:
-    repository: "pachyderm/worker"
-    pullPolicy: "IfNotPresent"
+    repository: {{ .Spec.Worker.Image.Repository }}
+    pullPolicy: {{ .Spec.Worker.Image.PullPolicy }}
+    tag: {{ .Spec.Worker.Image.ImageTag }}
   serviceAccount:
     create: true
     additionalAnnotations: {}

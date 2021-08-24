@@ -33,6 +33,8 @@ IMG ?= quay.io/opdev/pachyderm-operator:latest
 VERSION_IMG := quay.io/opdev/pachyderm-operator:$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+# BUILD_TOOL is name of tool used to build container images
+BUILD_TOOL ?= docker
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -88,11 +90,11 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 docker-build: test ## Build docker image with the manager.
-	docker build --build-arg VERSION=$(VERSION) -t ${IMG} -t ${VERSION_IMG} .
+	${BUILD_TOOL} build --build-arg VERSION=$(VERSION) -t ${IMG} -t ${VERSION_IMG} .
 
 docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
-	docker push ${VERSION_IMG}
+	${BUILD_TOOL} push ${IMG}
+	${BUILD_TOOL} push ${VERSION_IMG}
 
 ##@ Deployment
 
@@ -141,13 +143,13 @@ bundle: manifests kustomize
 
 .PHONY: bundle-build ## Build the bundle image.
 bundle-build:
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	${BUILD_TOOL} build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 bundle-push:
-	docker push $(BUNDLE_IMG)
+	${BUILD_TOOL} push $(BUNDLE_IMG)
 
 index-build:
-	opm index add --bundles quay.io/opdev/pachyderm-bundle:$(VERSION) -t quay.io/opdev/pachyderm-index:latest -u docker
+	opm index add --bundles quay.io/opdev/pachyderm-bundle:$(VERSION) -t quay.io/opdev/pachyderm-index:latest -u ${BUILD_TOOL}
 
 index-push: index-build
-	docker push quay.io/opdev/pachyderm-index:latest
+	${BUILD_TOOL} push quay.io/opdev/pachyderm-index:latest

@@ -1,0 +1,27 @@
+{
+   "pachd": {
+      "repository": "pachyderm/pachd",
+      "tag": "latest",
+      "pullPolicy": "IfNotPresent"
+   },
+   "dash": {
+      "repository": "pachyderm/haberdashery",
+      "tag": "b6769ac1ad4561d76e9382bc24ac271bc7686956",
+      "pullPolicy": "IfNotPresent"
+   },
+   "etcd": {
+      "repository": "pachyderm/etcd",
+      "tag": "v3.3.5",
+      "pullPolicy": "IfNotPresent"
+   },
+   "postgres": {
+      "repository": "postgres",
+      "tag": "13.0-alpine",
+      "pullPolicy": "IfNotPresent"
+   },
+   "worker": {
+      "repository": "pachyderm/worker",
+      "tag": "latest",
+      "pullPolicy": "IfNotPresent"
+   }
+}

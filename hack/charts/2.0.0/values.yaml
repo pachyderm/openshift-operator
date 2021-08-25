@@ -1,0 +1,400 @@
+# SPDX-FileCopyrightText: Pachyderm, Inc. <info@pachyderm.com>
+# SPDX-License-Identifier: Apache-2.0
+
+# imagePullSecret sets the image pull secret used for all images.  It
+# is analogous to the --image-pull-secret argument to pachctl deploy.
+#
+# In accordance with pachctl deploy it is _not_ per-image.
+imagePullSecret: ""
+
+# Deploy Target configures the storage backend to use and cloud provider
+# settings (storage classes, etc). It must be one of GOOGLE, AMAZON,
+# MINIO, MICROSOFT, CUSTOM or LOCAL.
+deployTarget: ""
+
+dash:
+  # enabled controls whether the dash manifests are created or not.
+  enabled: {{ not .Spec.Dashd.Disable }}
+  image:
+    # repository is the image repo to pull from; together with tag it
+    # replicates the --dash-image & --registry arguments to pachctl
+    # deploy.
+    repository: {{ .Spec.Dashd.Image.Repository }}
+    pullPolicy: {{ .Spec.Dashd.Image.PullPolicy }}
+    tag: {{ .Spec.Dashd.Image.ImageTag }}
+  # podLabels specifies labels to add to the dash pod.
+  podLabels: {}
+  # resources specifies the resource request and limits.
+  {{ if .Spec.Dashd.Resources }}
+  resources:
+    {{ if .Spec.Dashd.Resources.Requests }}
+    requests:
+      {{ range $key, $value := (resources .Spec.Dashd.Resources.Requests) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+    {{ if .Spec.Dashd.Resources.Limits }}
+    limits:
+      {{ range $key, $value := (resources .Spec.Dashd.Resources.Limits) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+  {{ end }}
+
+  config:
+    issuerURI: ""
+    oauthRedirectURI: ""
+    oauthClientID: ""
+    oauthClientSecret: ""
+    graphqlPort: 4000
+    oauthPachdClientID: ""
+    pachdAddress: "pachd-peer.{{ .ObjectMeta.Namespace }}.svc.cluster.local:30653"
+  ingress:
+    enabled: false
+    annotations: {}
+    host: "{{ .Spec.Dashd.URL }}"
+    # There are three options for TLS:
+    # 1. Disabled
+    # 2. Enabled, existingSecret, specify secret name
+    # 3. Enabled, newSecret, must specify cert, key, secretName and set newSecret.create to true
+    tls:
+      enabled: false
+      secretName: ""
+      newSecret:
+        create: false
+        crt: ""
+        key: ""
+
+  service:
+    # labels specifies labels to add to the dash service.
+    labels: {}
+    # type specifies the Kubernetes type of the dash service.
+    {{ if .Spec.Dashd.Service }}
+    type: {{if not (eq .Spec.Dashd.Service.Type "") }}{{ .Spec.Dashd.Service.Type }}{{ end }}
+    {{ else }}
+    type: ClusterIP
+    {{ end }}
+
+etcd:
+  affinity: {}
+  # dynamicNodes sets the number of nodes in the etcd StatefulSet.  It
+  # is analogous to the --dynamic-etcd-nodes argument to pachctl
+  # deploy.
+  dynamicNodes: {{ dynamicNodes .Spec.Etcd.DynamicNodes }}
+  image:
+    repository: {{ .Spec.Etcd.Image.Repository }}
+    pullPolicy: {{ .Spec.Etcd.Image.PullPolicy }}
+    tag: {{ .Spec.Etcd.Image.ImageTag }}
+  # podLabels specifies labels to add to the etcd pod.
+  podLabels: {}
+  # resources specifies the resource request and limits
+  {{ if .Spec.Etcd.Resources }}
+  resources:
+    {{ if .Spec.Etcd.Resources.Requests }}
+    requests:
+      {{ range $key, $value := (resources .Spec.Etcd.Resources.Requests) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+    {{ if .Spec.Etcd.Resources.Limits }}
+    limits:
+      {{ range $key, $value := (resources .Spec.Etcd.Resources.Limits) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+  {{ end }}
+
+  # storageClass indicates the etcd should use an existing
+  # StorageClass for its storage.  It is analogous to the
+  # --etcd-storage-class argument to pachctl deploy.
+  storageClass: "{{ .Spec.Etcd.StorageClass }}"
+  # storageSize specifies the size of the volume to use for etcd.
+  # If you do not specify, it will default to 256Gi on Azure and 100Gi on GCP/AWS
+  storageSize: "{{ .Spec.Etcd.StorageSize }}"
+  service:
+    # annotations specifies annotations to add to the etcd service.
+    annotations: {}
+    # labels specifies labels to add to the etcd service.
+    labels: {}
+    # type specifies the Kubernetes type of the etcd service.
+    type: ClusterIP
+
+enterpriseServer:
+  enabled: false
+  affinity: {}
+  service:
+    type: ClusterIP
+  # There are three options for TLS:
+  # 1. Disabled
+  # 2. Enabled, existingSecret, specify secret name
+  # 3. Enabled, newSecret, must specify cert, key and name
+  tls:
+    enabled: false
+    secretName: ""
+    newSecret:
+      create: false
+      crt: ""
+      key: ""
+  resources: {}
+    #limits:
+    #  cpu: "1"
+    #  memory: "2G"
+    #requests:
+    #  cpu: "1"
+    #  memory: "2G"
+  # podLabels specifies labels to add to the pachd pod.
+  podLabels: {}
+  image:
+    repository: {{ .Spec.Pachd.Image.Repository }}
+    pullPolicy: {{ .Spec.Pachd.Image.PullPolicy }}
+    # tag defaults to the chart’s specified appVersion.
+    tag: {{ .Spec.Pachd.Image.ImageTag }}
+
+pachd:
+  enabled: true
+  affinity: {}
+  # clusterDeploymentID sets the Pachyderm cluster ID.
+  clusterDeploymentID: "{{ .Spec.Pachd.ClusterID }}"
+  # goMaxProcs is passed as GOMAXPROCS to the pachd container.
+  goMaxProcs: 0
+  image:
+    repository: {{ .Spec.Pachd.Image.Repository }}
+    pullPolicy: {{ .Spec.Pachd.Image.PullPolicy }}
+    # tag defaults to the chart’s specified appVersion.
+    tag: {{ .Spec.Pachd.Image.ImageTag }}
+  logLevel: {{ .Spec.Pachd.LogLevel }}
+  # lokiLogging enables Loki logging if set.
+  lokiLogging: {{ .Spec.Pachd.LokiLogging }}
+  metrics:
+    # enabled sets the METRICS environment variable if set.
+    enabled: {{ not .Spec.Pachd.Metrics.Disable }}
+    # endpoint should be the URL of the metrics endpoint.
+    endpoint: "{{ .Spec.Pachd.Metrics.Endpoint }}"
+  # podLabels specifies labels to add to the pachd pod.
+  podLabels: {}
+  # resources specifies the resource requests and limits
+  {{ if .Spec.Pachd.Resources }}
+  resources:
+    {{ if .Spec.Pachd.Resources.Requests }}
+    requests:
+      {{ range $key, $value := (resources .Spec.Pachd.Resources.Requests) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+    {{ if .Spec.Pachd.Resources.Limits }}
+    limits:
+      {{ range $key, $value := (resources .Spec.Pachd.Resources.Limits) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+  {{ end }}
+
+  # requireCriticalServersOnly only requires the critical pachd
+  # servers to startup and run without errors.  It is analogous to the
+  # --require-critical-servers-only argument to pachctl deploy.
+  postgresql:
+    host: "{{ .Spec.Pachd.Postgres.Host }}"
+    port: "{{ .Spec.Pachd.Postgres.Port }}"
+    ssl: "{{ .Spec.Pachd.Postgres.SSL }}"
+    user: "{{ .Spec.Pachd.Postgres.User }}"
+    password: "{{ .Spec.Pachd.Postgres.Password }}"
+  requireCriticalServersOnly: {{ .Spec.Pachd.RequireCriticalServers }}
+  # If enabled, External service creates a service which is safe to
+  # be exposed externally 
+  externalService:
+    enabled: false
+    # (Optional) specify the existing IP Address of the load balancer
+    loadBalancerIP: ""
+    apiGRPCPort: 30650
+    apiHTTPPort: 30652
+    s3GatewayPort: 30600
+  service:
+    # labels specifies labels to add to the pachd service.
+    labels: {}
+    # type specifies the Kubernetes type of the pachd service.
+    type: "ClusterIP"
+    #apiGrpcPort:
+    #  expose: true
+    #  port: 30650
+  serviceAccount:
+    create: true
+    additionalAnnotations: {}
+    name: "pachyderm" #TODO Set default in helpers / Wire up in templates
+  storage:
+    # backend configures the storage backend to use.  It must be one
+    # of GOOGLE, AMAZON, MINIO, MICROSOFT or LOCAL. This is set automatically
+    # if deployTarget is GOOGLE, AMAZON, MICROSOFT, or LOCAL
+    backend: "{{ .Spec.Pachd.Storage.Backend }}"
+    {{ if eq .Spec.Pachd.Storage.Backend "AMAZON" }}
+    amazon:
+      # bucket sets the S3 bucket to use.
+      bucket: "{{ .Spec.Pachd.Storage.Amazon.Bucket }}"
+      # cloudFrontDistribution sets the CloudFront distribution in the
+      # storage secrets.  It is analogous to the
+      # --cloudfront-distribution argument to pachctl deploy.
+      cloudFrontDistribution: "{{ .Spec.Pachd.Storage.Amazon.CloudFrontDistribution }}"
+      customEndpoint: "{{ .Spec.Pachd.Storage.Amazon.CustomEndpoint }}"
+      # disableSSL disables SSL.  It is analogous to the --disable-ssl
+      # argument to pachctl deploy.
+      disableSSL: {{ .Spec.Pachd.Storage.Amazon.DisableSSL }}
+      # id sets the Amazon access key ID to use.  Together with secret
+      # and token, it implements the functionality of the
+      # --credentials argument to pachctl deploy.
+      id: "{{ .Spec.Pachd.Storage.Amazon.ID }}"
+      # logOptions sets various log options in Pachyderm’s internal S3
+      # client.  Comma-separated list containing zero or more of:
+      # 'Debug', 'Signing', 'HTTPBody', 'RequestRetries',
+      # 'RequestErrors', 'EventStreamBody', or 'all'
+      # (case-insensitive).  See 'AWS SDK for Go' docs for details.
+      # logOptions is analogous to the --obj-log-options argument to
+      # pachctl deploy.
+      logOptions: "{{ .Spec.Pachd.Storage.Amazon.LogOptions }}"
+      # maxUploadParts sets the maximum number of upload parts.  It is
+      # analogous to the --max-upload-parts argument to pachctl
+      # deploy.
+      maxUploadParts: {{ .Spec.Pachd.Storage.Amazon.MaxUploadParts }}
+      # verifySSL performs SSL certificate verification.  It is the
+      # inverse of the --no-verify-ssl argument to pachctl deploy.
+      verifySSL: {{ .Spec.Pachd.Storage.Amazon.VerifySSL }}
+      # partSize sets the part size for object storage uploads.  It is
+      # analogous to the --part-size argument to pachctl deploy.  It
+      # has to be a string due to Helm and YAML parsing integers as
+      # floats.  Cf. https://github.com/helm/helm/issues/1707
+      partSize: "{{ .Spec.Pachd.Storage.Amazon.PartSize }}"
+      # region sets the AWS region to use.
+      region: "{{ .Spec.Pachd.Storage.Amazon.Region }}"
+      # retries sets the number of retries for object storage
+      # requests.  It is analogous to the --retries argument to
+      # pachctl deploy.
+      retries: {{ .Spec.Pachd.Storage.Amazon.Retries }}
+      # reverse reverses object storage paths.  It is analogous to the
+      # --reverse argument to pachctl deploy.
+      reverse: {{ .Spec.Pachd.Storage.Amazon.Reverse }}
+      # secret sets the Amazon secret access key to use.  Together with id
+      # and token, it implements the functionality of the
+      # --credentials argument to pachctl deploy.
+      secret: "{{ .Spec.Pachd.Storage.Amazon.Secret }}"
+      # timeout sets the timeout for object storage requests.  It is
+      # analogous to the --timeout argument to pachctl deploy.
+      timeout: "{{ .Spec.Pachd.Storage.Amazon.Timeout }}"
+      # token optionally sets the Amazon token to use.  Together with
+      # id and secret, it implements the functionality of the
+      # --credentials argument to pachctl deploy.
+      token: "{{ .Spec.Pachd.Storage.Amazon.Token }}"
+      # uploadACL sets the upload ACL for object storage uploads.  It
+      # is analogous to the --upload-acl argument to pachctl deploy.
+      uploadACL: "{{ .Spec.Pachd.Storage.Amazon.UploadACL }}"
+    {{ end }}
+    {{ if eq .Spec.Pachd.Storage.Backend "GOOGLE" }}
+    google:
+      bucket: "{{ .Spec.Pachd.Storage.Google.Bucket }}"
+      # cred is a string containing a GCP service account private key,
+      # in object (JSON or YAML) form.  A simple way to pass this on
+      # the command line is with the set-file flag, e.g.:
+      #
+      #  helm install pachd -f my-values.yaml --set-file storage.google.cred=creds.json pachyderm/pachyderm
+      cred: "{{ .Spec.Pachd.Storage.Google.CredentialSecret }}"
+      # Example:
+      # cred: |
+      #  {
+      #    "type": "service_account",
+      #    "project_id": "…",
+      #    "private_key_id": "…",
+      #    "private_key": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----\n",
+      #    "client_email": "…@….iam.gserviceaccount.com",
+      #    "client_id": "…",
+      #    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      #    "token_uri": "https://oauth2.googleapis.com/token",
+      #    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      #    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/…%40….iam.gserviceaccount.com"
+      #  }
+      serviceAccountName: "{{ .Spec.Pachd.Storage.Google.ServiceAccountName }}" # For Workload Identity access to the bucket
+    {{ end }}
+    {{ if eq .Spec.Pachd.Storage.Backend "LOCAL" }}
+    local:
+      # hostPath indicates the path on the host where the PFS metadata
+      # will be stored.  It must end in /.  It is analogous to the
+      # --host-path argument to pachctl deploy.
+      hostPath: "{{ .Spec.Pachd.Storage.Local.HostPath }}"
+      requireRoot: true #Root required for hostpath, but we run rootless in CI
+    {{ end }}
+    {{ if eq .Spec.Pachd.Storage.Backend "MICROSOFT" }}
+    microsoft:
+      container: "{{ .Spec.Pachd.Storage.Microsoft.Container }}"
+      id: "{{ .Spec.Pachd.Storage.Microsoft.ID }}"
+      secret: "{{ .Spec.Pachd.Storage.Microsoft.Secret }}"
+    {{ end }}
+    {{ if eq .Spec.Pachd.Storage.Backend "MINIO" }}
+    minio:
+      bucket: "{{ .Spec.Pachd.Storage.Minio.Bucket }}"
+      endpoint: "{{ .Spec.Pachd.Storage.Minio.Endpoint }}"
+      id: "{{ .Spec.Pachd.Storage.Minio.ID }}"
+      secret: "{{ .Spec.Pachd.Storage.Minio.Secret }}"
+      secure: "{{ .Spec.Pachd.Storage.Minio.Secure }}"
+      signature: "{{ .Spec.Pachd.Storage.Minio.Signature }}"
+    {{ end }}
+    # putFileConcurrencyLimit sets the maximum number of files to
+    # upload or fetch from remote sources (HTTP, blob storage) using
+    # PutFile concurrently.  It is analogous to the
+    # --put-file-concurrency-limit argument to pachctl deploy.
+    putFileConcurrencyLimit: {{ .Spec.Pachd.Storage.PutFileConcurrencyLimit }}
+    # uploadConcurrencyLimit sets the maximum number of concurrent
+    # object storage uploads per Pachd instance.  It is analogous to
+    # the --upload-concurrency-limit argument to pachctl deploy.
+    uploadConcurrencyLimit: {{ .Spec.Pachd.Storage.UploadFileConcurrencyLimit }}
+  ppsWorkerGRPCPort: {{ .Spec.Pachd.PPSWorkerGRPCPort }}
+  # There are three options for TLS:
+  # 1. Disabled
+  # 2. Enabled, existingSecret, specify secret name
+  # 3. Enabled, newSecret, must specify cert, key and name
+  tls:
+    enabled: false
+    secretName: ""
+    newSecret:
+      create: false
+      crt: ""
+      key: ""
+
+rbac:
+  # create indicates whether RBAC resources should be created.
+  # Setting it to false is analogous to passing --no-rbac to pachctl
+  # deploy.
+  create: true
+  # clusterRBAC indicates that ClusterRole and ClusterRoleBinding
+  # should be used rather than Role and RoleBinding; it is the inverse
+  # of --local-roles passed to pachctl deploy.
+  clusterRBAC: true
+
+worker:
+  image:
+    repository: {{ .Spec.Worker.Image.Repository }}
+    pullPolicy: {{ .Spec.Worker.Image.PullPolicy }}
+    tag: {{ .Spec.Worker.Image.ImageTag }}
+  serviceAccount:
+    create: true
+    additionalAnnotations: {}
+    # name sets the name of the worker service account.  Analogous to
+    # the --worker-service-account argument to pachctl deploy.
+    name: "pachyderm-worker" #TODO Set default in helpers / Wire up in templates
+
+postgresql:
+  # Set to false if you are bringing your own PostgreSQL instance. PostgreSQL is a requirement for Pachyderm.
+  enabled: {{ not .Spec.Postgres.Disable }}
+  storageClass: "{{ .Spec.Postgres.StorageClass }}"
+  service:
+    type: "ClusterIP"
+  {{ if .Spec.Etcd.Resources }}
+  resources:
+    {{ if .Spec.Etcd.Resources.Requests }}
+    requests:
+      {{ range $key, $value := (resources .Spec.Etcd.Resources.Requests) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+    {{ if .Spec.Etcd.Resources.Limits }}
+    limits:
+      {{ range $key, $value := (resources .Spec.Etcd.Resources.Limits) }}
+      "{{ $key }}": "{{ $value }}"
+      {{ end }}
+    {{ end }}
+  {{ end }}

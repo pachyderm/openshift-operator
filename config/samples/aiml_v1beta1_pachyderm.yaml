@@ -9,7 +9,7 @@ spec:
     metrics:
       disable: false
     storage:
-      backend: local
+      backend: LOCAL
       local:
         hostPath: /var/pachyderm
 

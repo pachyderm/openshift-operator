@@ -73,7 +73,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                       requests:
                         additionalProperties:
@@ -85,7 +85,7 @@ spec:
                         description: 'Requests describes the minimum amount of compute
                           resources required. If Requests is omitted for a container,
                           it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
                   service:
@@ -147,7 +147,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                       requests:
                         additionalProperties:
@@ -159,7 +159,7 @@ spec:
                         description: 'Requests describes the minimum amount of compute
                           resources required. If Requests is omitted for a container,
                           it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
                   service:
@@ -191,15 +191,6 @@ spec:
               pachd:
                 description: Allows the user to customize the pachd instance(s)
                 properties:
-                  authenticationDisabledForTesting:
-                    description: When true, allows user to disable authentication
-                      during testing
-                    type: boolean
-                  blockCacheBytes:
-                    description: Size of Pachd's in-memory cache for PFS file. Size
-                      is specified in bytes, with allowed SI suffixes (M, K, G, Mi,
-                      Ki, Gi, etc)
-                    type: string
                   clusterDeploymentID:
                     description: Set an ID for the cluster deployment. Defaults to
                       a random value if none is provided
@@ -234,10 +225,6 @@ spec:
                     description: 'Optional value to determine the format of the logs
                       Default: false'
                     type: boolean
-                  memoryRequest:
-                    default: 1T
-                    description: Pachd memory request
-                    type: string
                   metrics:
                     description: Allows user to customize metrics options
                     properties:
@@ -250,13 +237,6 @@ spec:
                           not set, defaults to /metrics
                         type: string
                     type: object
-                  numShards:
-                    default: 16
-                    description: 'Sets the maximum number of pachd nodes allowed in
-                      the cluster. Increasing this number blindly could lead to degraded
-                      performance. Default: 16'
-                    format: int32
-                    type: integer
                   postgresql:
                     description: Postgresql server connection credentials
                     properties:
@@ -296,7 +276,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                       requests:
                         additionalProperties:
@@ -308,12 +288,11 @@ spec:
                         description: 'Requests describes the minimum amount of compute
                           resources required. If Requests is omitted for a container,
                           it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service
-                      type and annotations
+                    description: Service overrides for pachd
                     properties:
                       annotations:
                         items:
@@ -405,13 +384,13 @@ spec:
                         type: object
                       backend:
                         description: Sets the type of storage backend. Should be one
-                          of "google", "amazon", "minio", "microsoft" or "local"
+                          of "GOOGLE", "AMAZON", "MINIO", "MICROSOFT" or "LOCAL"
                         enum:
-                        - amazon
-                        - minio
-                        - microsoft
-                        - local
-                        - google
+                        - AMAZON
+                        - MINIO
+                        - MICROSOFT
+                        - GOOGLE
+                        - LOCAL
                         type: string
                       google:
                         description: Configures the Google storage backend
@@ -486,7 +465,7 @@ spec:
               postgresql:
                 description: Allows user to customize Postgresql database
                 properties:
-                  disabled:
+                  disable:
                     type: boolean
                   resources:
                     description: ResourceRequirements describes the compute resource
@@ -500,7 +479,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                       requests:
                         additionalProperties:
@@ -512,7 +491,7 @@ spec:
                         description: 'Requests describes the minimum amount of compute
                           resources required. If Requests is omitted for a container,
                           it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                         type: object
                     type: object
                   service:

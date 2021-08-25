@@ -1,12 +1,12 @@
 {
    "pachd": {
       "repository": "pachyderm/pachd",
-      "tag": "latest",
+      "tag": "",
       "pullPolicy": "IfNotPresent"
    },
-   "dash": {
+   "console": {
       "repository": "pachyderm/haberdashery",
-      "tag": "b6769ac1ad4561d76e9382bc24ac271bc7686956",
+      "tag": "41f09332d40f1e897314f0529fd5bbda37fc069e",
       "pullPolicy": "IfNotPresent"
    },
    "etcd": {
@@ -15,8 +15,8 @@
       "pullPolicy": "IfNotPresent"
    },
    "postgres": {
-      "repository": "postgres",
-      "tag": "13.0-alpine",
+      "repository": "docker.io/bitnami/postgresql",
+      "tag": "13.3.0",
       "pullPolicy": "IfNotPresent"
    },
    "worker": {

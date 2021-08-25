@@ -11,8 +11,8 @@ metadata:
             "name": "pachyderm-sample"
           },
           "spec": {
-            "dash": {
-              "disable": false
+            "console": {
+              "disable": true
             },
             "pachd": {
               "metrics": {

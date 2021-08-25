@@ -3,7 +3,6 @@ package generators
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,8 +19,6 @@ import (
 type PachydermCluster struct {
 	gcsCredentials      []byte
 	pachyderm           *aimlv1beta1.Pachyderm
-	dashDeploy          *appsv1.Deployment
-	pachdDeploy         *appsv1.Deployment
 	etcdStatefulSet     *appsv1.StatefulSet
 	postgreStatefulSet  *appsv1.StatefulSet
 	Pod                 *corev1.Pod
@@ -34,18 +31,11 @@ type PachydermCluster struct {
 	secrets             []*corev1.Secret
 	configMaps          []*corev1.ConfigMap
 	storageClasses      []*storagev1.StorageClass
+	deployments         []*appsv1.Deployment
 }
 
 func (c *PachydermCluster) SetGoogleCredentials(credentials []byte) {
 	c.gcsCredentials = credentials
-}
-
-// PachydermError defines custom error
-// type used by the operator
-type PachydermError string
-
-func (e PachydermError) Error() string {
-	return string(e)
 }
 
 func getPachydermCluster(pd *aimlv1beta1.Pachyderm) (*PachydermCluster, error) {
@@ -66,17 +56,21 @@ func getPachydermCluster(pd *aimlv1beta1.Pachyderm) (*PachydermCluster, error) {
 		// Convert from unstructured.Unstructured to kubernetes types
 		switch gvk.Kind {
 		case "Deployment":
-			if err := components.parseDeployment(obj); err != nil {
+			deployment := &appsv1.Deployment{}
+			if err := toTypedResource(obj, &deployment); err != nil {
 				fmt.Println("error parsing deployment.", err.Error())
 			}
+			components.deployments = append(components.deployments, deployment)
 		case "StatefulSet":
 			if err := components.parseStatefulSet(obj); err != nil {
 				fmt.Println("error parsing statefulset.", err.Error())
 			}
 		case "Pod":
-			if err := components.parsePod(obj); err != nil {
+			pod := &corev1.Pod{}
+			if err := toTypedResource(obj, components.Pod); err != nil {
 				fmt.Println("error parsing pod.", err.Error())
 			}
+			components.Pod = pod
 		case "ServiceAccount":
 			sa := &corev1.ServiceAccount{}
 			if err := toTypedResource(obj, sa); err != nil {
@@ -141,24 +135,6 @@ func toTypedResource(unstructured *unstructured.Unstructured, object interface{}
 	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured.Object, object)
 }
 
-func (c *PachydermCluster) parseDeployment(obj *unstructured.Unstructured) error {
-	var deployment appsv1.Deployment
-	if err := toTypedResource(obj, &deployment); err != nil {
-		return err
-	}
-
-	if !reflect.DeepEqual(deployment, appsv1.Deployment{}) {
-		switch deployment.Name {
-		case "dash":
-			c.dashDeploy = &deployment
-		case "pachd":
-			c.pachdDeploy = &deployment
-		}
-	}
-
-	return nil
-}
-
 func (c *PachydermCluster) parseStatefulSet(obj *unstructured.Unstructured) error {
 	var sts appsv1.StatefulSet
 	if err := toTypedResource(obj, &sts); err != nil {
@@ -178,11 +154,11 @@ func (c *PachydermCluster) parseStatefulSet(obj *unstructured.Unstructured) erro
 }
 
 func (c *PachydermCluster) parsePod(obj *unstructured.Unstructured) error {
-	var pod corev1.Pod
-	if err := toTypedResource(obj, &pod); err != nil {
+	pod := &corev1.Pod{}
+	if err := toTypedResource(obj, pod); err != nil {
 		return err
 	}
-	c.Pod = &pod
+	c.Pod = pod
 
 	return nil
 }
@@ -212,30 +188,11 @@ func (c *PachydermCluster) EtcdStatefulSet() *appsv1.StatefulSet {
 	return c.etcdStatefulSet
 }
 
-// TODO: update labels to use recommended k8s labels
-// PachdDeployment returns the pachd deployment resource
-func (c *PachydermCluster) PachdDeployment() *appsv1.Deployment {
-	return c.pachdDeploy
-}
-
-// DashDeployment returns the dash deployment resource
-func (c *PachydermCluster) DashDeployment() *appsv1.Deployment {
-	return c.dashDeploy
-}
-
+// TODO: switch to use certified postgresql image
+// registry.redhat.io/rhel8/postgresql-13:1-18
 // PostgreStatefulset returns the postgresql statefulset resource
 func (c *PachydermCluster) PostgreStatefulset() *appsv1.StatefulSet {
-	options := postgresqlImage(c.pachyderm)
-	pgsql := c.postgreStatefulSet
-	for i, container := range pgsql.Spec.Template.Spec.Containers {
-		if container.Name == "postgres" {
-			pgsql.Spec.Template.Spec.Containers[i].Image = strings.Join(
-				[]string{options.Repository, options.ImageTag}, ":")
-			pgsql.Spec.Template.Spec.Containers[i].ImagePullPolicy = corev1.PullPolicy(options.PullPolicy)
-		}
-	}
-
-	return pgsql
+	return c.postgreStatefulSet
 }
 
 // PrepareCluster takes a pachyderm custom resource and returns
@@ -249,4 +206,8 @@ func PrepareCluster(pd *aimlv1beta1.Pachyderm) (*PachydermCluster, error) {
 	// set pachyderm resource as parent
 	cluster.pachyderm = pd
 	return cluster, nil
+}
+
+func (c *PachydermCluster) Deployments() []*appsv1.Deployment {
+	return c.deployments
 }

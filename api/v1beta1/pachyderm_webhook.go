@@ -61,6 +61,7 @@ func (r *Pachyderm) Default() {
 	if r.Spec.Pachd.Storage.Backend == "LOCAL" {
 		r.prepareLocalStorage()
 	}
+	// TODO: encode minio, azure storage credentials
 
 	if r.Spec.Version == "" {
 		r.Spec.Version = getDefaultVersion()

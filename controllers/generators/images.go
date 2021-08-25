@@ -11,7 +11,7 @@ import (
 // required to deploy a Pachyderm cluster
 type ImageCatalog struct {
 	Pachd    *aimlv1beta1.ImageOverride `json:"pachd,omitempty"`
-	Dash     *aimlv1beta1.ImageOverride `json:"dash,omitempty"`
+	Console  *aimlv1beta1.ImageOverride `json:"console,omitempty"`
 	Postgres *aimlv1beta1.ImageOverride `json:"postgres,omitempty"`
 	Etcd     *aimlv1beta1.ImageOverride `json:"etcd,omitempty"`
 	Worker   *aimlv1beta1.ImageOverride `json:"worker,omitempty"`
@@ -32,7 +32,7 @@ func getDefaultCertifiedImages(images string) (*ImageCatalog, error) {
 }
 
 func (i *ImageCatalog) inject(pd *aimlv1beta1.Pachyderm) {
-	pd.Spec.Dashd.Image = setImageOptions(pd.Spec.Dashd.Image, i.Dash)
+	pd.Spec.Console.Image = setImageOptions(pd.Spec.Console.Image, i.Console)
 	pd.Spec.Pachd.Image = setImageOptions(pd.Spec.Pachd.Image, i.Pachd)
 	pd.Spec.Worker.Image = setImageOptions(pd.Spec.Worker.Image, i.Worker)
 	pd.Spec.Etcd.Image = setImageOptions(pd.Spec.Etcd.Image, i.Etcd)
@@ -43,8 +43,8 @@ func setImageOptions(user, shipped *aimlv1beta1.ImageOverride) *aimlv1beta1.Imag
 		return shipped
 	}
 
-	if user.ImageTag != "" {
-		shipped.ImageTag = user.ImageTag
+	if user.Tag != "" {
+		shipped.Tag = user.Tag
 	}
 
 	if user.PullPolicy != "" {

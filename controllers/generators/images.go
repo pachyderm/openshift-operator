@@ -10,11 +10,13 @@ import (
 // ImageCatalog consists the certified images
 // required to deploy a Pachyderm cluster
 type ImageCatalog struct {
-	Pachd    *aimlv1beta1.ImageOverride `json:"pachd,omitempty"`
-	Console  *aimlv1beta1.ImageOverride `json:"console,omitempty"`
-	Postgres *aimlv1beta1.ImageOverride `json:"postgres,omitempty"`
-	Etcd     *aimlv1beta1.ImageOverride `json:"etcd,omitempty"`
-	Worker   *aimlv1beta1.ImageOverride `json:"worker,omitempty"`
+	Pachd     *aimlv1beta1.ImageOverride `json:"pachd,omitempty"`
+	Console   *aimlv1beta1.ImageOverride `json:"console,omitempty"`
+	Postgres  *aimlv1beta1.ImageOverride `json:"postgres,omitempty"`
+	Etcd      *aimlv1beta1.ImageOverride `json:"etcd,omitempty"`
+	Worker    *aimlv1beta1.ImageOverride `json:"worker,omitempty"`
+	PgBouncer *aimlv1beta1.ImageOverride `json:"pgbouncer,omitempty"`
+	Utilities *aimlv1beta1.ImageOverride `json:"utilities,omitempty"`
 }
 
 func getDefaultCertifiedImages(images string) (*ImageCatalog, error) {
@@ -58,16 +60,27 @@ func setImageOptions(user, shipped *aimlv1beta1.ImageOverride) *aimlv1beta1.Imag
 	return shipped
 }
 
-func postgresqlImage(pd *aimlv1beta1.Pachyderm) *aimlv1beta1.ImageOverride {
+func pachydermImagesCatalog(pd *aimlv1beta1.Pachyderm) (*ImageCatalog, error) {
 	directory, err := getChartDirectory(pd.Spec.Version)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	catalog, err := getDefaultCertifiedImages(directory.Images)
-	if err != nil {
-		return nil
-	}
+	return getDefaultCertifiedImages(directory.Images)
+}
 
-	return catalog.Postgres
+func (c *ImageCatalog) postgresqlImage() *aimlv1beta1.ImageOverride {
+	return c.Postgres
+}
+
+func (c *ImageCatalog) pgBouncerImage() *aimlv1beta1.ImageOverride {
+	return c.PgBouncer
+}
+
+func (c *ImageCatalog) pachdImage() *aimlv1beta1.ImageOverride {
+	return c.Pachd
+}
+
+func (c *ImageCatalog) utilsImage() *aimlv1beta1.ImageOverride {
+	return c.Utilities
 }

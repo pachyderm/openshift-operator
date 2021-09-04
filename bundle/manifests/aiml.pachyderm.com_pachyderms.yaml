@@ -351,7 +351,7 @@ spec:
                             format: int64
                             type: integer
                           region:
-                            description: Region for the object storqge cluster
+                            description: Region for the object storage cluster
                             type: string
                           retries:
                             description: 'Set a custom number of retries for object
@@ -390,13 +390,12 @@ spec:
                         type: object
                       backend:
                         description: Sets the type of storage backend. Should be one
-                          of "GOOGLE", "AMAZON", "MINIO", "MICROSOFT" or "LOCAL"
+                          of "GOOGLE", "AMAZON", "MINIO" or "MICROSOFT"
                         enum:
                         - AMAZON
                         - MINIO
                         - MICROSOFT
                         - GOOGLE
-                        - LOCAL
                         type: string
                       google:
                         description: Configures the Google storage backend
@@ -408,14 +407,6 @@ spec:
                             description: Credentials json file
                             type: string
                           serviceAccountName:
-                            type: string
-                        type: object
-                      local:
-                        description: Kubernetes hostPath
-                        properties:
-                          hostPath:
-                            description: 'Location on the worker node to be mounted
-                              into the pod. Default: "/var/pachyderm/"'
                             type: string
                         type: object
                       microsoft:

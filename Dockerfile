@@ -28,7 +28,7 @@ LABEL name=pachyderm-operator \
       summary='Pachyderm is a data science platform that combines Data Lineage with End-to-End Pipelines'
 
 ENV USER_ID=1001
-ADD LICENSE /license/apache2
+ADD LICENSE /licenses/apache2
 ADD hack/charts /charts
 
 WORKDIR /

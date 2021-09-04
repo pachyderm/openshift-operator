@@ -9,7 +9,10 @@ spec:
     metrics:
       disable: false
     storage:
-      backend: LOCAL
-      local:
-        hostPath: /var/pachyderm
+      backend: AMAZON
+      amazon:
+        id: test-id
+        region: us-east
+        bucket: pachd-bucket
+
 

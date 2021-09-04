@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -77,6 +79,22 @@ type ImageOverride struct {
 	// It accepts, "IfNotPresent","Never" or "Always"
 	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
 	PullPolicy string `json:"pullPolicy,omitempty"`
+}
+
+// Name represents the full name of the image being override
+func (o *ImageOverride) Name() string {
+	if strings.Contains(o.Tag, "sha256:") {
+		return strings.Join([]string{o.Repository, o.Tag}, "@")
+	}
+	if o.Tag == "" {
+		o.Tag = "latest"
+	}
+	return strings.Join([]string{o.Repository, o.Tag}, ":")
+}
+
+// ImagePullPolicy returns the image pull policy
+func (o *ImageOverride) ImagePullPolicy() corev1.PullPolicy {
+	return corev1.PullPolicy(o.PullPolicy)
 }
 
 // ServiceOverrides allows user to customize k8s
@@ -186,8 +204,8 @@ type ObjectStorageOptions struct {
 	// +kubebuilder:default:=100
 	UploadFileConcurrencyLimit int32 `json:"uploadFileConcurrencyLimit,omitempty"`
 	// Sets the type of storage backend.
-	// Should be one of "GOOGLE", "AMAZON", "MINIO", "MICROSOFT" or "LOCAL"
-	// +kubebuilder:validation:Enum:=AMAZON;MINIO;MICROSOFT;GOOGLE;LOCAL
+	// Should be one of "GOOGLE", "AMAZON", "MINIO" or "MICROSOFT"
+	// +kubebuilder:validation:Enum:=AMAZON;MINIO;MICROSOFT;GOOGLE
 	Backend string `json:"backend"`
 	// Configures the Amazon storage backend
 	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`
@@ -197,8 +215,6 @@ type ObjectStorageOptions struct {
 	Microsoft *MicrosoftStorageOptions `json:"microsoft,omitempty"`
 	// Configures Minio object store
 	Minio *MinioStorageOptions `json:"minio,omitempty"`
-	// Kubernetes hostPath
-	Local *LocalStorageOptions `json:"local,omitempty"`
 }
 
 // GoogleStorageOptions exposes options to configure Google Cloud Storage
@@ -237,7 +253,7 @@ type AmazonStorageOptions struct {
 	// Set a custom part size for object storage uploads.
 	// Default: 5242880
 	PartSize int64 `json:"partSize,omitempty" default:"5242880"`
-	// Region for the object storqge cluster
+	// Region for the object storage cluster
 	Region string `json:"region,omitempty"`
 	// Set a custom number of retries for object storage requests.
 	// Default: 10

@@ -253,8 +253,6 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return err
 	}
 
-	fmt.Printf("%+v\n", components.Pod)
-
 	return nil
 }
 
@@ -624,6 +622,9 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components *
 
 		if err := r.Create(ctx, secret); err != nil {
 			if errors.IsAlreadyExists(err) {
+				if secret.Name == "postgres" {
+					return nil
+				}
 				// Check if the secret contents have changed
 				currentSecret := &corev1.Secret{}
 				secretKey := types.NamespacedName{

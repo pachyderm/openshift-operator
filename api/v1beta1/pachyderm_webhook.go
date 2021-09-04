@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
+	"strings"
 
 	"sort"
 
@@ -52,16 +54,8 @@ var _ webhook.Defaulter = &Pachyderm{}
 func (r *Pachyderm) Default() {
 	pachydermlog.Info("default", "name", r.Name)
 
-	if r.Spec.Pachd.Storage.Backend == "AMAZON" {
-		r.prepareAmazonStorage()
-	}
-
-	// if backend is "local" but, spec.pachd.storage.local is nil
-	// populate the hostPath
-	if r.Spec.Pachd.Storage.Backend == "LOCAL" {
-		r.prepareLocalStorage()
-	}
-	// TODO: encode minio, azure storage credentials
+	// encode storage info
+	r.encodeStorageSecrets()
 
 	if r.Spec.Version == "" {
 		r.Spec.Version = getDefaultVersion()
@@ -105,81 +99,81 @@ func (r *Pachyderm) isUsingGCS() bool {
 	return r.Spec.Pachd.Storage.Google != nil && r.Spec.Pachd.Storage.Backend == "GOOGLE"
 }
 
-func (r *Pachyderm) prepareLocalStorage() {
-	if r.Spec.Pachd.Storage.Local == nil {
-		r.Spec.Pachd.Storage.Local = &LocalStorageOptions{}
-		if err := defaults.Set(r.Spec.Pachd.Storage.Local); err != nil {
-			fmt.Println("err:", err.Error())
-		}
+func (r *Pachyderm) prepareAmazonStorage() {
+	// apply defaults
+	if err := defaults.Set(r.Spec.Pachd.Storage.Amazon); err != nil {
+		fmt.Println("err:", err.Error())
+	}
+
+	if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
+		r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = encodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution, false)
+	}
+	if r.Spec.Pachd.Storage.Amazon.IAMRole != "" {
+		r.Spec.Pachd.Storage.Amazon.IAMRole = encodeString(r.Spec.Pachd.Storage.Amazon.IAMRole, false)
+	}
+	if r.Spec.Pachd.Storage.Amazon.ID != "" {
+		r.Spec.Pachd.Storage.Amazon.ID = encodeString(r.Spec.Pachd.Storage.Amazon.ID, true)
+	}
+	if r.Spec.Pachd.Storage.Amazon.Secret != "" {
+		r.Spec.Pachd.Storage.Amazon.Secret = encodeString(r.Spec.Pachd.Storage.Amazon.Secret, true)
+	}
+	if r.Spec.Pachd.Storage.Amazon.Token != "" {
+		r.Spec.Pachd.Storage.Amazon.Token = encodeString(r.Spec.Pachd.Storage.Amazon.Token, true)
+	}
+	if r.Spec.Pachd.Storage.Amazon.UploadACL != "" {
+		r.Spec.Pachd.Storage.Amazon.UploadACL = encodeString(r.Spec.Pachd.Storage.Amazon.UploadACL, false)
 	}
 }
 
-func (r *Pachyderm) prepareAmazonStorage() {
-	if r.Spec.Pachd.Storage.Amazon != nil {
-		// apply defaults
-		if err := defaults.Set(r.Spec.Pachd.Storage.Amazon); err != nil {
-			fmt.Println("err:", err.Error())
-		}
-
-		if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
-			r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = encodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution, false)
-		}
-		if r.Spec.Pachd.Storage.Amazon.IAMRole != "" {
-			r.Spec.Pachd.Storage.Amazon.IAMRole = encodeString(r.Spec.Pachd.Storage.Amazon.IAMRole, false)
-		}
-		if r.Spec.Pachd.Storage.Amazon.ID != "" {
-			r.Spec.Pachd.Storage.Amazon.ID = encodeString(r.Spec.Pachd.Storage.Amazon.ID, true)
-		}
-		if r.Spec.Pachd.Storage.Amazon.Secret != "" {
-			r.Spec.Pachd.Storage.Amazon.Secret = encodeString(r.Spec.Pachd.Storage.Amazon.Secret, true)
-		}
-		if r.Spec.Pachd.Storage.Amazon.Token != "" {
-			r.Spec.Pachd.Storage.Amazon.Token = encodeString(r.Spec.Pachd.Storage.Amazon.Token, true)
-		}
-		if r.Spec.Pachd.Storage.Amazon.UploadACL != "" {
-			r.Spec.Pachd.Storage.Amazon.UploadACL = encodeString(r.Spec.Pachd.Storage.Amazon.UploadACL, false)
-		}
+// DecodeAmazonStorage function allows controllers to get the decoded user input
+// before using them as input for helm charts
+func (r *Pachyderm) decodeAmazonStorage() {
+	if r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution != "" {
+		r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution = decodeString(r.Spec.Pachd.Storage.Amazon.CloudFrontDistribution)
 	}
+	if r.Spec.Pachd.Storage.Amazon.IAMRole != "" {
+		r.Spec.Pachd.Storage.Amazon.IAMRole = decodeString(r.Spec.Pachd.Storage.Amazon.IAMRole)
+	}
+	if r.Spec.Pachd.Storage.Amazon.ID != "" {
+		r.Spec.Pachd.Storage.Amazon.ID = decodeString(r.Spec.Pachd.Storage.Amazon.ID)
+	}
+	if r.Spec.Pachd.Storage.Amazon.Secret != "" {
+		r.Spec.Pachd.Storage.Amazon.Secret = decodeString(r.Spec.Pachd.Storage.Amazon.Secret)
+	}
+	if r.Spec.Pachd.Storage.Amazon.Token != "" {
+		r.Spec.Pachd.Storage.Amazon.Token = decodeString(r.Spec.Pachd.Storage.Amazon.Token)
+	}
+	if r.Spec.Pachd.Storage.Amazon.UploadACL != "" {
+		r.Spec.Pachd.Storage.Amazon.UploadACL = decodeString(r.Spec.Pachd.Storage.Amazon.UploadACL)
+	}
+}
+
+func isInputEncoded(input string) bool {
+	output, err := base64.StdEncoding.DecodeString(input)
+	if err != nil {
+		return false
+	}
+	re := regexp.MustCompile(`^\[#\]`)
+	return re.Match(output)
 }
 
 // checks if input string is base64 encoded.
-// If yes, input variable is returned
 // else, base64 encoded input is returned
 func encodeString(input string, override bool) string {
-	if !override {
-		if IsBase64Encoded(input) {
-			return input
-		}
-	}
-
-	if encodeCount(input) == 2 {
+	if isInputEncoded(input) {
 		return input
 	}
-
-	return base64.StdEncoding.EncodeToString([]byte(input))
+	temp := []byte(fmt.Sprintf("[#].%s", input))
+	return base64.StdEncoding.EncodeToString(temp)
 }
 
-// IsBase64Encoded checks if user input is already base64 encoded
-func IsBase64Encoded(input string) bool {
-	if _, err := base64.StdEncoding.DecodeString(input); err == nil {
-		return true
+func decodeString(input string) string {
+	if isInputEncoded(input) {
+		payload, _ := base64.StdEncoding.DecodeString(input)
+		return strings.Split(string(payload), "].")[1]
 	}
-	return false
-}
 
-func encodeCount(input string) int {
-	var count int
-	var err error
-	result := input
-
-	for count = 0; err == nil; count++ {
-		out, err := base64.StdEncoding.DecodeString(result)
-		if err != nil {
-			break
-		}
-		result = string(out)
-	}
-	return count
+	return input
 }
 
 func isContainer() bool {
@@ -223,4 +217,52 @@ func getDefaultVersion() string {
 	})
 
 	return versions[len(versions)-1]
+}
+
+// TODO: encode minio, azure storage credentials
+func (r *Pachyderm) encodeStorageSecrets() {
+	switch r.Spec.Pachd.Storage.Backend {
+	case "AMAZON":
+		if r.Spec.Pachd.Storage.Amazon.isSet() {
+			r.prepareAmazonStorage()
+		}
+	case "MICROSOFT":
+		if r.Spec.Pachd.Storage.Microsoft.isSet() {
+			fmt.Println("microsoft azure blob storage")
+		}
+	case "GOOGLE":
+		if r.Spec.Pachd.Storage.Google.isSet() {
+			fmt.Println("google container storage")
+		}
+	case "MINIO":
+		if r.Spec.Pachd.Storage.Minio.isSet() {
+			fmt.Println("minio object storage")
+		}
+	}
+}
+
+func (r *Pachyderm) DecodeStorageInput() {
+	switch r.Spec.Pachd.Storage.Backend {
+	case "AMAZON":
+		r.decodeAmazonStorage()
+	case "MICROSOFT":
+	case "GOOGLE":
+	case "MINIO":
+	}
+}
+
+func (s *AmazonStorageOptions) isSet() bool {
+	return s != nil
+}
+
+func (s *MicrosoftStorageOptions) isSet() bool {
+	return s != nil
+}
+
+func (s *GoogleStorageOptions) isSet() bool {
+	return s != nil
+}
+
+func (s *MinioStorageOptions) isSet() bool {
+	return s != nil
 }

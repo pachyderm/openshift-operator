@@ -249,6 +249,10 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return ErrServiceNotReady
 	}
 
+	if err := r.initializePostgres(ctx, pd); err != nil {
+		return err
+	}
+
 	if err := r.reconcileDeployments(ctx, components); err != nil {
 		return err
 	}

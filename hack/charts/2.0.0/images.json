@@ -25,8 +25,8 @@
       "pullPolicy": "IfNotPresent"
    },
    "pgbouncer": {
-      "repository": "registry.connect.redhat.com/crunchydata/crunchy-pgbouncer",
-      "tag": "ubi8-1.15-2",
+      "repository": "quay.io/opdev/pgbouncer",
+      "tag": "latest",
       "pullPolicy": "IfNotPresent"
    },
    "utilities": {

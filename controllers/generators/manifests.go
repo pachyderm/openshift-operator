@@ -300,45 +300,34 @@ func (c *PachydermCluster) Deployments() []*appsv1.Deployment {
 func setupPGBouncer(pd *aimlv1beta1.Pachyderm, bouncer *appsv1.Deployment) {
 	catalog, _ := pachydermImagesCatalog(pd)
 	bouncerImage := catalog.pgBouncerImage()
-	utilsImage := catalog.utilsImage()
 
-	bouncer.Spec.Template.Spec = corev1.PodSpec{
-		InitContainers: []corev1.Container{
-			{
-				Name:  "configure",
-				Image: utilsImage.Name(),
-				Env:   bouncer.Spec.Template.Spec.Containers[0].Env,
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      "config",
-						MountPath: "/config",
-						ReadOnly:  false,
-					},
+	// pg-bouncer implementation
+	for i, container := range bouncer.Spec.Template.Spec.Containers {
+		if container.Name == "pg-bouncer" {
+			container.Image = bouncerImage.Name()
+			container.ImagePullPolicy = bouncerImage.ImagePullPolicy()
+			container.VolumeMounts = []corev1.VolumeMount{
+				{
+					Name:      "config",
+					MountPath: "/pgconf",
 				},
-			},
-		},
-		Containers: []corev1.Container{
-			{
-				Name:            "pgbouncer",
-				Image:           bouncerImage.Name(),
-				ImagePullPolicy: bouncerImage.ImagePullPolicy(),
-				VolumeMounts: []corev1.VolumeMount{
-					{
-						Name:      "config",
-						MountPath: "/pgconf",
-					},
-				},
-			},
-		},
-		Volumes: []corev1.Volume{
-			{
-				Name: "config",
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
-			},
-		},
+			}
+			bouncer.Spec.Template.Spec.Containers[i] = container
+
+		}
 	}
+	if bouncer.Spec.Template.Spec.Volumes == nil {
+		bouncer.Spec.Template.Spec.Volumes = []corev1.Volume{}
+	}
+	bouncer.Spec.Template.Spec.Volumes = append(
+		bouncer.Spec.Template.Spec.Volumes,
+		corev1.Volume{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+	)
 }
 
 func setupPachd(pd *aimlv1beta1.Pachyderm, pachd *appsv1.Deployment) {

@@ -28,7 +28,7 @@ func (r *PachydermReconciler) initializePostgres(ctx context.Context, pd *aimlv1
 
 	dataSource := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		pd.Spec.Pachd.Postgres.Host,
+		fmt.Sprintf("%s.%s", pd.Spec.Pachd.Postgres.Host, pd.Namespace),
 		pd.Spec.Pachd.Postgres.Port,
 		"postgres",
 		adminPassword,

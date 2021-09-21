@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -46,7 +45,7 @@ const (
 	pachydermFinalizer string = "finalizer.pachyderm.com"
 
 	// ErrEtcdNotReady is returned when Etcd is not ready
-	ErrEtcdNotReady generators.PachydermError = "waiting for etcd"
+	// ErrEtcdNotReady generators.PachydermError = "waiting for etcd"
 )
 
 // PachydermReconciler reconciles a Pachyderm object
@@ -104,7 +103,7 @@ func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if err := r.reconcilePachydermObj(ctx, pd); err != nil {
-		if err == ErrEtcdNotReady {
+		if err == ErrServiceNotReady {
 			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 		}
 		return ctrl.Result{}, err
@@ -232,11 +231,29 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return err
 	}
 
-	if err := r.deployPachd(ctx, components); err != nil {
+	// Check Etcd is ready before deploying pachd
+	etcdSvc := types.NamespacedName{
+		Name:      "etcd",
+		Namespace: pd.Namespace,
+	}
+	if !r.isServiceReady(ctx, etcdSvc) {
+		return ErrServiceNotReady
+	}
+
+	// Check Etcd is ready before deploying pachd
+	pgSvc := types.NamespacedName{
+		Name:      "postgres",
+		Namespace: pd.Namespace,
+	}
+	if !r.isServiceReady(ctx, pgSvc) {
+		return ErrServiceNotReady
+	}
+
+	if err := r.initializePostgres(ctx, pd); err != nil {
 		return err
 	}
 
-	if err := r.deployDash(ctx, components); err != nil {
+	if err := r.reconcileDeployments(ctx, components); err != nil {
 		return err
 	}
 
@@ -321,6 +338,23 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 	return nil
 }
 
+// TODO: add logic to update existing child objects
+func (r *PachydermReconciler) reconcileDeployments(ctx context.Context, components *generators.PachydermCluster) error {
+	for _, deployment := range components.Deployments() {
+		if err := controllerutil.SetControllerReference(components.Pachyderm(), deployment, r.Scheme); err != nil {
+			return err
+		}
+		if err := r.Create(ctx, deployment); err != nil {
+			if errors.IsAlreadyExists(err) {
+				// TODO: add logic to check if update is required
+				return nil
+			}
+			return err
+		}
+	}
+	return nil
+}
+
 // TODO: set finalizer and status for Pachyderm resource
 func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
 	current := &aimlv1beta1.Pachyderm{}
@@ -370,6 +404,15 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 		return false
 	}
 
+	// check status of postgres
+	pgSvc := types.NamespacedName{
+		Name:      "postgres",
+		Namespace: pd.Namespace,
+	}
+	if !r.isServiceReady(ctx, pgSvc) {
+		return false
+	}
+
 	// check status of pachd
 	pachdSvc := types.NamespacedName{
 		Name:      "pachd",
@@ -379,32 +422,42 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 		return false
 	}
 
-	if !pd.Spec.Dashd.Disable {
-		// check status of dash
-		dashSvc := types.NamespacedName{
-			Name:      "dash",
-			Namespace: pd.Namespace,
-		}
-		if !r.isServiceReady(ctx, dashSvc) {
-			return false
-		}
+	// check status of pachd
+	pachdPeerSvc := types.NamespacedName{
+		Name:      "pachd-peer",
+		Namespace: pd.Namespace,
 	}
+	// if !r.isServiceReady(ctx, pachdPeerSvc) {
+	// 	return false
+	// }
+	testPachdPeerConnection(ctx, pd)
+	return r.isServiceReady(ctx, pachdPeerSvc)
+
+	// if !pd.Spec.Console.Disable {
+	// 	// check status of dash
+	// 	dashSvc := types.NamespacedName{
+	// 		Name:      "dash",
+	// 		Namespace: pd.Namespace,
+	// 	}
+	// 	if !r.isServiceReady(ctx, dashSvc) {
+	// 		return false
+	// 	}
+	// }
 
 	// pachd-peer connection test
-	return testPachdPeerConnection(ctx, pd)
+	// return testPachdPeerConnection(ctx, pd)
 }
 
 func testPachdPeerConnection(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {
-	hostname := strings.Join([]string{"pachd-peer", pd.Namespace}, ".")
-	pachdPeer := fmt.Sprintf("%s:%s", hostname, "30653")
-
-	conn, err := net.Dial("tcp", pachdPeer)
+	conn, err := net.Dial("tcp",
+		fmt.Sprintf("pachd-peer.%s.svc.cluster.local:30653", pd.Namespace))
 	if err != nil {
+		fmt.Printf("error connecting to pachd-peer; error %v\n", err.Error())
 		return false
 	}
 	defer conn.Close()
 
-	return (conn != nil)
+	return conn != nil
 }
 
 func (r *PachydermReconciler) reconcileFinalizer(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
@@ -573,6 +626,9 @@ func (r *PachydermReconciler) reconcileSecrets(ctx context.Context, components *
 
 		if err := r.Create(ctx, secret); err != nil {
 			if errors.IsAlreadyExists(err) {
+				if secret.Name == "postgres" {
+					return nil
+				}
 				// Check if the secret contents have changed
 				currentSecret := &corev1.Secret{}
 				secretKey := types.NamespacedName{
@@ -676,53 +732,43 @@ func (r *PachydermReconciler) deployPostgres(ctx context.Context, components *ge
 	return nil
 }
 
-func (r *PachydermReconciler) deployPachd(ctx context.Context, components *generators.PachydermCluster) error {
-	pd := components.Pachyderm()
+// func (r *PachydermReconciler) deployPachd(ctx context.Context, components *generators.PachydermCluster) error {
+// 	pd := components.Pachyderm()
+// 	pachd := components.PachdDeployment()
+// 	if err := controllerutil.SetControllerReference(pd, pachd, r.Scheme); err != nil {
+// 		return err
+// 	}
 
-	// Check Etcd is ready before deploying pachd
-	etcdSvc := types.NamespacedName{
-		Name:      "etcd",
-		Namespace: pd.Namespace,
-	}
-	if !r.isServiceReady(ctx, etcdSvc) {
-		return ErrEtcdNotReady
-	}
+// 	if err := r.Create(ctx, pachd); err != nil {
+// 		if errors.IsAlreadyExists(err) {
+// 			// TODO: add update logic
+// 			return nil
+// 		}
+// 		return err
+// 	}
 
-	pachd := components.PachdDeployment()
-	if err := controllerutil.SetControllerReference(pd, pachd, r.Scheme); err != nil {
-		return err
-	}
+// 	return nil
+// }
 
-	if err := r.Create(ctx, pachd); err != nil {
-		if errors.IsAlreadyExists(err) {
-			// TODO: add update logic
-			return nil
-		}
-		return err
-	}
+// func (r *PachydermReconciler) deployConsole(ctx context.Context, components *generators.PachydermCluster) error {
+// 	pd := components.Pachyderm()
 
-	return nil
-}
+// 	if !pd.Spec.Console.Disable {
+// 		dash := components.DashDeployment()
+// 		if err := controllerutil.SetControllerReference(pd, dash, r.Scheme); err != nil {
+// 			return err
+// 		}
 
-func (r *PachydermReconciler) deployDash(ctx context.Context, components *generators.PachydermCluster) error {
-	pd := components.Pachyderm()
-
-	if !pd.Spec.Dashd.Disable {
-		dash := components.DashDeployment()
-		if err := controllerutil.SetControllerReference(pd, dash, r.Scheme); err != nil {
-			return err
-		}
-
-		if err := r.Create(ctx, dash); err != nil {
-			if errors.IsAlreadyExists(err) {
-				// TODO: add update logic
-				return nil
-			}
-			return err
-		}
-	}
-	return nil
-}
+// 		if err := r.Create(ctx, dash); err != nil {
+// 			if errors.IsAlreadyExists(err) {
+// 				// TODO: add update logic
+// 				return nil
+// 			}
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components *generators.PachydermCluster) error {
 	// if no storage class needs to be created,

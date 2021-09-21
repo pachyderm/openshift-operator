@@ -6,6 +6,7 @@ require (
 	github.com/creasty/defaults v1.5.1
 	github.com/go-logr/logr v0.4.0
 	github.com/imdario/mergo v0.3.12
+	github.com/lib/pq v1.10.3
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	golang.org/x/mod v0.4.2

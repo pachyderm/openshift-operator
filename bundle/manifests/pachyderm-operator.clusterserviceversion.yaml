@@ -11,18 +11,20 @@ metadata:
             "name": "pachyderm-sample"
           },
           "spec": {
-            "dash": {
-              "disable": false
+            "console": {
+              "disable": true
             },
             "pachd": {
               "metrics": {
                 "disable": false
               },
               "storage": {
-                "backend": "LOCAL",
-                "local": {
-                  "hostPath": "/var/pachyderm"
-                }
+                "amazon": {
+                  "bucket": "pachd-bucket",
+                  "id": "test-id",
+                  "region": "us-east"
+                },
+                "backend": "AMAZON"
               }
             }
           }
@@ -48,7 +50,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/opdev/pachyderm-operator
     support: Pachyderm, Inc.
-  name: pachyderm-operator.v0.0.2
+  name: pachyderm-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -468,7 +470,7 @@ spec:
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com
-  version: 0.0.2
+  version: 0.0.1
   webhookdefinitions:
   - admissionReviewVersions:
     - v1

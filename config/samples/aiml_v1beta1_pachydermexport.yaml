@@ -1,0 +1,7 @@
+apiVersion: aiml.pachyderm.com/v1beta1
+kind: PachydermExport
+metadata:
+  name: pachydermexport-sample
+spec:
+  backup:
+    target: pachyderm-sample

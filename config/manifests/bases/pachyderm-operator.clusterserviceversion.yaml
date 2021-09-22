@@ -17,15 +17,15 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: PachydermExport is the Schema for the pachydermexports API
+      displayName: Pachyderm Export
+      kind: PachydermExport
+      name: pachydermexports.aiml.pachyderm.com
+      version: v1beta1
     - description: Pachyderm is the Schema for the pachyderms API
       displayName: Pachyderm
       kind: Pachyderm
       name: pachyderms.aiml.pachyderm.com
-      version: v1beta1
-    - description: PachydermVault is the Schema for the pachydermvaults API
-      displayName: Pachyderm Vault
-      kind: PachydermVault
-      name: pachydermvaults.aiml.pachyderm.com
       version: v1beta1
   description: |
     The Pachyderm operator aims to make deploying and managing Pachyderm instances on Openshift or Kubernetes easier.

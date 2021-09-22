@@ -5,7 +5,7 @@ plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: pachyderm-operator
-repo: github.com/opdev/pachyderm-operator
+repo: github.com/pachyderm/openshift-operator
 resources:
 - api:
     crdVersion: v1
@@ -14,7 +14,7 @@ resources:
   domain: pachyderm.com
   group: aiml
   kind: Pachyderm
-  path: github.com/opdev/pachyderm-operator/api/v1beta1
+  path: github.com/pachyderm/openshift-operator/api/v1beta1
   version: v1beta1
   webhooks:
     defaulting: true
@@ -26,7 +26,7 @@ resources:
   controller: true
   domain: pachyderm.com
   group: aiml
-  kind: PachydermVault
-  path: github.com/opdev/pachyderm-operator/api/v1beta1
+  kind: PachydermExport
+  path: github.com/pachyderm/openshift-operator/api/v1beta1
   version: v1beta1
 version: "3"

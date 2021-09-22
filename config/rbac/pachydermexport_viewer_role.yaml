@@ -1,24 +1,20 @@
-# permissions for end users to edit pachydermvaults.
+# permissions for end users to view pachydermexports.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: pachydermvault-editor-role
+  name: pachydermexport-viewer-role
 rules:
 - apiGroups:
   - aiml.pachyderm.com
   resources:
-  - pachydermvaults
+  - pachydermexports
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - aiml.pachyderm.com
   resources:
-  - pachydermvaults/status
+  - pachydermexports/status
   verbs:
   - get

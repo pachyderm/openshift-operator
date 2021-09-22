@@ -20,11 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// PachydermVaultSpec defines the desired state of PachydermVault
-type PachydermVaultSpec struct {
+// PachydermExportSpec defines the desired state of PachydermExport
+type PachydermExportSpec struct {
 	// Backup options allow the user to provide options
 	// when performing a backup
 	Backup *BackupOptions `json:"backup,omitempty"`
@@ -33,26 +30,27 @@ type PachydermVaultSpec struct {
 	Restore *RestoreOptions `json:"restore,omitempty"`
 }
 
+// BackupOptions exposes values to
 type BackupOptions struct {
 	// Name of Pachyderm instance to backup.
-	Pachyderm string `json:"pachyderm"`
+	Target string `json:"target"`
 }
 
 type RestoreOptions struct {
-	// Name of the pachyderm instance to be
-	// deployed from a specific backup
-	Pachyderm PachydermRestore `json:"pachyderm"`
+	// Name of the pachyderm instance to restore the backup to
+	Destination RestoreDestination `json:"destination"`
 	// Name of backup to restore
 	BackupName string `json:"backup,omitempty"`
 }
 
-type PachydermRestore struct {
+// RestoreDestination name of pachyderm instance to restore to
+type RestoreDestination struct {
 	Name      string `json:"name,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
 }
 
-// PachydermVaultStatus defines the observed state of PachydermVault
-type PachydermVaultStatus struct {
+// PachydermExportStatus defines the observed state of PachydermExport
+type PachydermExportStatus struct {
 	// Time the backup process commenced
 	StartedAt string `json:"startedAt,omitempty"`
 	// Time the backup process completed
@@ -64,24 +62,24 @@ type PachydermVaultStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// PachydermVault is the Schema for the pachydermvaults API
-type PachydermVault struct {
+// PachydermExport is the Schema for the pachydermexports API
+type PachydermExport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   PachydermVaultSpec   `json:"spec,omitempty"`
-	Status PachydermVaultStatus `json:"status,omitempty"`
+	Spec   PachydermExportSpec   `json:"spec,omitempty"`
+	Status PachydermExportStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// PachydermVaultList contains a list of PachydermVault
-type PachydermVaultList struct {
+// PachydermExportList contains a list of PachydermExport
+type PachydermExportList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []PachydermVault `json:"items"`
+	Items           []PachydermExport `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&PachydermVault{}, &PachydermVaultList{})
+	SchemeBuilder.Register(&PachydermExport{}, &PachydermExportList{})
 }

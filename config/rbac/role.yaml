@@ -9,6 +9,32 @@ rules:
 - apiGroups:
   - aiml.pachyderm.com
   resources:
+  - pachydermexports
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermexports/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermexports/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
   - pachyderms
   verbs:
   - create
@@ -33,32 +59,6 @@ rules:
   - patch
   - update
 - apiGroups:
-  - aiml.pachyderm.com
-  resources:
-  - pachydermvaults
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - aiml.pachyderm.com
-  resources:
-  - pachydermvaults/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - aiml.pachyderm.com
-  resources:
-  - pachydermvaults/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - apps
   resources:
   - deployments
@@ -74,6 +74,18 @@ rules:
   - apps
   resources:
   - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
   verbs:
   - create
   - delete
@@ -110,6 +122,13 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get
 - apiGroups:
   - ""
   resources:

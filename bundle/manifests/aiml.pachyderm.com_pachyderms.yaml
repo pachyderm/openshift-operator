@@ -317,29 +317,26 @@ spec:
                       amazon:
                         description: Configures the Amazon storage backend
                         properties:
-                          bucket:
-                            description: Name of the S3 bucket to hold objects
-                            type: string
                           cloudFrontDistribution:
-                            description: AWS cloudfront distribution
+                            description: CloudFrontDistribution sets the CloudFront
+                              distribution in the storage secrets. It is analogous
+                              to the --cloudfront-distribution argument to pachctl
+                              deploy.
                             type: string
-                          customEndpoint:
-                            description: Custom endpoint for connecting to S3 object
-                              store
+                          credentialSecretName:
+                            description: The name of the secret containing the credentials
+                              to the S3 storage
                             type: string
                           disableSSL:
-                            description: Disable SSL.
+                            description: DisableSSL disables SSL.  It is analogous
+                              to the --disable-ssl
                             type: boolean
                           iamRole:
                             description: IAM identity with the desired permissions
                             type: string
-                          id:
-                            description: Set an ID for the cluster deployment. Defaults
-                              to a random value.
-                            type: string
                           logOptions:
-                            description: Enable verbose logging in Pachyderm's internal
-                              S3 client for debugging.
+                            description: LogOptions sets various log options in Pachyderm’s
+                              internal S3 client.
                             type: string
                           maxUploadParts:
                             description: 'Set a custom maximum number of upload parts.
@@ -350,9 +347,6 @@ spec:
                               uploads. Default: 5242880'
                             format: int64
                             type: integer
-                          region:
-                            description: Region for the object storage cluster
-                            type: string
                           retries:
                             description: 'Set a custom number of retries for object
                               storage requests. Default: 10'
@@ -360,14 +354,9 @@ spec:
                           reverse:
                             description: Reverse object storage paths.
                             type: boolean
-                          secret:
-                            description: The secret access key for the S3 bucket
-                            type: string
                           timeout:
                             description: 'Set a custom timeout for object storage
                               requests. Default: 5m'
-                            type: string
-                          token:
                             type: string
                           uploadACL:
                             description: 'Sets a custom upload ACL for object store
@@ -407,6 +396,8 @@ spec:
                             description: Credentials json file
                             type: string
                           serviceAccountName:
+                            description: ServiceAccount used for Google container
+                              storage
                             type: string
                         type: object
                       microsoft:

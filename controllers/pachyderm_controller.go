@@ -137,15 +137,82 @@ func filterEvents() predicate.Funcs {
 	}
 }
 
-func (r *PachydermReconciler) validatePachyderm(ctx context.Context, components *generators.PachydermCluster) error {
-	pd := components.Pachyderm()
-	if pd.Spec.Pachd.Storage.Google != nil {
-		credentials, err := r.googleCredentialsJSON(ctx, components.Pachyderm())
+type ErrKeyNotFound struct {
+	Key string
+}
+
+func NewKeyError(msg string) *ErrKeyNotFound {
+	return &ErrKeyNotFound{
+		Key: msg,
+	}
+}
+
+func (e *ErrKeyNotFound) Error() string {
+	return fmt.Sprintf("%s.\n", e.Key)
+}
+
+func (r *PachydermReconciler) validatePachyderm(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	if pd.Spec.Pachd.Storage.Backend == aimlv1beta1.GoogleStorageBackend &&
+		pd.Spec.Pachd.Storage.Google != nil {
+		credentials, err := r.googleCredentialsJSON(ctx, pd)
 		if err != nil {
 			return err
 		}
 
-		components.SetGoogleCredentials(credentials)
+		pd.SetGoogleCredentials(credentials)
+	}
+
+	if pd.Spec.Pachd.Storage.Backend == aimlv1beta1.AmazonStorageBackend {
+		credentialSecretKey := types.NamespacedName{
+			Name:      pd.Spec.Pachd.Storage.Amazon.CredentialSecretName,
+			Namespace: pd.Namespace,
+		}
+		credentialSecret := &corev1.Secret{}
+		if err := r.Get(ctx, credentialSecretKey, credentialSecret); err != nil {
+			return err
+		}
+		accessID, ok := credentialSecret.Data["access-id"]
+		if !ok {
+			return NewKeyError(
+				fmt.Sprintf("the key %s missing in secret %s.\n",
+					"access-id",
+					credentialSecretKey.Name),
+			)
+		}
+		accessSecret, ok := credentialSecret.Data["access-secret"]
+		if !ok {
+			return NewKeyError(
+				fmt.Sprintf("the key %s missing in secret %s.\n",
+					"access-secret",
+					credentialSecretKey.Name),
+			)
+		}
+		bucket, ok := credentialSecret.Data["bucket"]
+		if !ok {
+			return NewKeyError(
+				fmt.Sprintf("the key %s missing in secret %s.\n",
+					"bucket",
+					credentialSecretKey.Name),
+			)
+		}
+		region, ok := credentialSecret.Data["region"]
+		if !ok {
+			return NewKeyError(
+				fmt.Sprintf("the key %s missing in secret %s.\n",
+					"region",
+					credentialSecretKey.Name),
+			)
+		}
+		if token, ok := credentialSecret.Data["token"]; ok {
+			pd.Spec.Pachd.Storage.Amazon.Token = string(token)
+		}
+		if endpoint, ok := credentialSecret.Data["custom-endpoint"]; ok {
+			pd.Spec.Pachd.Storage.Amazon.CustomEndpoint = string(endpoint)
+		}
+		pd.Spec.Pachd.Storage.Amazon.ID = string(accessID)
+		pd.Spec.Pachd.Storage.Amazon.Secret = string(accessSecret)
+		pd.Spec.Pachd.Storage.Amazon.Bucket = string(bucket)
+		pd.Spec.Pachd.Storage.Amazon.Region = string(region)
 	}
 
 	return nil
@@ -169,13 +236,13 @@ func (r *PachydermReconciler) googleCredentialsJSON(ctx context.Context, pd *aim
 }
 
 func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
-	components, err := generators.PrepareCluster(pd)
-	if err != nil {
+	// perform pre-checks
+	if err := r.validatePachyderm(ctx, pd); err != nil {
 		return err
 	}
 
-	// perform pre-checks
-	if err := r.validatePachyderm(ctx, components); err != nil {
+	components, err := generators.PrepareCluster(pd)
+	if err != nil {
 		return err
 	}
 
@@ -371,20 +438,24 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 		return err
 	}
 
-	if pd.DeletionTimestamp != nil && pd.Status.Phase != aimlv1beta1.PhaseDeleting {
+	if pd.IsDeleted() && pd.Status.Phase != aimlv1beta1.PhaseDeleting {
 		pd.Status.Phase = aimlv1beta1.PhaseDeleting
 	}
 
 	if reflect.DeepEqual(current.Status, aimlv1beta1.PachydermStatus{}) &&
-		pd.DeletionTimestamp == nil {
+		!pd.IsDeleted() {
 		pd.Status.Phase = aimlv1beta1.PhaseInitializing
 	}
 
-	if r.isPachydermRunning(ctx, pd) && pd.DeletionTimestamp == nil {
+	if r.isPachydermRunning(ctx, pd) && !pd.IsDeleted() {
 		pd.Status.Phase = aimlv1beta1.PhaseRunning
 	}
 
-	return r.Status().Patch(ctx, current, client.MergeFrom(pd))
+	if !reflect.DeepEqual(pd.Status, current.Status) {
+		return r.Status().Patch(ctx, pd, client.MergeFrom(current))
+	}
+
+	return nil
 }
 
 func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {
@@ -420,11 +491,9 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 		Name:      "pachd-peer",
 		Namespace: pd.Namespace,
 	}
-	// if !r.isServiceReady(ctx, pachdPeerSvc) {
-	// 	return false
-	// }
-	testPachdPeerConnection(ctx, pd)
-	return r.isServiceReady(ctx, pachdPeerSvc)
+	if !r.isServiceReady(ctx, pachdPeerSvc) {
+		return false
+	}
 
 	// if !pd.Spec.Console.Disable {
 	// 	// check status of dash
@@ -438,7 +507,7 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 	// }
 
 	// pachd-peer connection test
-	// return testPachdPeerConnection(ctx, pd)
+	return testPachdPeerConnection(ctx, pd)
 }
 
 func testPachdPeerConnection(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {

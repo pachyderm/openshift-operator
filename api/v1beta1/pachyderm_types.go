@@ -23,6 +23,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// Amazon storage backend for pachd
+	AmazonStorageBackend string = "AMAZON"
+	// Microsoft storage backend for pachd
+	MicrosoftStorageBackend string = "MICROSOFT"
+	// Google storage backend for pachd
+	GoogleStorageBackend string = "GOOGLE"
+	// Minio storage backend for pachd
+	MinioStorageBackend string = "MINIO"
+)
+
 // PachydermSpec defines the desired state of Pachyderm
 type PachydermSpec struct {
 	// Allows user to change version of Pachyderm to deploy
@@ -222,7 +233,10 @@ type GoogleStorageOptions struct {
 	// Name of GCS bucket to hold objects
 	Bucket string `json:"bucket,omitempty"`
 	// Credentials json file
-	CredentialSecret   string `json:"credentialSecret,omitempty"`
+	CredentialSecret string `json:"credentialSecret,omitempty"`
+	// Contents of the "credentials.json" key from the CredentialSecret
+	CredentialsData []byte `json:"-"`
+	// ServiceAccount used for Google container storage
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
@@ -230,19 +244,19 @@ type GoogleStorageOptions struct {
 // configure Amazon s3 storage
 type AmazonStorageOptions struct {
 	// Name of the S3 bucket to hold objects
-	Bucket string `json:"bucket,omitempty"`
-	// AWS cloudfront distribution
+	Bucket string `json:"-"`
+	// CloudFrontDistribution sets the CloudFront distribution in the storage secrets.
+	// It is analogous to the --cloudfront-distribution argument to pachctl deploy.
 	CloudFrontDistribution string `json:"cloudFrontDistribution,omitempty"`
 	// Custom endpoint for connecting to S3 object store
-	CustomEndpoint string `json:"customEndpoint,omitempty"`
-	// Disable SSL.
+	CustomEndpoint string `json:"-"`
+	// DisableSSL disables SSL.  It is analogous to the --disable-ssl
 	DisableSSL bool `json:"disableSSL,omitempty"`
 	// IAM identity with the desired permissions
 	IAMRole string `json:"iamRole,omitempty"`
-	// Set an ID for the cluster deployment.
-	// Defaults to a random value.
-	ID string `json:"id,omitempty"`
-	// Enable verbose logging in Pachyderm's internal S3 client for debugging.
+	// The access ID for the AWS S3 storage solution
+	ID string `json:"-"`
+	// LogOptions sets various log options in Pachyderm’s internal S3 client.
 	LogOptions string `json:"logOptions,omitempty"`
 	// Set a custom maximum number of upload parts.
 	// Default: 10000
@@ -254,23 +268,28 @@ type AmazonStorageOptions struct {
 	// Default: 5242880
 	PartSize int64 `json:"partSize,omitempty" default:"5242880"`
 	// Region for the object storage cluster
-	Region string `json:"region,omitempty"`
+	Region string `json:"-"`
 	// Set a custom number of retries for object storage requests.
 	// Default: 10
 	Retries int `json:"retries,omitempty" default:"10"`
 	// Reverse object storage paths.
 	Reverse *bool `json:"reverse,omitempty" default:"true"`
 	// The secret access key for the S3 bucket
-	Secret string `json:"secret,omitempty"`
+	Secret string `json:"-"`
 	// Set a custom timeout for object storage requests.
 	// Default: 5m
 	Timeout string `json:"timeout,omitempty" default:"5m"`
-	Token   string `json:"token,omitempty"`
+	// Token optionally sets the Amazon token to use.  Together with
+	// ID and Secret, it implements the functionality of the
+	// --credentials argument to pachctl deploy.
+	Token string `json:"-"`
 	// Sets a custom upload ACL for object store uploads.
 	// Default: "bucket-owner-full-control"
 	UploadACL string `json:"uploadACL,omitempty" default:"bucket-owner-full-control"`
 	// Container for storing archives
 	Vault *AmazonStorageVault `json:"vault,omitempty"`
+	// The name of the secret containing the credentials to the S3 storage
+	CredentialSecretName string `json:"credentialSecretName,omitempty" default:"pachyderm-aws-secret"`
 }
 
 // AmazonStorageVault exposes options to configure
@@ -303,15 +322,6 @@ type MinioStorageOptions struct {
 	Secret    string `json:"secret,omitempty"`
 	Secure    string `json:"secure,omitempty"`
 	Signature string `json:"signature,omitempty"`
-}
-
-// LocalStorageOptions exposes options to
-// confifure local storage
-type LocalStorageOptions struct {
-	// Location on the worker node to be
-	// mounted into the pod.
-	// Default: "/var/pachyderm/"
-	HostPath string `json:"hostPath,omitempty" default:"/var/pachyderm/"`
 }
 
 // PachydermPhase defines the data type used

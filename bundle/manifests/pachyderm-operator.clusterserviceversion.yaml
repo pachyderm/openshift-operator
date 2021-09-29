@@ -20,9 +20,7 @@ metadata:
               },
               "storage": {
                 "amazon": {
-                  "bucket": "pachd-bucket",
-                  "id": "test-id",
-                  "region": "us-east"
+                  "credentialSecretName": "pachyderm-aws"
                 },
                 "backend": "AMAZON"
               }
@@ -48,7 +46,7 @@ metadata:
     createdAt: "2021-05-20T08:05:00Z"
     description: Pachyderm provides version control for data. Think, "git for data",
       but better.
-    operators.operatorframework.io/builder: operator-sdk-v1.9.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.11.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/opdev/pachyderm-operator
     support: Pachyderm, Inc.
@@ -504,27 +502,6 @@ spec:
     containerPort: 443
     deploymentName: pachyderm-operator-controller-manager
     failurePolicy: Fail
-    generateName: vpachyderm.kb.io
-    rules:
-    - apiGroups:
-      - aiml.pachyderm.com
-      apiVersions:
-      - v1beta1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - pachyderms
-    sideEffects: None
-    targetPort: 9443
-    type: ValidatingAdmissionWebhook
-    webhookPath: /validate-aiml-pachyderm-com-v1beta1-pachyderm
-  - admissionReviewVersions:
-    - v1
-    - v1beta1
-    containerPort: 443
-    deploymentName: pachyderm-operator-controller-manager
-    failurePolicy: Fail
     generateName: mpachyderm.kb.io
     rules:
     - apiGroups:
@@ -540,3 +517,24 @@ spec:
     targetPort: 9443
     type: MutatingAdmissionWebhook
     webhookPath: /mutate-aiml-pachyderm-com-v1beta1-pachyderm
+  - admissionReviewVersions:
+    - v1
+    - v1beta1
+    containerPort: 443
+    deploymentName: pachyderm-operator-controller-manager
+    failurePolicy: Fail
+    generateName: vpachyderm.kb.io
+    rules:
+    - apiGroups:
+      - aiml.pachyderm.com
+      apiVersions:
+      - v1beta1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pachyderms
+    sideEffects: None
+    targetPort: 9443
+    type: ValidatingAdmissionWebhook
+    webhookPath: /validate-aiml-pachyderm-com-v1beta1-pachyderm

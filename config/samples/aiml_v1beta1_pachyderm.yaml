@@ -11,8 +11,5 @@ spec:
     storage:
       backend: AMAZON
       amazon:
-        id: test-id
-        region: us-east
-        bucket: pachd-bucket
-
+        credentialSecretName: pachyderm-aws-secret
 

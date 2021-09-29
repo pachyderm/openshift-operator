@@ -18,7 +18,6 @@ import (
 // PachydermCluster is a structure that contains
 // all the Kubernetes resources that make up a Pachyderm cluster
 type PachydermCluster struct {
-	gcsCredentials      []byte
 	pachyderm           *aimlv1beta1.Pachyderm
 	etcdStatefulSet     *appsv1.StatefulSet
 	postgreStatefulSet  *appsv1.StatefulSet
@@ -33,10 +32,6 @@ type PachydermCluster struct {
 	configMaps          []*corev1.ConfigMap
 	storageClasses      []*storagev1.StorageClass
 	deployments         []*appsv1.Deployment
-}
-
-func (c *PachydermCluster) SetGoogleCredentials(credentials []byte) {
-	c.gcsCredentials = credentials
 }
 
 func getPachydermCluster(pd *aimlv1beta1.Pachyderm) (*PachydermCluster, error) {
@@ -272,9 +267,6 @@ func (c *PachydermCluster) PostgreStatefulset() *appsv1.StatefulSet {
 // child resources based on the pachyderm custom resource
 // TODO: decode any input here
 func PrepareCluster(pd *aimlv1beta1.Pachyderm) (*PachydermCluster, error) {
-	// decode any encoded values before processing
-	pd.DecodeStorageInput()
-
 	cluster, err := getPachydermCluster(pd)
 	if err != nil {
 		return nil, err

@@ -339,7 +339,8 @@ const (
 
 // PachydermStatus defines the observed state of Pachyderm
 type PachydermStatus struct {
-	Phase PachydermPhase `json:"phase"`
+	Phase        PachydermPhase `json:"phase"`
+	PachdAddress string         `json:"pachdAddress,omitempty"`
 }
 
 //+kubebuilder:object:root=true

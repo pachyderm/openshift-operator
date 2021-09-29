@@ -20,7 +20,7 @@ metadata:
               },
               "storage": {
                 "amazon": {
-                  "credentialSecretName": "pachyderm-aws"
+                  "credentialSecretName": "pachyderm-aws-secret"
                 },
                 "backend": "AMAZON"
               }

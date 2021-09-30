@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"reflect"
@@ -438,6 +439,10 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 		return err
 	}
 
+	if pd.Status.PachdAddress == "" {
+		pd.Status.PachdAddress = pachdAddress(pd)
+	}
+
 	if pd.IsDeleted() && pd.Status.Phase != aimlv1beta1.PhaseDeleting {
 		pd.Status.Phase = aimlv1beta1.PhaseDeleting
 	}
@@ -456,6 +461,25 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 	}
 
 	return nil
+}
+
+// ClusterStatus returns address of the Pachyderm cluster
+type ClusterStatus struct {
+	PachdAddress string `json:"pachd_address,omitempty"`
+}
+
+func pachdAddress(pd *aimlv1beta1.Pachyderm) string {
+	var port int32 = 30650
+	var namespace string = pd.ObjectMeta.Namespace
+	cluster := ClusterStatus{
+		PachdAddress: fmt.Sprintf("%s.%s.svc.cluster.local:%d",
+			"pachd", namespace, port),
+	}
+	data, err := json.Marshal(cluster)
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }
 
 func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {

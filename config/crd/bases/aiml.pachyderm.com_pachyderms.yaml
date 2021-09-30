@@ -537,6 +537,8 @@ spec:
           status:
             description: PachydermStatus defines the observed state of Pachyderm
             properties:
+              pachdAddress:
+                type: string
               phase:
                 description: PachydermPhase defines the data type used to report the
                   status of a Pachyderm resource

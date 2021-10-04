@@ -5,6 +5,7 @@ metadata:
     alm-examples: '[]'
     capabilities: Basic Install
     categories: AI/Machine Learning
+    certified: "true"
     containerImage: quay.io/opdev/pachyderm-operator:latest
     createdAt: "2021-05-20T08:05:00Z"
     description: Pachyderm provides version control for data. Think, "git for data",
@@ -65,8 +66,6 @@ spec:
   - machine learning
   - artificial intelligence
   links:
-  - name: Pachyderm Operator
-    url: https://pachyderm-operator.domain
   - name: Documentation
     url: https://docs.pachyderm.com/latest/
   maintainers:
@@ -74,7 +73,7 @@ spec:
     name: Kyle White
   - email: eochieng@redhat.com
     name: Edmund Ochieng
-  maturity: alpha
+  maturity: beta
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com

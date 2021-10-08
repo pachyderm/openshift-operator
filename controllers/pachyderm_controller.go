@@ -153,6 +153,10 @@ func (e *ErrKeyNotFound) Error() string {
 }
 
 func (r *PachydermReconciler) validatePachyderm(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	if err := r.postgresPassword(ctx, pd); err != nil {
+		return err
+	}
+
 	if pd.Spec.Pachd.Storage.Backend == aimlv1beta1.GoogleStorageBackend &&
 		pd.Spec.Pachd.Storage.Google != nil {
 		credentials, err := r.googleCredentialsJSON(ctx, pd)
@@ -214,6 +218,27 @@ func (r *PachydermReconciler) validatePachyderm(ctx context.Context, pd *aimlv1b
 		pd.Spec.Pachd.Storage.Amazon.Secret = string(accessSecret)
 		pd.Spec.Pachd.Storage.Amazon.Bucket = string(bucket)
 		pd.Spec.Pachd.Storage.Amazon.Region = string(region)
+	}
+
+	return nil
+}
+
+func (r *PachydermReconciler) postgresPassword(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	if pd.Spec.Pachd.Postgres.PasswordSecretName != "" {
+		passwordSecret := &corev1.Secret{}
+		pgPasswordSecret := types.NamespacedName{
+			Name:      pd.Spec.Pachd.Postgres.PasswordSecretName,
+			Namespace: pd.Namespace,
+		}
+		if err := r.Get(ctx, pgPasswordSecret, passwordSecret); err != nil {
+			return err
+		}
+
+		password, ok := passwordSecret.Data["postgres-password"]
+		if !ok {
+			return ErrPasswordNotFound
+		}
+		pd.Spec.Pachd.Postgres.Password = string(password)
 	}
 
 	return nil
@@ -296,8 +321,23 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		return err
 	}
 
-	if err := r.deployPostgres(ctx, components); err != nil {
-		return err
+	if pd.DeployPostgres() {
+		if err := r.deployPostgres(ctx, components); err != nil {
+			return err
+		}
+
+		// Check Postgresql is ready before deploying pachd
+		pgSvc := types.NamespacedName{
+			Name:      "postgres",
+			Namespace: pd.Namespace,
+		}
+		if !r.isServiceReady(ctx, pgSvc) {
+			return ErrServiceNotReady
+		}
+
+		if err := r.initializePostgres(ctx, pd); err != nil {
+			return err
+		}
 	}
 
 	// Check Etcd is ready before deploying pachd
@@ -307,19 +347,6 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 	}
 	if !r.isServiceReady(ctx, etcdSvc) {
 		return ErrServiceNotReady
-	}
-
-	// Check Etcd is ready before deploying pachd
-	pgSvc := types.NamespacedName{
-		Name:      "postgres",
-		Namespace: pd.Namespace,
-	}
-	if !r.isServiceReady(ctx, pgSvc) {
-		return ErrServiceNotReady
-	}
-
-	if err := r.initializePostgres(ctx, pd); err != nil {
-		return err
 	}
 
 	if err := r.reconcileDeployments(ctx, components); err != nil {
@@ -338,6 +365,10 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 	}
 
 	// delete cluster resources
+	if err := r.validatePachyderm(ctx, pd); err != nil {
+		return err
+	}
+
 	components, err := generators.PrepareCluster(pd)
 	if err != nil {
 		return err
@@ -493,12 +524,14 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 	}
 
 	// check status of postgres
-	pgSvc := types.NamespacedName{
-		Name:      "postgres",
-		Namespace: pd.Namespace,
-	}
-	if !r.isServiceReady(ctx, pgSvc) {
-		return false
+	if pd.DeployPostgres() {
+		pgSvc := types.NamespacedName{
+			Name:      "postgres",
+			Namespace: pd.Namespace,
+		}
+		if !r.isServiceReady(ctx, pgSvc) {
+			return false
+		}
 	}
 
 	// check status of pachd

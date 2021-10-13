@@ -236,7 +236,10 @@ func (r *PachydermReconciler) postgresPassword(ctx context.Context, pd *aimlv1be
 
 		password, ok := passwordSecret.Data["postgres-password"]
 		if !ok {
-			return ErrPasswordNotFound
+			password, ok = passwordSecret.Data["postgresql-password"]
+			if !ok {
+				return ErrPasswordNotFound
+			}
 		}
 		pd.Spec.Pachd.Postgres.Password = string(password)
 	}
@@ -334,10 +337,10 @@ func (r *PachydermReconciler) reconcilePachydermObj(ctx context.Context, pd *aim
 		if !r.isServiceReady(ctx, pgSvc) {
 			return ErrServiceNotReady
 		}
+	}
 
-		if err := r.initializePostgres(ctx, pd); err != nil {
-			return err
-		}
+	if err := r.initializePostgres(ctx, pd); err != nil {
+		return err
 	}
 
 	// Check Etcd is ready before deploying pachd
@@ -552,26 +555,22 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 		return false
 	}
 
-	// if !pd.Spec.Console.Disable {
-	// 	// check status of dash
-	// 	dashSvc := types.NamespacedName{
-	// 		Name:      "dash",
-	// 		Namespace: pd.Namespace,
-	// 	}
-	// 	if !r.isServiceReady(ctx, dashSvc) {
-	// 		return false
-	// 	}
-	// }
-
 	// pachd-peer connection test
-	return testPachdPeerConnection(ctx, pd)
+	const retries = 3
+	for i := 0; i < retries; i++ {
+		if testPachdPeerConnection(ctx, pd) {
+			return true
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	return false
 }
 
 func testPachdPeerConnection(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {
 	conn, err := net.Dial("tcp",
 		fmt.Sprintf("pachd-peer.%s.svc.cluster.local:30653", pd.Namespace))
 	if err != nil {
-		fmt.Printf("error connecting to pachd-peer; error %v\n", err.Error())
 		return false
 	}
 	defer conn.Close()
@@ -850,44 +849,6 @@ func (r *PachydermReconciler) deployPostgres(ctx context.Context, components *ge
 
 	return nil
 }
-
-// func (r *PachydermReconciler) deployPachd(ctx context.Context, components *generators.PachydermCluster) error {
-// 	pd := components.Pachyderm()
-// 	pachd := components.PachdDeployment()
-// 	if err := controllerutil.SetControllerReference(pd, pachd, r.Scheme); err != nil {
-// 		return err
-// 	}
-
-// 	if err := r.Create(ctx, pachd); err != nil {
-// 		if errors.IsAlreadyExists(err) {
-// 			// TODO: add update logic
-// 			return nil
-// 		}
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func (r *PachydermReconciler) deployConsole(ctx context.Context, components *generators.PachydermCluster) error {
-// 	pd := components.Pachyderm()
-
-// 	if !pd.Spec.Console.Disable {
-// 		dash := components.DashDeployment()
-// 		if err := controllerutil.SetControllerReference(pd, dash, r.Scheme); err != nil {
-// 			return err
-// 		}
-
-// 		if err := r.Create(ctx, dash); err != nil {
-// 			if errors.IsAlreadyExists(err) {
-// 				// TODO: add update logic
-// 				return nil
-// 			}
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
 
 func (r *PachydermReconciler) reconcileStorageClass(ctx context.Context, components *generators.PachydermCluster) error {
 	// if no storage class needs to be created,

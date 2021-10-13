@@ -73,6 +73,10 @@ func (c *ImageCatalog) postgresqlImage() *aimlv1beta1.ImageOverride {
 	return c.Postgres
 }
 
+func (c *ImageCatalog) etcdImage() *aimlv1beta1.ImageOverride {
+	return c.Etcd
+}
+
 func (c *ImageCatalog) pgBouncerImage() *aimlv1beta1.ImageOverride {
 	return c.PgBouncer
 }

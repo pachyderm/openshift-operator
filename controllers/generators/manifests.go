@@ -151,16 +151,6 @@ func (c *PachydermCluster) parseStatefulSet(obj *unstructured.Unstructured) erro
 	return nil
 }
 
-// func (c *PachydermCluster) parsePod(obj *unstructured.Unstructured) error {
-// 	pod := &corev1.Pod{}
-// 	if err := toTypedResource(obj, pod); err != nil {
-// 		return err
-// 	}
-// 	c.Pod = pod
-
-// 	return nil
-// }
-
 // Pachyderm returns the pachyderm resource used to configure components
 func (c *PachydermCluster) Pachyderm() *aimlv1beta1.Pachyderm {
 	return c.pachyderm
@@ -184,7 +174,15 @@ func (c *PachydermCluster) ConfigMaps() []*corev1.ConfigMap {
 
 // EtcdStatefulSet returns the etcd statefulset resource
 func (c *PachydermCluster) EtcdStatefulSet() *appsv1.StatefulSet {
-	return c.etcdStatefulSet
+	etcd := c.etcdStatefulSet
+	catalog, _ := pachydermImagesCatalog(c.Pachyderm())
+	for i, container := range etcd.Spec.Template.Spec.Containers {
+		if container.Name == "etcd" {
+			etcd.Spec.Template.Spec.Containers[i].Image = catalog.etcdImage().Name()
+		}
+	}
+
+	return etcd
 }
 
 // PostgreStatefulset returns the postgresql statefulset resource

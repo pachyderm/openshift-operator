@@ -177,7 +177,7 @@ ingress:
       key: ""
 
 pachd:
-  enabled: true
+  enabled: {{ not .Spec.Pachd.Disable }}
   affinity: {}
   # clusterDeploymentID sets the Pachyderm cluster ID.
   clusterDeploymentID: "{{ .Spec.Pachd.ClusterID }}"
@@ -419,7 +419,7 @@ postgresql:
   # database server to connect to in global.postgresql
   # The enabled value is watched by the 'condition' set on the Postgresql
   # dependency in Chart.yaml
-  enabled: true
+  enabled: {{ not .Spec.Postgres.Disable }}
   image:
     tag: "13.3.0"
   initdbScripts:

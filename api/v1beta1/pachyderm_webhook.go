@@ -151,3 +151,7 @@ func (r *Pachyderm) SetGoogleCredentials(credentials []byte) {
 func (r *Pachyderm) IsDeleted() bool {
 	return r.ObjectMeta.DeletionTimestamp != nil
 }
+
+func (r *Pachyderm) DeployPostgres() bool {
+	return !r.Spec.Postgres.Disable
+}

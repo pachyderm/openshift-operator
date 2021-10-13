@@ -50,4 +50,8 @@ phase: Running
 $   
 ```
 
+**2. User-provided postgresql database**
 
+- Set postgresql to disabled in pachyderm.spec.postgresql
+
+- Provide postgresql instance information in pachyderm.spec.pachd.postgresql

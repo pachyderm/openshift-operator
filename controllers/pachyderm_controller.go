@@ -364,7 +364,7 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		return err
 	}
 
-	// delete cluster resources
+	// validate the pachyderm resource submitted by user
 	if err := r.validatePachyderm(ctx, pd); err != nil {
 		return err
 	}

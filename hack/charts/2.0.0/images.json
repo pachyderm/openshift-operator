@@ -25,13 +25,13 @@
       "pullPolicy": "IfNotPresent"
    },
    "pgbouncer": {
-      "repository": "quay.io/opdev/pgbouncer",
-      "tag": "latest",
+      "repository": "registry.connect.redhat.com/pachyderm/pgbouncer",
+      "tag": "sha256:4ec31d8d5a9ca163ec4caa44a05fe7599cb32e1e6ddc9cdbb1af93f61e40ccfb",
       "pullPolicy": "IfNotPresent"
    },
    "utilities": {
-      "repository": "quay.io/eochieng/init-utils",
-      "tag": "0.0.1",
+      "repository": "registry.connect.redhat.com/pachyderm/init-utils",
+      "tag": "sha256:bef6d565ba29eaeb07450ca0594ec1ee76f9fabd67e8bc4809bdb5d6799c4f3e",
       "pullPolicy": "IfNotPresent"
    }
 }

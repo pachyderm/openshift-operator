@@ -52,6 +52,8 @@ $
 
 **2. User-provided postgresql database**
 
-- Set postgresql to disabled in pachyderm.spec.postgresql
+- Set postgresql to disabled in `pachyderm.spec.postgresql`
 
-- Provide postgresql instance information in pachyderm.spec.pachd.postgresql
+- Provide postgresql instance information in `pachyderm.spec.pachd.postgresql`
+
+- Create a k8s secret to hold the postgresql password. It should have a key `postgres-password`

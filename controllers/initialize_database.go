@@ -92,9 +92,19 @@ func (r *PachydermReconciler) getPostgresAdminPassword(ctx context.Context, pd *
 		return "", err
 	}
 	dbAdminPassword, ok := secret.Data["postgresql-postgres-password"]
-	if !ok {
-		return "", errors.New("postgresql key \"postgresql-postgres-password\" missing")
+	if ok {
+		return string(dbAdminPassword), nil
 	}
 
-	return string(dbAdminPassword), nil
+	dbAdminPassword, ok = secret.Data["postgres-password"]
+	if ok {
+		return string(dbAdminPassword), nil
+	}
+
+	dbAdminPassword, ok = secret.Data["postgresql-password"]
+	if ok {
+		return string(dbAdminPassword), nil
+	}
+
+	return "", errors.New("postgresql key \"postgresql-postgres-password\" missing")
 }

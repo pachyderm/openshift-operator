@@ -33,11 +33,11 @@ func getDefaultCertifiedImages(images string) (*ImageCatalog, error) {
 	return catalog, nil
 }
 
-func (i *ImageCatalog) inject(pd *aimlv1beta1.Pachyderm) {
-	pd.Spec.Console.Image = setImageOptions(pd.Spec.Console.Image, i.Console)
-	pd.Spec.Pachd.Image = setImageOptions(pd.Spec.Pachd.Image, i.Pachd)
-	pd.Spec.Worker.Image = setImageOptions(pd.Spec.Worker.Image, i.Worker)
-	pd.Spec.Etcd.Image = setImageOptions(pd.Spec.Etcd.Image, i.Etcd)
+func (c *ImageCatalog) inject(pd *aimlv1beta1.Pachyderm) {
+	pd.Spec.Console.Image = setImageOptions(pd.Spec.Console.Image, c.Console)
+	pd.Spec.Pachd.Image = setImageOptions(pd.Spec.Pachd.Image, c.Pachd)
+	pd.Spec.Worker.Image = setImageOptions(pd.Spec.Worker.Image, c.Worker)
+	pd.Spec.Etcd.Image = setImageOptions(pd.Spec.Etcd.Image, c.Etcd)
 }
 
 func setImageOptions(user, shipped *aimlv1beta1.ImageOverride) *aimlv1beta1.ImageOverride {

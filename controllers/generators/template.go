@@ -85,6 +85,8 @@ func loadPachydermTemplates(pd *aimlv1beta1.Pachyderm) (map[string]string, error
 	return releaseutil.SplitManifests(release.Manifest), nil
 }
 
+// ChartDirectory contains information on the helm charts
+// available to the the operator
 type ChartDirectory struct {
 	// Path to the chart values.yaml file
 	Values string

@@ -179,6 +179,12 @@ func (c *PachydermCluster) EtcdStatefulSet() *appsv1.StatefulSet {
 	for i, container := range etcd.Spec.Template.Spec.Containers {
 		if container.Name == "etcd" {
 			etcd.Spec.Template.Spec.Containers[i].Image = catalog.etcdImage().Name()
+			// Patch:  to change the location of the etcd binary
+			for j, arg := range container.Args {
+				if arg == "/usr/local/bin/etcd" {
+					etcd.Spec.Template.Spec.Containers[i].Args[j] = "/bin/etcd"
+				}
+			}
 		}
 	}
 

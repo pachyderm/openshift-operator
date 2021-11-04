@@ -10,8 +10,8 @@
       "pullPolicy": "IfNotPresent"
    },
    "etcd": {
-      "repository": "pachyderm/etcd",
-      "tag": "v3.3.5",
+      "repository": "registry.redhat.io/rhel7/etcd",
+      "tag": "sha256:678c05a6003be4cf11516bf7cf5c6deb3e84a4eb6fd70deb873ebc781b712503",
       "pullPolicy": "IfNotPresent"
    },
    "postgres": {

@@ -51,7 +51,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/opdev/pachyderm-operator
     support: Pachyderm, Inc.
-  name: pachyderm-operator.v0.0.3
+  name: pachyderm-operator.v0.0.6
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -411,7 +411,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                image: registry.connect.redhat.com/pachyderm/pachyderm-operator@sha256:014172c0aa3fa32122fab1b6f0ec2ec139ec8f16c544d89ec46337cef3034a0a
+                image: registry.connect.redhat.com/pachyderm/pachyderm-operator@sha256:a600517dc31570ea8947ad39fb5f5aab873ecec09d884c4d40e3466e62e3554c
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -493,7 +493,7 @@ spec:
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com
-  version: 0.0.3
+  version: 0.0.6
   webhookdefinitions:
   - admissionReviewVersions:
     - v1

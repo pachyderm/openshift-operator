@@ -1,7 +1,12 @@
 {
    "pachd": {
-      "repository": "pachyderm/pachd",
-      "tag": "2.0.0-beta.8",
+      "repository": "registry.connect.redhat.com/pachyderm/pachd",
+      "tag": "sha256:987752293cdc28277e317b247e90519499ec06f285c44579044cde7866217663",
+      "pullPolicy": "IfNotPresent"
+   },
+   "worker": {
+      "repository": "registry.connect.redhat.com/pachyderm/worker",
+      "tag": "sha256:ff7af824ff241a2a200b0e3d336e7041bf70c8a271b4daf2a78c9f6f2903f6e0",
       "pullPolicy": "IfNotPresent"
    },
    "console": {
@@ -10,18 +15,13 @@
       "pullPolicy": "IfNotPresent"
    },
    "etcd": {
-      "repository": "registry.redhat.io/rhel7/etcd",
-      "tag": "sha256:678c05a6003be4cf11516bf7cf5c6deb3e84a4eb6fd70deb873ebc781b712503",
+      "repository": "registry.connect.redhat.com/pachyderm/etcd",
+      "tag": "sha256:89726ad77875670475288419b61bcf2729cf1aa7606738a916bf78c3dbf8f10f",
       "pullPolicy": "IfNotPresent"
    },
    "postgres": {
       "repository": "registry.redhat.io/rhel8/postgresql-13",
-      "tag": "1-18",
-      "pullPolicy": "IfNotPresent"
-   },
-   "worker": {
-      "repository": "pachyderm/worker",
-      "tag": "2.0.0-beta.8",
+      "tag": "sha256:ea945ee50ea2d0f311c9aee71dc99b6e4677356bfff7f2334a32af920d37e367",
       "pullPolicy": "IfNotPresent"
    },
    "pgbouncer": {

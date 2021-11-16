@@ -10,7 +10,7 @@ metadata:
     createdAt: "2021-05-20T08:05:00Z"
     description: Pachyderm provides version control for data. Think, "git for data",
       but better.
-    repository: https://github.com/opdev/pachyderm-operator
+    repository: https://github.com/pachyderm/openshift-operator
     support: Pachyderm, Inc.
   name: pachyderm-operator.v0.0.0
   namespace: placeholder
@@ -74,6 +74,7 @@ spec:
   - email: eochieng@redhat.com
     name: Edmund Ochieng
   maturity: beta
+  minKubeVersion: v1.19.0
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com

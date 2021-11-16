@@ -49,7 +49,7 @@ metadata:
       but better.
     operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
-    repository: https://github.com/opdev/pachyderm-operator
+    repository: https://github.com/pachyderm/openshift-operator
     support: Pachyderm, Inc.
   name: pachyderm-operator.v0.0.6
   namespace: placeholder
@@ -490,6 +490,7 @@ spec:
   - email: eochieng@redhat.com
     name: Edmund Ochieng
   maturity: beta
+  minKubeVersion: v1.19.0
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com

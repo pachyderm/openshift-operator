@@ -182,7 +182,7 @@ type PostgresOptions struct {
 	Resources    *corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
-// PachdPostgresConfig
+// PachdPostgresConfig sets up storage for pachd
 type PachdPostgresConfig struct {
 	// Hostname opr address  of the postgresql host
 	// +kubebuilder:default:=postgres

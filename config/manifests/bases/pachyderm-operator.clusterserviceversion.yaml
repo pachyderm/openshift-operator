@@ -73,7 +73,7 @@ spec:
   - email: eochieng@redhat.com
     name: Edmund Ochieng
   maturity: beta
-  miniKubeVersion: v1.19.0
+  minKubeVersion: v1.19.0
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com

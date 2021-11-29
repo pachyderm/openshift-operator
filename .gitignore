@@ -25,4 +25,4 @@ testbin/*
 
 # custom files
 catalogsource.yaml
-**/manifests
+**/bundle/manifests

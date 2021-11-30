@@ -88,3 +88,7 @@ func (c *ImageCatalog) pachdImage() *aimlv1beta1.ImageOverride {
 func (c *ImageCatalog) utilsImage() *aimlv1beta1.ImageOverride {
 	return c.Utilities
 }
+
+func (c *ImageCatalog) workerImage() *aimlv1beta1.ImageOverride {
+	return c.Worker
+}

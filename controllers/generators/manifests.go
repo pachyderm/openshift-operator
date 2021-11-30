@@ -356,6 +356,12 @@ func setupPachd(pd *aimlv1beta1.Pachyderm, pachd *appsv1.Deployment) {
 				if environment.Name == "POSTGRES_DATABASE" {
 					environment.Value = pd.Spec.Pachd.Postgres.Database
 				}
+				if environment.Name == "WORKER_IMAGE" {
+					environment.Value = catalog.workerImage().Name()
+				}
+				if environment.Name == "WORKER_SIDECAR_IMAGE" {
+					environment.Value = catalog.pachdImage().Name()
+				}
 				env = append(env, environment)
 			}
 			pachd.Spec.Template.Spec.Containers[i].Env = env

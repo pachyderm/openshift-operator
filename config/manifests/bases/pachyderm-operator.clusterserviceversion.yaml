@@ -32,15 +32,15 @@ spec:
   description: |
     The Pachyderm operator aims to make deploying and managing Pachyderm instances on Openshift container platform easier.
 
-    Pachyderm is an enterprise-grade, open-source data science platform that makes explainable, repeatable, and scalable AI/ML a reality.  It brings together version control for data with the tools to build scalable end-to-end AI/ML pipelines while empowering users to use any language, framework, or tool they want.
+    Pachyderm is the data foundation for machine learning.  Pachyderm provides industry leading data versioning, pipelines and lineage that allow data science teams to automate the machine learning lifecycle and optimize their machine learning operations (MLOps). 
 
     ## Getting started
 
-    1. Identify and set the pachd storage backend at `pachyderm.spec.pachd.storage.backend`. Supported backends are `AMAZON`, `MICROSOFT`, `GOOGLE` and `MINIO`.
+    1. Pachyderm uses an object store to store your data. Set the pachd storage backend at `pachyderm.spec.pachd.storage.backend` to `AMAZON`, `MICROSOFT`, `GOOGLE` or `MINIO` depending on your storage provider. Additionally, create a user with read/write access to the object store.
 
-    2. Setup the pachd storage credentials in the section, `pachyderm.spec.pachd.storage`. Required fields depend on the backend type set in step 1 above.
+    2. Setup the user credentials in the section, `pachyderm.spec.pachd.storage`. Required fields depend on the backend type set in step 1 above.
 
-    3. Finally, deploy the pachyderm cluster.
+    3. Finally, deploy the pachyderm cluster in its own namespace.
 
     For more information on getting started, reference the documentation.
   displayName: Pachyderm

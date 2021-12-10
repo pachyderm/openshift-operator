@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"golang.org/x/mod/semver"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -44,9 +45,6 @@ import (
 
 const (
 	pachydermFinalizer string = "finalizer.pachyderm.com"
-
-	// ErrEtcdNotReady is returned when Etcd is not ready
-	// ErrEtcdNotReady generators.PachydermError = "waiting for etcd"
 )
 
 // PachydermReconciler reconciles a Pachyderm object
@@ -97,10 +95,6 @@ func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		// TODO: refactor reconcile status to update most recent pachyderm object
-		// if strings.Contains(err.Error(), "please apply your changes to the latest version and try again") {
-		// 	return ctrl.Result{}, nil
-		// }
 		return ctrl.Result{}, err
 	}
 
@@ -174,6 +168,11 @@ func (r *PachydermReconciler) validatePachyderm(ctx context.Context, pd *aimlv1b
 		}
 		credentialSecret := &corev1.Secret{}
 		if err := r.Get(ctx, credentialSecretKey, credentialSecret); err != nil {
+			// if pachyderm is marked for deletion but
+			// secret is missing, return nil
+			if errors.IsNotFound(err) && pd.DeletionTimestamp != nil {
+				return nil
+			}
 			return err
 		}
 		accessID, ok := credentialSecret.Data["access-id"]
@@ -372,6 +371,11 @@ func (r *PachydermReconciler) cleanupPachydermResources(ctx context.Context, pd 
 		return err
 	}
 
+	// abort clean up if pachyderm object is deleted during initialization
+	if pd.DeletionTimestamp != nil && !r.isPachydermRunning(ctx, pd) {
+		return nil
+	}
+
 	components, err := generators.PrepareCluster(pd)
 	if err != nil {
 		return err
@@ -458,7 +462,26 @@ func (r *PachydermReconciler) reconcileDeployments(ctx context.Context, componen
 	return nil
 }
 
-// TODO: set finalizer and status for Pachyderm resource
+func isUpgradable(pd *aimlv1beta1.Pachyderm) bool {
+	desiredVersion := pd.Spec.Version
+	currentVersion := pd.Status.CurrentVersion
+
+	if pd.Status.CurrentVersion == "" {
+		return false
+	}
+
+	if !semver.IsValid(pd.Spec.Version) {
+		desiredVersion = fmt.Sprintf("v%s", pd.Spec.Version)
+	}
+
+	if !semver.IsValid(pd.Status.CurrentVersion) {
+		currentVersion = fmt.Sprintf("v%s", pd.Status.CurrentVersion)
+	}
+
+	return semver.Compare(desiredVersion, currentVersion) == 1
+}
+
+// set finalizer and status for Pachyderm resource
 func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
 	current := &aimlv1beta1.Pachyderm{}
 	pdKey := types.NamespacedName{
@@ -481,6 +504,10 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 		pd.Status.Phase = aimlv1beta1.PhaseDeleting
 	}
 
+	if isUpgradable(pd) {
+		pd.Status.Phase = aimlv1beta1.PhaseUpgrading
+	}
+
 	if reflect.DeepEqual(current.Status, aimlv1beta1.PachydermStatus{}) &&
 		!pd.IsDeleted() {
 		pd.Status.Phase = aimlv1beta1.PhaseInitializing
@@ -488,6 +515,7 @@ func (r *PachydermReconciler) reconcileStatus(ctx context.Context, pd *aimlv1bet
 
 	if r.isPachydermRunning(ctx, pd) && !pd.IsDeleted() {
 		pd.Status.Phase = aimlv1beta1.PhaseRunning
+		pd.Status.CurrentVersion = pd.Spec.Version
 	}
 
 	if !reflect.DeepEqual(pd.Status, current.Status) {

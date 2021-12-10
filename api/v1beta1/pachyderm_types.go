@@ -352,12 +352,16 @@ const (
 	PhaseRunning PachydermPhase = "Running"
 	// PhaseDeleting reports the resource status to deleting
 	PhaseDeleting PachydermPhase = "Deleting"
+	// PhaseUpgrading denotes the pachyderm resource is
+	// updating from one version to another
+	PhaseUpgrading PachydermPhase = "Upgrading"
 )
 
 // PachydermStatus defines the observed state of Pachyderm
 type PachydermStatus struct {
-	Phase        PachydermPhase `json:"phase"`
-	PachdAddress string         `json:"pachdAddress,omitempty"`
+	Phase          PachydermPhase `json:"phase"`
+	PachdAddress   string         `json:"pachdAddress,omitempty"`
+	CurrentVersion string         `json:"currentVersion,omitempty"`
 }
 
 //+kubebuilder:object:root=true

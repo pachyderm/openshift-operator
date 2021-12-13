@@ -3,7 +3,6 @@ package generators
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -182,6 +181,12 @@ func (c *PachydermCluster) EtcdStatefulSet() *appsv1.StatefulSet {
 		}
 	}
 
+	// Remove security context deployed by the charts.
+	// This conflicts with the random user ID range provided by Openshift
+	if etcd.Spec.Template.Spec.SecurityContext != nil {
+		etcd.Spec.Template.Spec.SecurityContext = nil
+	}
+
 	return etcd
 }
 
@@ -303,7 +308,6 @@ func setupPGBouncer(pd *aimlv1beta1.Pachyderm, bouncer *appsv1.Deployment) {
 				},
 			}
 			bouncer.Spec.Template.Spec.Containers[i] = container
-
 		}
 	}
 	if bouncer.Spec.Template.Spec.Volumes == nil {
@@ -326,20 +330,18 @@ func setupPachd(pd *aimlv1beta1.Pachyderm, pachd *appsv1.Deployment) {
 	pgImage := catalog.postgresqlImage()
 	utilsImage := catalog.utilsImage()
 
+	// Remove securityContext applied by helm chart in favour of
+	// randomized user ID provided by Openshift
+	if pachd.Spec.Template.Spec.SecurityContext != nil {
+		pachd.Spec.Template.Spec.SecurityContext = nil
+	}
+
 	for i, initContainer := range pachd.Spec.Template.Spec.InitContainers {
 		if initContainer.Name != "init-etcd" {
 			pachd.Spec.Template.Spec.InitContainers[i].Image = pgImage.Name()
 		}
 		if initContainer.Name == "init-etcd" {
-			var cmd []string
-			for _, line := range initContainer.Command {
-				if strings.Contains(line, "wget") {
-					line = strings.ReplaceAll(line, "wget", "curl -s")
-				}
-				cmd = append(cmd, line)
-			}
 			pachd.Spec.Template.Spec.InitContainers[i].Image = utilsImage.Name()
-			pachd.Spec.Template.Spec.InitContainers[i].Command = cmd
 		}
 	}
 

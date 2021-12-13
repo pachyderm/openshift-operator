@@ -26,7 +26,7 @@
    },
    "pgbouncer": {
       "repository": "registry.connect.redhat.com/pachyderm/pgbouncer",
-      "tag": "sha256:4ec31d8d5a9ca163ec4caa44a05fe7599cb32e1e6ddc9cdbb1af93f61e40ccfb",
+      "tag": "sha256:305b1f447a57bba7cf69b56130e95e817507d5cbc5ab5a0a63b77772eb71a12a",
       "pullPolicy": "IfNotPresent"
    },
    "utilities": {

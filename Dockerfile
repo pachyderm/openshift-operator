@@ -25,7 +25,7 @@ LABEL name=pachyderm-operator \
       version=$VERSION \
       release='beta' \
       description='Operator to manage Pachyderm instances' \
-      summary='Pachyderm is a data science platform that combines Data Lineage with End-to-End Pipelines'
+      summary='Pachyderm is the data foundation for Machine Learning. It combines Data Lineage with End-to-End Pipelines'
 
 ENV USER_ID=1001
 ADD LICENSE /licenses/apache2

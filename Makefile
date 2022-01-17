@@ -151,7 +151,7 @@ bundle-push:
 	${BUILD_TOOL} push $(BUNDLE_IMG)
 
 index-build:
-	opm index add --bundles quay.io/opdev/pachyderm-bundle:$(VERSION) -t quay.io/opdev/pachyderm-index:latest -u ${BUILD_TOOL}
-
+	bash -x ./hack/scripts/build_index_image.sh
+	
 index-push: index-build
 	${BUILD_TOOL} push quay.io/opdev/pachyderm-index:latest

@@ -1,12 +1,12 @@
 {
    "pachd": {
       "repository": "registry.connect.redhat.com/pachyderm/pachd",
-      "tag": "sha256:987752293cdc28277e317b247e90519499ec06f285c44579044cde7866217663",
+      "tag": "sha256:f8075d88f17aec19d9eb6368c589de400443782bae36b3b1887a10fb9e54fbe0",
       "pullPolicy": "IfNotPresent"
    },
    "worker": {
       "repository": "registry.connect.redhat.com/pachyderm/worker",
-      "tag": "sha256:ff7af824ff241a2a200b0e3d336e7041bf70c8a271b4daf2a78c9f6f2903f6e0",
+      "tag": "sha256:bca30445ca2033312bf47efe9e9de2e44a42c5d50ae53d9cb0534505fbd5c125",
       "pullPolicy": "IfNotPresent"
    },
    "console": {
@@ -26,7 +26,7 @@
    },
    "pgbouncer": {
       "repository": "registry.connect.redhat.com/pachyderm/pgbouncer",
-      "tag": "sha256:4ec31d8d5a9ca163ec4caa44a05fe7599cb32e1e6ddc9cdbb1af93f61e40ccfb",
+      "tag": "sha256:305b1f447a57bba7cf69b56130e95e817507d5cbc5ab5a0a63b77772eb71a12a",
       "pullPolicy": "IfNotPresent"
    },
    "utilities": {

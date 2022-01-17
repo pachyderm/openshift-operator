@@ -56,11 +56,11 @@ spec:
                         type: string
                       repository:
                         description: This option dictates the particular image to
-                          pull
+                          pull e.g. quay.io/app-sre/ubi8-ubi-minimal
                         type: string
                       tag:
                         description: Used with the image registry to choose a specific
-                          image in a cointainer registry to pull
+                          image in a cointainer registry to pull e.g. latest
                         type: string
                     type: object
                   resources:
@@ -91,8 +91,7 @@ spec:
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service
-                      type and annotations
+                    description: Service overrides
                     properties:
                       annotations:
                         items:
@@ -131,11 +130,11 @@ spec:
                         type: string
                       repository:
                         description: This option dictates the particular image to
-                          pull
+                          pull e.g. quay.io/app-sre/ubi8-ubi-minimal
                         type: string
                       tag:
                         description: Used with the image registry to choose a specific
-                          image in a cointainer registry to pull
+                          image in a cointainer registry to pull e.g. latest
                         type: string
                     type: object
                   resources:
@@ -165,8 +164,7 @@ spec:
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service
-                      type and annotations
+                    description: Service overrides
                     properties:
                       annotations:
                         items:
@@ -215,11 +213,11 @@ spec:
                         type: string
                       repository:
                         description: This option dictates the particular image to
-                          pull
+                          pull e.g. quay.io/app-sre/ubi8-ubi-minimal
                         type: string
                       tag:
                         description: Used with the image registry to choose a specific
-                          image in a cointainer registry to pull
+                          image in a cointainer registry to pull e.g. latest
                         type: string
                     type: object
                   logLevel:
@@ -257,8 +255,7 @@ spec:
                         type: string
                       passwordSecret:
                         description: Name of the kubernetes secret containing the
-                          database password. Password should be in a secret with key
-                          postgres-password
+                          database password. Password should have the key postgres-password
                         type: string
                       port:
                         default: 5432
@@ -324,6 +321,7 @@ spec:
                     - type
                     type: object
                   serviceAccountName:
+                    description: Service Account Name to use for the pachd pod
                     type: string
                   storage:
                     description: Object storage options for Pachd
@@ -499,8 +497,7 @@ spec:
                         type: object
                     type: object
                   service:
-                    description: ServiceOverrides allows user to customize k8s service
-                      type and annotations
+                    description: Service overrides
                     properties:
                       annotations:
                         items:
@@ -535,11 +532,11 @@ spec:
                         type: string
                       repository:
                         description: This option dictates the particular image to
-                          pull
+                          pull e.g. quay.io/app-sre/ubi8-ubi-minimal
                         type: string
                       tag:
                         description: Used with the image registry to choose a specific
-                          image in a cointainer registry to pull
+                          image in a cointainer registry to pull e.g. latest
                         type: string
                     type: object
                   serviceAccountName:
@@ -553,15 +550,14 @@ spec:
             description: PachydermStatus defines the observed state of Pachyderm
             properties:
               currentVersion:
+                description: Version of the deployed pachyderm cluster
                 type: string
               pachdAddress:
+                description: Address of the pachyderm cluster
                 type: string
               phase:
-                description: PachydermPhase defines the data type used to report the
-                  status of a Pachyderm resource
+                description: Deployment phase of the pachyderm cluster
                 type: string
-            required:
-            - phase
             type: object
         type: object
     served: true

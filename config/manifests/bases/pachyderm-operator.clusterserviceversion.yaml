@@ -28,6 +28,492 @@ spec:
       displayName: Pachyderm
       kind: Pachyderm
       name: pachyderms.aiml.pachyderm.com
+      specDescriptors:
+      - description: If true, this option disables the Pachyderm dashboard.
+        displayName: Disable
+        path: console.disable
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: Determines when images should be pulled. It accepts, "IfNotPresent","Never"
+          or "Always"
+        displayName: Pull Policy
+        path: console.image.pullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: This option dictates the particular image to pull e.g. quay.io/app-sre/ubi8-ubi-minimal
+        displayName: Image Repo
+        path: console.image.repository
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Used with the image registry to choose a specific image in a
+          cointainer registry to pull e.g. latest
+        displayName: Tag
+        path: console.image.tag
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Optional resource requirements required to run the dash pods.
+        displayName: Resources
+        path: console.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - displayName: Annotations
+        path: console.service.annotations
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Type
+        path: console.service.type
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: The address to use as the host in the dash ingress. Used as the
+          host of a rule
+        displayName: URL
+        path: console.url
+        x-descriptors:
+        - urn:alm:descriptor:text
+      - description: Optional parameter to set the number of nodes in the Etcd statefulset.
+          Analogous --dynamic-etcd-nodes argument to 'pachctl deploy'
+        displayName: Dynamic Nodes
+        path: etcd.dynamicNodes
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Determines when images should be pulled. It accepts, "IfNotPresent","Never"
+          or "Always"
+        displayName: Pull Policy
+        path: etcd.image.pullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: This option dictates the particular image to pull e.g. quay.io/app-sre/ubi8-ubi-minimal
+        displayName: Image Repo
+        path: etcd.image.repository
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Used with the image registry to choose a specific image in a
+          cointainer registry to pull e.g. latest
+        displayName: Tag
+        path: etcd.image.tag
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Resource requests and limits for Etcd
+        displayName: Resources
+        path: etcd.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - displayName: Annotations
+        path: etcd.service.annotations
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Type
+        path: etcd.service.type
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: If specified, etcd would use an existing storage class for its
+          storage Name of existing storage class to use for the Etcd persistent volume.
+        displayName: Storage Class
+        path: etcd.storageClass
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: 'The size of the storage to use for etcd. For example: "100Gi"'
+        displayName: Storage Size
+        path: etcd.storageSize
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+      - description: Set an ID for the cluster deployment. Defaults to a random value
+          if none is provided
+        displayName: Cluster ID
+        path: pachd.clusterDeploymentID
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Disable pachd
+        displayName: Disable
+        path: pachd.disable
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: Determines when images should be pulled. It accepts, "IfNotPresent","Never"
+          or "Always"
+        displayName: Pull Policy
+        path: pachd.image.pullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: This option dictates the particular image to pull e.g. quay.io/app-sre/ubi8-ubi-minimal
+        displayName: Image Repo
+        path: pachd.image.repository
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Used with the image registry to choose a specific image in a
+          cointainer registry to pull e.g. latest
+        displayName: Tag
+        path: pachd.image.tag
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: The log level option determines the severity of logs that are
+          of interest to the user
+        displayName: Log Level
+        path: pachd.logLevel
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: 'Optional value to determine the format of the logs Default:
+          false'
+        displayName: Loki Logging
+        path: pachd.lokiLogging
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: If true, this option allows user to disable metrics endpoint.
+        displayName: Disable
+        path: pachd.metrics.disable
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: Option to customize pachd metrics endpoint. When not set, defaults
+          to /metrics
+        displayName: Endpoint
+        path: pachd.metrics.endpoint
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Name of the database into which the table schemas will live
+        displayName: Database
+        path: pachd.postgresql.database
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Hostname opr address  of the postgresql host
+        displayName: Host
+        path: pachd.postgresql.host
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Name of the kubernetes secret containing the database password.
+          Password should have the key postgres-password
+        displayName: Password Secret
+        path: pachd.postgresql.passwordSecret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Postgresql port number. Defaults to 5432 when not set
+        displayName: Port
+        path: pachd.postgresql.port
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - displayName: SSL
+        path: pachd.postgresql.ssl
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Username to use to connect to the database. Defaults to pachyderm
+        displayName: User
+        path: pachd.postgresql.user
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Pachyderm Pipeline System(PPS) worker GRPC port. Defaults to
+          port 1080
+        displayName: PPS Worker GRPC Port
+        path: pachd.ppsWorkerGRPCPort
+        x-descriptors:
+        - urn:alm:descriptor:number
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Require only critical Pachd servers to startup and run without
+          errors.
+        displayName: Require Critical Servers Only
+        path: pachd.requireCriticalServersOnly
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: Resource requests and limits for Pachd
+        displayName: Resources
+        path: pachd.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - displayName: Annotations
+        path: pachd.service.annotations
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Type
+        path: pachd.service.type
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Service Account Name to use for the pachd pod
+        displayName: Service Account Name
+        path: pachd.serviceAccountName
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: CloudFrontDistribution sets the CloudFront distribution in the
+          storage secrets. It is analogous to the --cloudfront-distribution argument
+          to pachctl deploy.
+        displayName: CloudFront Distribution
+        path: pachd.storage.amazon.cloudFrontDistribution
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: The name of the secret containing the credentials to the S3 storage
+        displayName: S3 Credentials Secret
+        path: pachd.storage.amazon.credentialSecretName
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      - description: DisableSSL disables SSL.  It is analogous to the --disable-ssl
+        displayName: Disable SSL
+        path: pachd.storage.amazon.disableSSL
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: IAM identity with the desired permissions
+        displayName: IAM Role
+        path: pachd.storage.amazon.iamRole
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: LogOptions sets various log options in Pachyderm’s internal S3
+          client.
+        displayName: Log Options
+        path: pachd.storage.amazon.logOptions
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: 'Set a custom maximum number of upload parts. Default: 10000'
+        displayName: Max Upload Parts
+        path: pachd.storage.amazon.maxUploadParts
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: 'Set a custom part size for object storage uploads. Default:
+          5242880'
+        displayName: Part Size
+        path: pachd.storage.amazon.partSize
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: 'Set a custom number of retries for object storage requests.
+          Default: 10'
+        displayName: Retries
+        path: pachd.storage.amazon.retries
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: Reverse object storage paths.
+        displayName: Reverse
+        path: pachd.storage.amazon.reverse
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: 'Set a custom timeout for object storage requests. Default: 5m'
+        displayName: Timeout
+        path: pachd.storage.amazon.timeout
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: 'Sets a custom upload ACL for object store uploads. Default:
+          "bucket-owner-full-control"'
+        displayName: Upload ACL
+        path: pachd.storage.amazon.uploadACL
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Address
+        path: pachd.storage.amazon.vault.address
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Role
+        path: pachd.storage.amazon.vault.role
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Token
+        path: pachd.storage.amazon.vault.token
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Skip SSL certificate verification. Typically used for enabling
+          self-signed certificates
+        displayName: Verify SSL
+        path: pachd.storage.amazon.verifySSL
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - description: Sets the type of storage backend. Should be one of "GOOGLE",
+          "AMAZON", "MINIO" or "MICROSOFT"
+        displayName: Backend
+        path: pachd.storage.backend
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Name of GCS bucket to hold objects
+        displayName: Bucket
+        path: pachd.storage.google.bucket
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Credentials json file
+        displayName: Credential Secret
+        path: pachd.storage.google.credentialSecret
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: ServiceAccount used for Google container storage
+        displayName: Service Account Name
+        path: pachd.storage.google.serviceAccountName
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Container
+        path: pachd.storage.microsoft.container
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: ID
+        path: pachd.storage.microsoft.id
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Secret
+        path: pachd.storage.microsoft.secret
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Name of minio bucket to store pachd objects
+        displayName: Bucket
+        path: pachd.storage.minio.bucket
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: 'The hostname and port that are used to access the minio object
+          store Example: "minio-server:9000"'
+        displayName: Endpoint
+        path: pachd.storage.minio.endpoint
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: The user access ID that is used to access minio object store.
+        displayName: ID
+        path: pachd.storage.minio.id
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: The associated password that is used with the user access ID
+        displayName: Secret
+        path: pachd.storage.minio.secret
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Secure
+        path: pachd.storage.minio.secure
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Signature
+        path: pachd.storage.minio.signature
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: 'The maximum number of files to upload or fetch from remote sources
+          (HTTP, blob storage) using PutFile concurrently. Default: 100'
+        displayName: Put File Concurrency Limit
+        path: pachd.storage.putFileConcurrencyLimit
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: 'The maximum number of concurrent object storage uploads per
+          Pachd instance. Default: 100'
+        displayName: Upload File Concurrency Limit
+        path: pachd.storage.uploadFileConcurrencyLimit
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:number
+      - description: Set disabled to true if you choose to provide an external postgresql
+          database
+        displayName: Disable
+        path: postgresql.disable
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - urn:alm:descriptor:com.tectonic.ui:custom
+      - displayName: Resources
+        path: postgresql.resources
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+      - displayName: Annotations
+        path: postgresql.service.annotations
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Type
+        path: postgresql.service.type
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Storage class for the postgresql persistent storage
+        displayName: Storage Class
+        path: postgresql.storageClass
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:StorageClass
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Allows user to change version of Pachyderm to deploy
+        displayName: Version
+        path: version
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      - description: Determines when images should be pulled. It accepts, "IfNotPresent","Never"
+          or "Always"
+        displayName: Pull Policy
+        path: worker.image.pullPolicy
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: This option dictates the particular image to pull e.g. quay.io/app-sre/ubi8-ubi-minimal
+        displayName: Image Repo
+        path: worker.image.repository
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Used with the image registry to choose a specific image in a
+          cointainer registry to pull e.g. latest
+        displayName: Tag
+        path: worker.image.tag
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Name of worker service account. Defaults to pachyderm-worker
+          service account
+        displayName: Service Account Name
+        path: worker.serviceAccountName
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:advanced
+      statusDescriptors:
+      - description: Version of the deployed pachyderm cluster
+        displayName: Version
+        path: currentVersion
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:version
+      - description: Address of the pachyderm cluster
+        displayName: Pachd Address
+        path: pachdAddress
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:pachdAddress
+      - description: Deployment phase of the pachyderm cluster
+        displayName: Phase
+        path: phase
+        x-descriptors:
+        - urn:alm:descriptor:com.tectonic.ui:phase
       version: v1beta1
   description: "The Pachyderm operator aims to make deploying and managing Pachyderm
     instances on Openshift container platform easier.\n\nPachyderm is the data foundation

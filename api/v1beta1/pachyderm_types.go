@@ -61,7 +61,7 @@ type WorkerOptions struct {
 	// Name of worker service account.
 	// Defaults to pachyderm-worker service account
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Service Account Name",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=pachyderm-worker
+	//+kubebuilder:default:=pachyderm-worker
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
 }
 
@@ -97,7 +97,7 @@ type ImageOverride struct {
 	// Determines when images should be pulled.
 	// It accepts, "IfNotPresent","Never" or "Always"
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Pull Policy",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
-	// +kubebuilder:validation:Enum:=IfNotPresent;Always;Never
+	//+kubebuilder:validation:Enum:=IfNotPresent;Always;Never
 	PullPolicy string `json:"pullPolicy,omitempty"`
 }
 
@@ -144,7 +144,7 @@ type EtcdOptions struct {
 	StorageClass string `json:"storageClass,omitempty"`
 	// The size of the storage to use for etcd.
 	// For example: "100Gi"
-	// +kubebuilder:default:="10Gi"
+	//+kubebuilder:default:="10Gi"
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Storage Size",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:text"}
 	StorageSize string `json:"storageSize,omitempty"`
 	// Service overrides
@@ -174,7 +174,7 @@ type PachdOptions struct {
 	// The log level option determines the severity of logs
 	// that are of interest to the user
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Log Level",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=info
+	//+kubebuilder:default:=info
 	LogLevel string `json:"logLevel,omitempty"`
 	// Optional value to determine the format of the logs
 	// Default: false
@@ -183,7 +183,7 @@ type PachdOptions struct {
 	// Pachyderm Pipeline System(PPS) worker GRPC port.
 	// Defaults to port 1080
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="PPS Worker GRPC Port",xDescriptors={"urn:alm:descriptor:number","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default=1080
+	//+kubebuilder:default=1080
 	PPSWorkerGRPCPort int32 `json:"ppsWorkerGRPCPort,omitempty"`
 	// Service overrides for pachd
 	Service *ServiceOverrides `json:"service,omitempty"`
@@ -215,20 +215,20 @@ type PostgresOptions struct {
 type PachdPostgresConfig struct {
 	// Hostname opr address  of the postgresql host
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Host",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=postgres
+	//+kubebuilder:default:=postgres
 	Host string `json:"host,omitempty"`
 	// Postgresql port number.
 	// Defaults to 5432 when not set
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Port",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=5432
+	//+kubebuilder:default:=5432
 	Port int32 `json:"port,omitempty"`
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="SSL",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=disable
+	//+kubebuilder:default:=disable
 	SSL string `json:"ssl,omitempty"`
 	// Username to use to connect to the database.
 	// Defaults to pachyderm
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="User",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=pachyderm
+	//+kubebuilder:default:=pachyderm
 	User string `json:"user,omitempty"`
 	// The password field is used internally by the operator.
 	// If the PasswordSecretName is set, it will contain the password
@@ -241,7 +241,7 @@ type PachdPostgresConfig struct {
 	PasswordSecretName string `json:"passwordSecret,omitempty"`
 	// Name of the database into which the table schemas will live
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Database",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:advanced"}
-	// +kubebuilder:default:=pachyderm
+	//+kubebuilder:default:=pachyderm
 	Database string `json:"database,omitempty"`
 }
 
@@ -262,18 +262,18 @@ type MetricsOptions struct {
 type ObjectStorageOptions struct {
 	// The maximum number of files to upload or fetch from remote sources (HTTP, blob storage) using PutFile concurrently.
 	// Default: 100
-	// +kubebuilder:default:=100
+	//+kubebuilder:default:=100
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Put File Concurrency Limit",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number"}
 	PutFileConcurrencyLimit int32 `json:"putFileConcurrencyLimit,omitempty"`
 	// The maximum number of concurrent object storage uploads per Pachd instance.
 	// Default: 100
-	// +kubebuilder:default:=100
+	//+kubebuilder:default:=100
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Upload File Concurrency Limit",xDescriptors={"urn:alm:descriptor:com.tectonic.ui:number"}
 	UploadFileConcurrencyLimit int32 `json:"uploadFileConcurrencyLimit,omitempty"`
 	// Sets the type of storage backend.
 	// Should be one of "GOOGLE", "AMAZON", "MINIO" or "MICROSOFT"
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Backend",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
-	// +kubebuilder:validation:Enum:=AMAZON;MINIO;MICROSOFT;GOOGLE
+	//+kubebuilder:validation:Enum:=AMAZON;MINIO;MICROSOFT;GOOGLE
 	Backend string `json:"backend"`
 	// Configures the Amazon storage backend
 	Amazon *AmazonStorageOptions `json:"amazon,omitempty"`

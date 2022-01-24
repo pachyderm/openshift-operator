@@ -98,17 +98,9 @@ type ChartDirectory struct {
 }
 
 func getChartDirectory(version string) (*ChartDirectory, error) {
-	chartDir := filepath.Join("/", "charts", version[1:])
+	chartDir := filepath.Join("/", "charts", version)
 	if _, err := os.Stat(chartDir); err != nil {
-		wd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-
-		chartDir = filepath.Join(wd, "hack", "charts", version[1:])
-		if _, err := os.Stat(chartDir); err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	entry, err := os.ReadDir(chartDir)

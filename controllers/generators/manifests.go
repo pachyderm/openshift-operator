@@ -371,5 +371,4 @@ func setupPachd(pd *aimlv1beta1.Pachyderm, pachd *appsv1.Deployment) {
 			pachd.Spec.Template.Spec.Containers[i].ImagePullPolicy = pachdImage.ImagePullPolicy()
 		}
 	}
-
 }

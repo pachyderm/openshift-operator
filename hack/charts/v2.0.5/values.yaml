@@ -216,7 +216,8 @@ pachd:
       {{ end }}
     {{ end }}
   {{ end }}
-
+  securityContext:
+    enabled: false
   # requireCriticalServersOnly only requires the critical pachd
   # servers to startup and run without errors.  It is analogous to the
   # --require-critical-servers-only argument to pachctl deploy.

@@ -119,7 +119,7 @@ func getVersions() ([]string, error) {
 	versions := []string{}
 	for _, f := range files {
 		if f.IsDir() {
-			if version := fmt.Sprintf("v%s", f.Name()); semver.IsValid(version) {
+			if version := f.Name(); semver.IsValid(version) {
 				versions = append(versions, version)
 			}
 		}

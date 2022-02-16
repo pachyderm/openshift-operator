@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -935,7 +934,9 @@ func (r *PachydermReconciler) getLicense(ctx context.Context, pd *aimlv1beta1.Pa
 
 	license, ok := licenseSecret.Data["license"]
 	if !ok {
-		return goerrors.New("the key `license` not found")
+		return fmt.Errorf(
+			"the key 'license' not found in license secret %s",
+			pd.Spec.License)
 	}
 
 	pd.Spec.EnterpriseLicense = string(license)

@@ -33,6 +33,10 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+const (
+	maintenanceMode = "pachyderm.com/maintenance"
+)
+
 // log is for logging in this package.
 var pachydermlog = logf.Log.WithName("pachyderm-resource")
 
@@ -154,4 +158,32 @@ func (r *Pachyderm) IsDeleted() bool {
 
 func (r *Pachyderm) DeployPostgres() bool {
 	return !r.Spec.Postgres.Disable
+}
+
+// MaintenanceMode method add maintenance annotation
+// on the pachyderm resource
+// Returns true if changed
+func (r *Pachyderm) MaintenanceMode() bool {
+	if len(r.Annotations) == 0 {
+		r.Annotations = map[string]string{}
+	}
+
+	_, ok := r.Annotations[maintenanceMode]
+	if !ok {
+		r.Annotations[maintenanceMode] = "true"
+		return true
+	}
+	return false
+}
+
+// NormalMode method removes maintenance annotation
+// from the pachyderm resource
+func (r *Pachyderm) NormalMode() bool {
+	if len(r.Annotations) > 0 {
+		if _, ok := r.Annotations[maintenanceMode]; ok {
+			delete(r.Annotations, maintenanceMode)
+			return true
+		}
+	}
+	return false
 }

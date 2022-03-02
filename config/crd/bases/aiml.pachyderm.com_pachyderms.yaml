@@ -189,6 +189,10 @@ spec:
               imagePullSecret:
                 description: Allow user to provide an image pull secret
                 type: string
+              license:
+                description: License for pachyderm enterprise. Takes the name of the
+                  secret containing the 'license' string
+                type: string
               pachd:
                 description: Allows the user to customize the pachd instance(s)
                 properties:

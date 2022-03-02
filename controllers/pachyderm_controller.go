@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -147,6 +148,10 @@ func (e *ErrKeyNotFound) Error() string {
 }
 
 func (r *PachydermReconciler) validatePachyderm(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	if err := r.getLicense(ctx, pd); err != nil {
+		return err
+	}
+
 	if err := r.postgresPassword(ctx, pd); err != nil {
 		return err
 	}
@@ -909,4 +914,30 @@ func (r *PachydermReconciler) isServiceReady(ctx context.Context, service types.
 	}
 
 	return len(addresses) > 0
+}
+
+// get pachyderm enterprise license from secret name provided in pachyderm.spec.License
+// The secret should contain a key `license` containing the value of the license
+func (r *PachydermReconciler) getLicense(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	if pd.Spec.License == "" {
+		return nil
+	}
+
+	secretKey := types.NamespacedName{
+		Namespace: pd.Namespace,
+		Name:      pd.Spec.License,
+	}
+
+	licenseSecret := &corev1.Secret{}
+	if err := r.Get(ctx, secretKey, licenseSecret); err != nil {
+		return err
+	}
+
+	license, ok := licenseSecret.Data["license"]
+	if !ok {
+		return goerrors.New("the key `license` not found")
+	}
+
+	pd.Spec.EnterpriseLicense = string(license)
+	return nil
 }

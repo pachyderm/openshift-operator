@@ -46,7 +46,7 @@ openshift_annotations() {
 cat <<EOF>> ${OPERATOR_ANNOTATIONS_FILE}
 
   # OpenShift annotations.
-  com.redhat.openshift.versions: v4.6-v4.9
+  com.redhat.openshift.versions: v4.6
 EOF
 }
 

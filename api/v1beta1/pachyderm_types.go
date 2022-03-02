@@ -51,6 +51,12 @@ type PachydermSpec struct {
 	Postgres PostgresOptions `json:"postgresql,omitempty"`
 	// Allow user to provide an image pull secret
 	ImagePullSecret *string `json:"imagePullSecret,omitempty"`
+	// License for pachyderm enterprise.
+	// Takes the name of the secret containing the 'license' string
+	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Enterprise License Secret",xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	License string `json:"license,omitempty"`
+	// The enterprise license string
+	EnterpriseLicense string `json:"-"`
 }
 
 // WorkerOptions allows the user to configure workers

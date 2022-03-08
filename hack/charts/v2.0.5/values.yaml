@@ -238,7 +238,7 @@ pachd:
     #apiGrpcPort:
     #  expose: true
     #  port: 30650
-  enterpriseLicenseKey: ""
+  enterpriseLicenseKey: "{{ .Spec.EnterpriseLicense }}"
   rootToken: ""
   enterpriseSecret: ""
   oauthClientSecret: ""

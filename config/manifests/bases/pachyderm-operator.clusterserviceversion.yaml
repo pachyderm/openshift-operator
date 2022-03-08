@@ -130,6 +130,12 @@ spec:
         path: etcd.storageSize
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
+      - description: License for pachyderm enterprise. Takes the name of the secret
+          containing the 'license' string
+        displayName: Enterprise License Secret
+        path: license
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
       - description: Set an ID for the cluster deployment. Defaults to a random value
           if none is provided
         displayName: Cluster ID

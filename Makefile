@@ -156,3 +156,7 @@ index-build:
 	
 index-push: index-build
 	${BUILD_TOOL} push quay.io/opdev/pachyderm-index:latest
+
+backup-build:
+	${BUILD_TOOL} build -f Dockerfile.backup-handler -t quay.io/eochieng/backup-handler:latest .
+	${BUILD_TOOL} push quay.io/eochieng/backup-handler:latest

@@ -866,6 +866,29 @@ spec:
           - create
         serviceAccountName: pachyderm-operator-controller-manager
       deployments:
+      - name: pachyderm-operator-backup-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: pachyderm-backup-manager
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                app: pachyderm-backup-manager
+            spec:
+              containers:
+              - image: quay.io/eochieng/backup-handler:latest
+                name: backup-handler
+                ports:
+                - containerPort: 8890
+                  name: api
+                  protocol: TCP
+                resources: {}
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: pachyderm-operator-controller-manager
       - name: pachyderm-operator-controller-manager
         spec:
           replicas: 1

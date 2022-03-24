@@ -56,7 +56,11 @@ type PachydermExportStatus struct {
 	// Time the backup process completed
 	CompletedAt string `json:"completedAt,omitempty"`
 	// Name and location of backup resource created
-	Backup string `json:"backupName"`
+	Backup string `json:"backupName,omitempty"`
+	// ID of the backup
+	BackupID string `json:"backupID,omitempty"`
+	// Phase of the export status
+	Phase string `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true

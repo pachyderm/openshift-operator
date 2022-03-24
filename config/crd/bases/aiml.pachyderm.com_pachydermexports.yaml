@@ -69,17 +69,21 @@ spec:
           status:
             description: PachydermExportStatus defines the observed state of PachydermExport
             properties:
+              backupID:
+                description: ID of the backup
+                type: string
               backupName:
                 description: Name and location of backup resource created
                 type: string
               completedAt:
                 description: Time the backup process completed
                 type: string
+              phase:
+                description: Phase of the export status
+                type: string
               startedAt:
                 description: Time the backup process commenced
                 type: string
-            required:
-            - backupName
             type: object
         type: object
     served: true

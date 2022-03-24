@@ -25,7 +25,7 @@ build_index_image() {
     opm validate ./pachyderm-operator-index
     if [ $? -eq 0 ]
     then
-        ${BUILD_TOOL} build -t pachyderm-index:latest -f pachyderm-operator-index.Dockerfile .
+        ${BUILD_TOOL} build -t quay.io/opdev/pachyderm-index:latest -f pachyderm-operator-index.Dockerfile .
     fi
 }
 

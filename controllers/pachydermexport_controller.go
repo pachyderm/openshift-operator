@@ -130,11 +130,6 @@ func (r *PachydermExportReconciler) getStatefulSetPods(ctx context.Context, sts 
 	return pods, nil
 }
 
-var (
-	// Backup ID not found
-	ErrBackupNotFound = goerrors.New("backup not found")
-)
-
 func createBackup(export *aimlv1beta1.PachydermExport, pods *corev1.PodList) (*backupv1.Backup, error) {
 	if export.Status.BackupID != "" {
 		return nil, nil
@@ -198,7 +193,7 @@ func getBackup(export *aimlv1beta1.PachydermExport) (*backupv1.Backup, error) {
 
 	if response.StatusCode == http.StatusNotFound {
 		export.Status.CompletedAt = time.Now().UTC().String()
-		return nil, ErrBackupNotFound
+		return nil, goerrors.New("backup not found")
 	}
 
 	body, err := ioutil.ReadAll(response.Body)
@@ -224,6 +219,10 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 		return err
 	}
 
+	if err := r.pausePachydermAnnotation(ctx, pd); err != nil {
+		return err
+	}
+
 	if pd.Spec.Postgres.Disable {
 		return nil
 	}
@@ -239,10 +238,6 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 
 	pods, err := r.getStatefulSetPods(ctx, pg)
 	if err != nil {
-		return err
-	}
-
-	if err := r.setInMaintenance(ctx, pd); err != nil {
 		return err
 	}
 
@@ -274,38 +269,16 @@ func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, expor
 
 			if export.Status.CompletedAt != "" {
 				// remove pachyderm resource from maintenance mode
-				pd, err := r.pachydermForBackup(ctx, export)
+				_, err := r.pachydermForBackup(ctx, export)
 				if err != nil {
 					return err
 				}
 
-				if err := r.removeMaintenance(ctx, pd); err != nil {
-					return err
-				}
+				// TODO: markremove pause cluster annotation
 			}
 		}
 	}
 
-	return nil
-}
-
-// Add maintenance mode annotation to pachyderm resource
-func (r *PachydermExportReconciler) setInMaintenance(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
-	if pd.MaintenanceMode() {
-		if err := r.Update(ctx, pd); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Removes maintenance mode annotation from pachyderm resource
-func (r *PachydermExportReconciler) removeMaintenance(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
-	if pd.NormalMode() {
-		if err := r.Update(ctx, pd); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -320,4 +293,23 @@ func (r *PachydermExportReconciler) pachydermForBackup(ctx context.Context, expo
 	}
 
 	return pd, nil
+}
+
+func (r *PachydermExportReconciler) pausePachydermAnnotation(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	pachd := &appsv1.Deployment{}
+	pachdKey := types.NamespacedName{
+		Name:      "pachd",
+		Namespace: pd.Namespace,
+	}
+	if err := r.Get(ctx, pachdKey, pachd); err != nil {
+		return err
+	}
+
+	if pd.Annotations == nil {
+		annotations := make(map[string]string)
+		annotations[pauseClusterAnnotation] = "true"
+		pd.Annotations = annotations
+	}
+
+	return r.Update(ctx, pd)
 }

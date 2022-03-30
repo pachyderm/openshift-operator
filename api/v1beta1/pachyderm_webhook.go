@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 
 	"sort"
 
@@ -31,10 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"golang.org/x/mod/semver"
-)
-
-const (
-	maintenanceMode = "pachyderm.com/maintenance"
 )
 
 // log is for logging in this package.
@@ -160,30 +157,11 @@ func (r *Pachyderm) DeployPostgres() bool {
 	return !r.Spec.Postgres.Disable
 }
 
-// MaintenanceMode method add maintenance annotation
-// on the pachyderm resource
-// Returns true if changed
-func (r *Pachyderm) MaintenanceMode() bool {
-	if len(r.Annotations) == 0 {
-		r.Annotations = map[string]string{}
+func (r *Pachyderm) IsPaused() bool {
+	v := r.Annotations["pachyderm.com/pause-cluster"]
+	pause, err := strconv.ParseBool(v)
+	if err != nil {
+		return false
 	}
-
-	_, ok := r.Annotations[maintenanceMode]
-	if !ok {
-		r.Annotations[maintenanceMode] = "true"
-		return true
-	}
-	return false
-}
-
-// NormalMode method removes maintenance annotation
-// from the pachyderm resource
-func (r *Pachyderm) NormalMode() bool {
-	if len(r.Annotations) > 0 {
-		if _, ok := r.Annotations[maintenanceMode]; ok {
-			delete(r.Annotations, maintenanceMode)
-			return true
-		}
-	}
-	return false
+	return pause
 }

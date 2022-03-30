@@ -48,7 +48,7 @@ metadata:
     description: Pachyderm provides the data layer that allows data science teams
       to productionize and scale their machine learning lifecycle with data driven
       automation, petabyte scalability and end-to-end reproducibility.
-    operators.operatorframework.io/builder: operator-sdk-v1.17.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.18.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pachyderm/openshift-operator
     support: Pachyderm, Inc.

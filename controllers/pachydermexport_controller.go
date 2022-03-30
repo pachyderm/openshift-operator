@@ -269,12 +269,15 @@ func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, expor
 
 			if export.Status.CompletedAt != "" {
 				// remove pachyderm resource from maintenance mode
-				_, err := r.pachydermForBackup(ctx, export)
+				pd, err := r.pachydermForBackup(ctx, export)
 				if err != nil {
 					return err
 				}
 
-				// TODO: markremove pause cluster annotation
+				if pd.IsPaused() {
+					delete(pd.Annotations, aimlv1beta1.PachydermPauseAnnotation)
+					return r.Update(ctx, pd)
+				}
 			}
 		}
 	}
@@ -296,19 +299,10 @@ func (r *PachydermExportReconciler) pachydermForBackup(ctx context.Context, expo
 }
 
 func (r *PachydermExportReconciler) pausePachydermAnnotation(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
-	pachd := &appsv1.Deployment{}
-	pachdKey := types.NamespacedName{
-		Name:      "pachd",
-		Namespace: pd.Namespace,
-	}
-	if err := r.Get(ctx, pachdKey, pachd); err != nil {
-		return err
-	}
-
 	if pd.Annotations == nil {
-		annotations := make(map[string]string)
-		annotations[pauseClusterAnnotation] = "true"
-		pd.Annotations = annotations
+		pd.Annotations = map[string]string{
+			aimlv1beta1.PachydermPauseAnnotation: "true",
+		}
 	}
 
 	return r.Update(ctx, pd)

@@ -45,9 +45,7 @@ import (
 )
 
 const (
-	pachydermFinalizer      string = "finalizer.pachyderm.com"
-	pachdPodCountAnnotation string = "operator.pachyderm.com/pachd-podcount"
-	pauseClusterAnnotation  string = "operator.pachyderm.com/pause-cluster"
+	pachydermFinalizer string = "finalizer.pachyderm.com"
 )
 
 // PachydermReconciler reconciles a Pachyderm object
@@ -91,6 +89,10 @@ func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if err := r.pausePachydermCluster(ctx, pd); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.resumePachydermCluster(ctx, pd); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -969,18 +971,47 @@ func (r *PachydermReconciler) pausePachydermCluster(ctx context.Context, pd *aim
 		return err
 	}
 
-	num := pachd.Annotations[pachdPodCountAnnotation]
+	num := pachd.Annotations[aimlv1beta1.PachdPodCountAnnotation]
 	if num == "" {
-		pachd.Annotations[pachdPodCountAnnotation] = fmt.Sprintf("%d", *pachd.Spec.Replicas)
+		pachd.Annotations[aimlv1beta1.PachdPodCountAnnotation] = fmt.Sprintf("%d", *pachd.Spec.Replicas)
 	}
 
 	replicas := *pachd.Spec.Replicas
-	podCount, _ := strconv.Atoi(pd.Annotations[pachdPodCountAnnotation])
+	podCount, _ := strconv.Atoi(pd.Annotations[aimlv1beta1.PachdPodCountAnnotation])
 	if replicas != int32(podCount) && replicas != 0 {
 		var zero int32 = 0
 		pachd.Spec.Replicas = &zero
 	}
 
 	// update annotations of pachd deployment resource
+	return r.Update(ctx, pachd)
+}
+
+func (r *PachydermReconciler) resumePachydermCluster(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	if pd.IsPaused() {
+		return nil
+	}
+
+	pachd := &appsv1.Deployment{}
+	pachdKey := types.NamespacedName{
+		Name:      "pachd",
+		Namespace: pd.Namespace,
+	}
+	if err := r.Get(ctx, pachdKey, pachd); err != nil {
+		return err
+	}
+
+	v := pachd.Annotations[aimlv1beta1.PachdPodCountAnnotation]
+	count, err := strconv.Atoi(v)
+	if err != nil || v == "" {
+		return nil
+	}
+
+	podCount := int32(count)
+	pachd.Spec.Replicas = &podCount
+	if podCount > 0 && podCount == *pachd.Spec.Replicas {
+		delete(pachd.Annotations, aimlv1beta1.PachdPodCountAnnotation)
+	}
+
 	return r.Update(ctx, pachd)
 }

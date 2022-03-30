@@ -158,8 +158,12 @@ func (r *Pachyderm) DeployPostgres() bool {
 }
 
 func (r *Pachyderm) IsPaused() bool {
-	v := r.Annotations["pachyderm.com/pause-cluster"]
-	pause, err := strconv.ParseBool(v)
+	pauseState, ok := r.Annotations[PachydermPauseAnnotation]
+	if !ok {
+		return false
+	}
+
+	pause, err := strconv.ParseBool(pauseState)
 	if err != nil {
 		return false
 	}

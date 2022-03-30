@@ -32,6 +32,10 @@ const (
 	GoogleStorageBackend string = "GOOGLE"
 	// Minio storage backend for pachd
 	MinioStorageBackend string = "MINIO"
+	// Pachyderm Pause Annotation
+	PachydermPauseAnnotation string = "operator.pachyderm.com/pause-cluster"
+	// Pachd Pod Count Annotation
+	PachdPodCountAnnotation string = "operator.pachyderm.com/pachd-podcount"
 )
 
 // PachydermSpec defines the desired state of Pachyderm

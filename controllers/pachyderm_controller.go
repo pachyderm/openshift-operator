@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -44,7 +45,9 @@ import (
 )
 
 const (
-	pachydermFinalizer string = "finalizer.pachyderm.com"
+	pachydermFinalizer      string = "finalizer.pachyderm.com"
+	pachdPodCountAnnotation string = "operator.pachyderm.com/pachd-podcount"
+	pauseClusterAnnotation  string = "operator.pachyderm.com/pause-cluster"
 )
 
 // PachydermReconciler reconciles a Pachyderm object
@@ -84,6 +87,10 @@ func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
+		return ctrl.Result{}, err
+	}
+
+	if err := r.pausePachydermCluster(ctx, pd); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -941,4 +948,39 @@ func (r *PachydermReconciler) getLicense(ctx context.Context, pd *aimlv1beta1.Pa
 
 	pd.Spec.EnterpriseLicense = string(license)
 	return nil
+}
+
+// TODO: add annotation to autoresume the cluster e.g. "operator.pachyderm.com/autoresume"
+// add pod count annotation and scale down pachd deployment when
+// pachyderm pause cluster annotation is added
+func (r *PachydermReconciler) pausePachydermCluster(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	// return nil if pachyderm does not have
+	// annotation to pause cluster
+	if !pd.IsPaused() {
+		return nil
+	}
+
+	pachd := &appsv1.Deployment{}
+	pachdKey := types.NamespacedName{
+		Name:      "pachd",
+		Namespace: pd.Namespace,
+	}
+	if err := r.Get(ctx, pachdKey, pachd); err != nil {
+		return err
+	}
+
+	num := pachd.Annotations[pachdPodCountAnnotation]
+	if num == "" {
+		pachd.Annotations[pachdPodCountAnnotation] = fmt.Sprintf("%d", *pachd.Spec.Replicas)
+	}
+
+	replicas := *pachd.Spec.Replicas
+	podCount, _ := strconv.Atoi(pd.Annotations[pachdPodCountAnnotation])
+	if replicas != int32(podCount) && replicas != 0 {
+		var zero int32 = 0
+		pachd.Spec.Replicas = &zero
+	}
+
+	// update annotations of pachd deployment resource
+	return r.Update(ctx, pachd)
 }

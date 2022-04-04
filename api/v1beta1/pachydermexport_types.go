@@ -28,6 +28,11 @@ type PachydermExportSpec struct {
 
 	// Restore allows a user to restore a backup to a new Pachyderm cluster
 	Restore *RestoreOptions `json:"restore,omitempty"`
+	// Storage Secret containing credentials to
+	// upload the backup to an S3-compatible object store
+	//+kubebuilder:validation:required=true
+	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="S3 Upload Secret",xDescriptors={"urn:alm:descriptor:io.kubernetes:Secret"}
+	StorageSecret string `json:"storageSecret,omitempty"`
 }
 
 // BackupOptions exposes values to
@@ -38,14 +43,18 @@ type BackupOptions struct {
 
 type RestoreOptions struct {
 	// Name of the pachyderm instance to restore the backup to
+	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Restore Destination",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
 	Destination RestoreDestination `json:"destination"`
 	// Name of backup to restore
+	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Backup Name",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
 	BackupName string `json:"backup,omitempty"`
 }
 
 // RestoreDestination name of pachyderm instance to restore to
 type RestoreDestination struct {
-	Name      string `json:"name,omitempty"`
+	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Restore Target",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
+	Name string `json:"name,omitempty"`
+	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Pachyderm Namespace",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
 	Namespace string `json:"namespace,omitempty"`
 }
 

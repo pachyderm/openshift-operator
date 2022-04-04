@@ -23,6 +23,35 @@ spec:
       displayName: Pachyderm Export
       kind: PachydermExport
       name: pachydermexports.aiml.pachyderm.com
+      specDescriptors:
+      - description: Name of backup to restore
+        displayName: Backup Name
+        path: restore.backup
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Name of the pachyderm instance to restore the backup to
+        displayName: Restore Destination
+        path: restore.destination
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Restore Target
+        path: restore.destination.name
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - displayName: Pachyderm Namespace
+        path: restore.destination.namespace
+        x-descriptors:
+        - urn:alm:descriptor:text
+        - urn:alm:descriptor:io.kubernetes:custom
+      - description: Storage Secret containing credentials to upload the backup to
+          an S3-compatible object store
+        displayName: S3 Upload Secret
+        path: storageSecret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
       version: v1beta1
     - description: Pachyderm is the Schema for the pachyderms API
       displayName: Pachyderm

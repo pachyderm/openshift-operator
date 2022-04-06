@@ -968,6 +968,9 @@ func (r *PachydermReconciler) pausePachydermCluster(ctx context.Context, pd *aim
 		Namespace: pd.Namespace,
 	}
 	if err := r.Get(ctx, pachdKey, pachd); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -998,6 +1001,9 @@ func (r *PachydermReconciler) resumePachydermCluster(ctx context.Context, pd *ai
 		Namespace: pd.Namespace,
 	}
 	if err := r.Get(ctx, pachdKey, pachd); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
 		return err
 	}
 

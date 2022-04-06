@@ -142,6 +142,7 @@ func createBackup(export *aimlv1beta1.PachydermExport, pods *corev1.PodList) (*b
 		},
 		PodName:       pods.Items[0].Name,
 		ContainerName: "postgres",
+		UploadSecret:  export.Spec.StorageSecret,
 		Command:       []string{"bash", "-c", "pg_dumpall"},
 	}
 

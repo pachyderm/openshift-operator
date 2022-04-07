@@ -251,6 +251,7 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 		export.Status.BackupID = backup.ID.String()
 		export.Status.Backup = backup.Name
 		export.Status.StartedAt = backup.CreatedAt.String()
+		export.Status.Phase = aimlv1beta1.ExportRunningStatus
 	}
 
 	return nil
@@ -266,6 +267,8 @@ func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, expor
 		if backup != nil {
 			if backup.DeletedAt != nil {
 				export.Status.CompletedAt = backup.DeletedAt.String()
+				export.Status.Phase = aimlv1beta1.ExportCompletedStatus
+				export.Status.BackupLocation = backup.UploadLocation
 			}
 
 			if export.Status.CompletedAt != "" {

@@ -35,6 +35,13 @@ type PachydermExportSpec struct {
 	StorageSecret string `json:"storageSecret,omitempty"`
 }
 
+const (
+	// Set status of Pachyderm Export to running
+	ExportRunningStatus string = "Running"
+	// Sets status of Pachyderm export to completed
+	ExportCompletedStatus string = "Completed"
+)
+
 // BackupOptions exposes values to
 type BackupOptions struct {
 	// Name of Pachyderm instance to backup.
@@ -70,6 +77,8 @@ type PachydermExportStatus struct {
 	BackupID string `json:"backupID,omitempty"`
 	// Phase of the export status
 	Phase string `json:"phase,omitempty"`
+	// Backup location on the S3 bucket
+	BackupLocation string `json:"location,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -82,6 +82,9 @@ spec:
               completedAt:
                 description: Time the backup process completed
                 type: string
+              location:
+                description: Backup location on the S3 bucket
+                type: string
               phase:
                 description: Phase of the export status
                 type: string

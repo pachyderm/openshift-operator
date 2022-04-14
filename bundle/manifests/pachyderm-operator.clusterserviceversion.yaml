@@ -52,7 +52,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pachyderm/openshift-operator
     support: Pachyderm, Inc.
-  name: pachyderm-operator.v0.1.0
+  name: pachyderm-operator.v0.1.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -1036,7 +1036,7 @@ spec:
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com
-  version: 0.1.0
+  version: 0.1.1
   webhookdefinitions:
   - admissionReviewVersions:
     - v1

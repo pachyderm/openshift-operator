@@ -19,6 +19,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -130,9 +131,15 @@ func (r *PachydermExportReconciler) getStatefulSetPods(ctx context.Context, sts 
 	return pods, nil
 }
 
-func createBackup(export *aimlv1beta1.PachydermExport, pods *corev1.PodList) (*backupv1.Backup, error) {
+func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm, pods *corev1.PodList) (*backupv1.Backup, error) {
 	if export.Status.BackupID != "" {
 		return nil, nil
+	}
+
+	// Backup the pachyderm resource
+	cr, err := json.Marshal(pd)
+	if err != nil {
+		return nil, err
 	}
 
 	backup := &backupv1.Backup{
@@ -143,7 +150,8 @@ func createBackup(export *aimlv1beta1.PachydermExport, pods *corev1.PodList) (*b
 		PodName:       pods.Items[0].Name,
 		ContainerName: "postgres",
 		UploadSecret:  export.Spec.StorageSecret,
-		Command:       []string{"bash", "-c", "pg_dumpall"},
+		Command:       []string{"bash", "-c", "pg_dump --dbname \"pachyderm\" --dbname \"dex\""},
+		Resource:      base64.StdEncoding.EncodeToString(cr),
 	}
 
 	payload, err := json.Marshal(backup)
@@ -242,7 +250,7 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 		return err
 	}
 
-	backup, err := createBackup(export, pods)
+	backup, err := createBackup(export, pd, pods)
 	if err != nil {
 		return err
 	}

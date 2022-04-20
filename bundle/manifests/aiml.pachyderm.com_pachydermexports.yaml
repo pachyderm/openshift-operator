@@ -49,7 +49,7 @@ spec:
                   cluster
                 properties:
                   backup:
-                    description: Name of backup to restore
+                    description: Name of backup resource in S3 to restore
                     type: string
                   destination:
                     description: Name of the pachyderm instance to restore the backup
@@ -60,8 +60,6 @@ spec:
                       namespace:
                         type: string
                     type: object
-                required:
-                - destination
                 type: object
               storageSecret:
                 description: Storage Secret containing credentials to upload the backup
@@ -86,6 +84,12 @@ spec:
               phase:
                 description: Phase of the export status
                 type: string
+              restoreID:
+                description: ID of the restore request
+                type: string
+              restored:
+                description: Returns true when the restore is completed
+                type: boolean
               startedAt:
                 description: Time the backup process commenced
                 type: string

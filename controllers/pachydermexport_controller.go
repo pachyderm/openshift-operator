@@ -84,6 +84,14 @@ func (r *PachydermExportReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
+	// restore pachyderm from export
+	if export.Spec.Restore != nil {
+		if err := r.restorePachyderm(ctx, export); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+
 	if !reflect.DeepEqual(current.Status, aimlv1beta1.PachydermExportStatus{}) {
 		if export.Status.CompletedAt != "" {
 			return ctrl.Result{}, nil

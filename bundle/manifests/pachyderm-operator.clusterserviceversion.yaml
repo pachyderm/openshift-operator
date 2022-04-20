@@ -63,7 +63,7 @@ spec:
       kind: PachydermExport
       name: pachydermexports.aiml.pachyderm.com
       specDescriptors:
-      - description: Name of backup to restore
+      - description: Name of backup resource in S3 to restore
         displayName: Backup Name
         path: restore.backup
         x-descriptors:

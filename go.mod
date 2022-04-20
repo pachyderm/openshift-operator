@@ -9,7 +9,7 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
-	github.com/opdev/backup-handler v0.0.0-20220412123311-38a6f7614657
+	github.com/opdev/backup-handler v0.0.0-20220419162523-90968736b67f
 	golang.org/x/mod v0.5.0
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	helm.sh/helm/v3 v3.8.1

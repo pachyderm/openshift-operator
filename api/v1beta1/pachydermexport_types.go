@@ -51,8 +51,8 @@ type BackupOptions struct {
 type RestoreOptions struct {
 	// Name of the pachyderm instance to restore the backup to
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Restore Destination",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
-	Destination RestoreDestination `json:"destination"`
-	// Name of backup to restore
+	Destination RestoreDestination `json:"destination,omitempty"`
+	// Name of backup resource in S3 to restore
 	//+operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Backup Name",xDescriptors={"urn:alm:descriptor:text","urn:alm:descriptor:io.kubernetes:custom"}
 	BackupName string `json:"backup,omitempty"`
 }
@@ -79,6 +79,10 @@ type PachydermExportStatus struct {
 	Phase string `json:"phase,omitempty"`
 	// Backup location on the S3 bucket
 	BackupLocation string `json:"location,omitempty"`
+	// ID of the restore request
+	RestoreID string `json:"restoreID,omitempty"`
+	// Returns true when the restore is completed
+	RestoreCompleted *bool `json:"restored,omitempty"`
 }
 
 //+kubebuilder:object:root=true

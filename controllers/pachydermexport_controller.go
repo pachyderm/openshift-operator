@@ -25,9 +25,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
-	backupv1 "github.com/opdev/backup-handler/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -40,6 +40,7 @@ import (
 
 	goerrors "errors"
 
+	backupservice "github.com/opdev/backup-handler/gen/backup_service"
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 )
 
@@ -86,6 +87,9 @@ func (r *PachydermExportReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 
 	// restore pachyderm from export
 	if export.Spec.Restore != nil {
+		if export.Spec.StorageSecret == "" {
+			return ctrl.Result{}, goerrors.New("storage secret name required")
+		}
 		if err := r.restorePachyderm(ctx, export); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -139,35 +143,74 @@ func (r *PachydermExportReconciler) getStatefulSetPods(ctx context.Context, sts 
 	return pods, nil
 }
 
-func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm, pods *corev1.PodList) (*backupv1.Backup, error) {
-	if export.Status.BackupID != "" {
-		return nil, nil
-	}
+type backup struct {
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	DeletedAt *string `form:"deleted_at,omitempty" json:"deleted_at,omitempty" xml:"deleted_at,omitempty"`
+	ID        *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Current state of the job
+	State *string `form:"state,omitempty" json:"state,omitempty" xml:"state,omitempty"`
+	// Name of pachyderm instance backed up
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Namespace of resource backed up
+	Namespace *string `form:"namespace,omitempty" json:"namespace,omitempty" xml:"namespace,omitempty"`
+	// Name of target pod
+	Pod *string `form:"pod,omitempty" json:"pod,omitempty" xml:"pod,omitempty"`
+	// Name of container in pod
+	Container *string `form:"container,omitempty" json:"container,omitempty" xml:"container,omitempty"`
+	// base64 encoded command to run in pod
+	Command *string `form:"command,omitempty" json:"command,omitempty" xml:"command,omitempty"`
+	// Kubernetes secret containing S3 storage credentials
+	StorageSecret *string `form:"storage_secret,omitempty" json:"storage_secret,omitempty" xml:"storage_secret,omitempty"`
+	// base64 encoded json representation of object
+	KubernetesResource *string `form:"kubernetes_resource,omitempty" json:"kubernetes_resource,omitempty" xml:"kubernetes_resource,omitempty"`
+	// BackupLocation represents the URL for the uploaded backup object
+	BackupLocation *string `form:"backup_location,omitempty" json:"backup_location,omitempty" xml:"backup_location,omitempty"`
+}
 
-	// Backup the pachyderm resource
+func newBackupRequest(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm, pod, container string, command []string) ([]byte, error) {
 	cr, err := json.Marshal(pd)
 	if err != nil {
 		return nil, err
 	}
 
-	backup := &backupv1.Backup{
-		Metadata: backupv1.Metadata{
-			Name:      export.Name,
-			Namespace: export.Namespace,
+	encodedCR := base64.StdEncoding.EncodeToString(cr)
+
+	cmd := []byte(strings.Join(command, "[/]"))
+	encodedCmd := base64.StdEncoding.EncodeToString(cmd)
+
+	return json.Marshal(
+		&backup{
+			Name:               &export.Name,
+			Namespace:          &export.Namespace,
+			Pod:                &pod,
+			Container:          &container,
+			StorageSecret:      &export.Spec.StorageSecret,
+			KubernetesResource: &encodedCR,
+			Command:            &encodedCmd,
 		},
-		PodName:       pods.Items[0].Name,
-		ContainerName: "postgres",
-		UploadSecret:  export.Spec.StorageSecret,
-		Command:       []string{"bash", "-c", "pg_dump --dbname \"pachyderm\" --dbname \"dex\""},
-		Resource:      base64.StdEncoding.EncodeToString(cr),
+	)
+}
+
+func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm, pods *corev1.PodList) (*backupservice.Backupresult, error) {
+	res := &backupservice.Backupresult{}
+	if export.Status.BackupID != "" {
+		return nil, nil
 	}
 
-	payload, err := json.Marshal(backup)
+	// Backup the pachyderm resource
+	payload, err := newBackupRequest(
+		export,
+		pd,
+		pods.Items[0].Name,
+		"postgres",
+		[]string{"bash", "-c", "pg_dump --dbname \"pachyderm\" --dbname \"dex\""},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := http.NewRequest(http.MethodPost, "http://pachyderm-operator-pachyderm-backup-manager:8890/backup", bytes.NewBuffer(payload))
+	request, err := http.NewRequest(http.MethodPost, "http://pachyderm-operator-pachyderm-backup-manager:8890/backups", bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
@@ -185,16 +228,16 @@ func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm
 		return nil, err
 	}
 
-	if err := json.Unmarshal(body, backup); err != nil {
+	if err := json.Unmarshal(body, res); err != nil {
 		return nil, err
 	}
 
-	return backup, nil
+	return res, nil
 }
 
-func getBackup(export *aimlv1beta1.PachydermExport) (*backupv1.Backup, error) {
-	backup := &backupv1.Backup{}
-	url := fmt.Sprintf("http://pachyderm-operator-pachyderm-backup-manager:8890/backup/%s", export.Status.BackupID)
+func getBackup(export *aimlv1beta1.PachydermExport) (*backupservice.Backupresult, error) {
+	backup := &backupservice.Backupresult{}
+	url := fmt.Sprintf("http://pachyderm-operator-pachyderm-backup-manager:8890/backups/%s", export.Status.BackupID)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -264,9 +307,9 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 	}
 
 	if backup != nil {
-		export.Status.BackupID = backup.ID.String()
-		export.Status.Backup = backup.Name
-		export.Status.StartedAt = backup.CreatedAt.String()
+		export.Status.BackupID = *backup.ID
+		export.Status.Backup = *backup.Name
+		export.Status.StartedAt = *backup.CreatedAt
 		export.Status.Phase = aimlv1beta1.ExportRunningStatus
 	}
 
@@ -282,9 +325,9 @@ func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, expor
 
 		if backup != nil {
 			if backup.DeletedAt != nil {
-				export.Status.CompletedAt = backup.DeletedAt.String()
+				export.Status.CompletedAt = *backup.DeletedAt
 				export.Status.Phase = aimlv1beta1.ExportCompletedStatus
-				export.Status.BackupLocation = backup.UploadLocation
+				export.Status.BackupLocation = *backup.BackupLocation
 			}
 
 			if export.Status.CompletedAt != "" {

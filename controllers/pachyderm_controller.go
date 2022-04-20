@@ -77,6 +77,7 @@ type PachydermReconciler struct {
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=anyuid,verbs=use
 
+// Reconcile function attempts to bring the state of the world to resemble the desired state
 func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("pachyderm", req.NamespacedName)
 
@@ -141,10 +142,12 @@ func filterEvents() predicate.Funcs {
 	}
 }
 
+// ErrKeyNotFound is a custom error
 type ErrKeyNotFound struct {
 	Key string
 }
 
+// NewKeyError returns a custom error
 func NewKeyError(msg string) *ErrKeyNotFound {
 	return &ErrKeyNotFound{
 		Key: msg,

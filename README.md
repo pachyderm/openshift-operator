@@ -3,6 +3,9 @@
 The pachyderm operator is an application responsible for installing, watching and managing Pachyderm resources in your Openshift cluster.
 
 Pachyderm is the data foundation for machine learning.  Pachyderm provides industry leading data versioning, pipelines and lineage that allow data science teams to automate the machine learning lifecycle and optimize their machine learning operations (MLOps). 
+
+To lean about the structure of the operator's architecture, this repo's code, how to test the operator, or how to release the operator, see [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ## Usage
 
 **1. Using AWS S3 for Pachd storage**

@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	goerrors "errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
-	backupv1 "github.com/opdev/backup-handler/api/v1"
+	restoreservice "github.com/opdev/backup-handler/gen/restore_service"
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 )
 
@@ -31,9 +34,11 @@ func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export
 		return err
 	}
 
-	if restore.ID.String() != "" {
+	fmt.Printf("restore response ==> %+v\n", restore)
+
+	if restore.ID != nil {
 		if export.Status.RestoreID == "" {
-			export.Status.RestoreID = restore.ID.String()
+			export.Status.RestoreID = *restore.ID
 		}
 
 		if err := r.Status().Update(ctx, export); err != nil {
@@ -44,13 +49,15 @@ func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export
 	return nil
 }
 
-func requestRestore(export *aimlv1beta1.PachydermExport) (*backupv1.Restore, error) {
-	restore := &backupv1.Restore{
-		Destination: backupv1.Destination{
-			Name:      export.Spec.Restore.Destination.Name,
-			Namespace: export.Spec.Restore.Destination.Namespace,
-		},
-		Backup: export.Spec.Restore.BackupName,
+func requestRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
+	result := &restoreservice.Restoreresult{}
+	restore := &restoreservice.Restore{
+		Name:                 &export.Name,
+		Namespace:            &export.Namespace,
+		DestinationName:      &export.Spec.Restore.Destination.Name,
+		DestinationNamespace: &export.Spec.Restore.Destination.Namespace,
+		BackupLocation:       &export.Spec.Restore.BackupName,
+		StorageSecret:        &export.Spec.StorageSecret,
 	}
 
 	payload, err := json.Marshal(restore)
@@ -58,7 +65,7 @@ func requestRestore(export *aimlv1beta1.PachydermExport) (*backupv1.Restore, err
 		return nil, err
 	}
 
-	request, err := http.NewRequest(http.MethodPost, "http://pachyderm-operator-pachyderm-backup-manager:8890/restore", bytes.NewBuffer(payload))
+	request, err := http.NewRequest(http.MethodPost, "http://localhost:8890/restores", bytes.NewBuffer(payload))
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +83,43 @@ func requestRestore(export *aimlv1beta1.PachydermExport) (*backupv1.Restore, err
 		return nil, err
 	}
 
-	if err := json.Unmarshal(body, restore); err != nil {
+	if err := json.Unmarshal(body, result); err != nil {
 		return nil, err
 	}
 
-	return restore, nil
+	return result, nil
 }
 
-func getRestore(export *aimlv1beta1.PachydermExport) (*backupv1.Restore, error) {
-	return nil, nil
+func getRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
+	result := &restoreservice.Restoreresult{}
+	url := fmt.Sprintf("http://localhost:8890/restores/%s", export.Status.RestoreID)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	defer request.Body.Close()
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusNotFound {
+		export.Status.CompletedAt = time.Now().UTC().String()
+		return nil, goerrors.New("restore not found")
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(body, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

@@ -52,7 +52,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/pachyderm/openshift-operator
     support: Pachyderm, Inc.
-  name: pachyderm-operator.v0.1.1
+  name: pachyderm-operator.v0.1.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -896,31 +896,6 @@ spec:
         serviceAccountName: pachyderm-operator-controller-manager
       deployments:
       - label:
-          app: backup-manager
-        name: pachyderm-operator-backup-manager
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: pachyderm-backup-manager
-          strategy: {}
-          template:
-            metadata:
-              labels:
-                app: pachyderm-backup-manager
-            spec:
-              containers:
-              - image: quay.io/eochieng/backup-handler:latest
-                name: backup-handler
-                ports:
-                - containerPort: 8890
-                  name: api
-                  protocol: TCP
-                resources: {}
-              securityContext:
-                runAsNonRoot: true
-              serviceAccountName: pachyderm-operator-controller-manager
-      - label:
           control-plane: controller-manager
         name: pachyderm-operator-controller-manager
         spec:
@@ -984,6 +959,15 @@ spec:
                 - containerPort: 8443
                   name: https
                 resources: {}
+              - image: quay.io/eochieng/backup-handler:latest
+                name: backup
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 250Mi
+                  requests:
+                    cpu: 100m
+                    memory: 200Mi
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: pachyderm-operator-controller-manager
@@ -1040,7 +1024,7 @@ spec:
   provider:
     name: Pachyderm, Inc.
     url: https://pachyderm.com
-  version: 0.1.1
+  version: 0.1.2
   webhookdefinitions:
   - admissionReviewVersions:
     - v1

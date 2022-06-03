@@ -1,6 +1,9 @@
 resources:
 - manager.yaml
 
+patchesStrategicMerge:
+- patches/proxy.yaml
+
 generatorOptions:
   disableNameSuffixHash: true
 

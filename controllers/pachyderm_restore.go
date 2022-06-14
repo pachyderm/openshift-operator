@@ -15,6 +15,23 @@ import (
 )
 
 func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export *aimlv1beta1.PachydermExport) error {
+	if export.Spec.Restore != nil && export.Status.RestoreID == "" {
+		restore, err := requestRestore(export)
+		if err != nil {
+			return err
+		}
+
+		if restore.ID != nil {
+			if export.Status.RestoreID == "" {
+				export.Status.RestoreID = *restore.ID
+			}
+
+			if err := r.Status().Update(ctx, export); err != nil {
+				return err
+			}
+		}
+	}
+
 	if export.Status.RestoreID != "" {
 		restore, err := getRestore(export)
 		if err != nil {
@@ -29,38 +46,11 @@ func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export
 		return r.Status().Update(ctx, export)
 	}
 
-	restore, err := requestRestore(export)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("restore response ==> %+v\n", restore)
-
-	if restore.ID != nil {
-		if export.Status.RestoreID == "" {
-			export.Status.RestoreID = *restore.ID
-		}
-
-		if err := r.Status().Update(ctx, export); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
 func requestRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
-	result := &restoreservice.Restoreresult{}
-	restore := &restoreservice.Restore{
-		Name:                 &export.Name,
-		Namespace:            &export.Namespace,
-		DestinationName:      &export.Spec.Restore.Destination.Name,
-		DestinationNamespace: &export.Spec.Restore.Destination.Namespace,
-		BackupLocation:       &export.Spec.Restore.BackupName,
-		StorageSecret:        &export.Spec.StorageSecret,
-	}
-
-	payload, err := json.Marshal(restore)
+	payload, err := newRestorequest(export)
 	if err != nil {
 		return nil, err
 	}
@@ -83,23 +73,16 @@ func requestRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restor
 		return nil, err
 	}
 
-	if err := json.Unmarshal(body, result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return parseRestoreresult(body)
 }
 
 func getRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
-	result := &restoreservice.Restoreresult{}
 	url := fmt.Sprintf("http://localhost:8890/restores/%s", export.Status.RestoreID)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	defer request.Body.Close()
-
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
@@ -117,9 +100,29 @@ func getRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreres
 		return nil, err
 	}
 
-	if err := json.Unmarshal(body, result); err != nil {
+	return parseRestoreresult(body)
+}
+
+func parseRestoreresult(body []byte) (*restoreservice.Restoreresult, error) {
+	payload := &restore{}
+	if err := json.Unmarshal(body, payload); err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	response := restoreservice.Restoreresult(*payload)
+
+	return &response, nil
+}
+
+func newRestorequest(export *aimlv1beta1.PachydermExport) ([]byte, error) {
+	restoreObj := &restore{
+		Name:                 &export.Name,
+		Namespace:            &export.Namespace,
+		DestinationName:      &export.Spec.Restore.Destination.Name,
+		DestinationNamespace: &export.Spec.Restore.Destination.Namespace,
+		BackupLocation:       &export.Spec.Restore.BackupName,
+		StorageSecret:        &export.Spec.StorageSecret,
+	}
+
+	return json.Marshal(restoreObj)
 }

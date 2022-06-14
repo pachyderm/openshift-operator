@@ -41,7 +41,6 @@ import (
 
 	backupcmd "github.com/opdev/backup-handler/cmd/command"
 	backupservice "github.com/opdev/backup-handler/gen/backup_service"
-	backupserviceclient "github.com/opdev/backup-handler/gen/http/backup_service/client"
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 )
 
@@ -155,7 +154,7 @@ func newBackupRequest(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachy
 	encodedCR := base64.StdEncoding.EncodeToString(cr)
 
 	return json.Marshal(
-		&backupserviceclient.CreateRequestBody{
+		&backup{
 			Name:               &export.Name,
 			Namespace:          &export.Namespace,
 			Pod:                &pod,
@@ -207,7 +206,7 @@ func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm
 }
 
 func parseBackupresult(body []byte) (*backupservice.Backupresult, error) {
-	temp := backupserviceclient.CreateResponseBody{}
+	temp := backup{}
 	if err := json.Unmarshal(body, &temp); err != nil {
 		return nil, err
 	}

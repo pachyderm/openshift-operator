@@ -67,22 +67,42 @@ type RestoreDestination struct {
 
 // PachydermExportStatus defines the observed state of PachydermExport
 type PachydermExportStatus struct {
+	// Phase of the export status
+	Phase string `json:"phase,omitempty"`
+	// Backup represents the backup status
+	Backup PachydermBackupStatus `json:"backup,omitempty"`
+	// Restore represents the restore status
+	Restore PachydermRestoreStatus `json:"restore,omitempty"`
+}
+
+// PachydermRestoreStatus captures the status
+// of a backup of a pachyderm instance
+type PachydermBackupStatus struct {
+	// Unique ID of the backup
+	ID string `json:"id,omitempty"`
 	// Time the backup process commenced
 	StartedAt string `json:"startedAt,omitempty"`
 	// Time the backup process completed
 	CompletedAt string `json:"completedAt,omitempty"`
-	// Name and location of backup resource created
-	Backup string `json:"backupName,omitempty"`
-	// ID of the backup
-	BackupID string `json:"backupID,omitempty"`
-	// Phase of the export status
-	Phase string `json:"phase,omitempty"`
-	// Backup location on the S3 bucket
-	BackupLocation string `json:"location,omitempty"`
-	// ID of the restore request
-	RestoreID string `json:"restoreID,omitempty"`
-	// Returns true when the restore is completed
-	RestoreCompleted *bool `json:"restored,omitempty"`
+	// Name of backup resource created
+	Name string `json:"name,omitempty"`
+	// Location of pachyderm backup on the S3 bucket
+	Location string `json:"location,omitempty"`
+	// Status reports the state of the restore request
+	Status string `json:"status,omitempty"`
+}
+
+// PachydermRestoreStatus captures the status
+// of a restore of a pachyderm instance
+type PachydermRestoreStatus struct {
+	// Unique ID of the backup
+	ID string `json:"id,omitempty"`
+	// Time the restore process commenced
+	StartedAt string `json:"startedAt,omitempty"`
+	// Time the restore process completed
+	CompletedAt string `json:"completedAt,omitempty"`
+	// Status reports the state of the restore request
+	Status string `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

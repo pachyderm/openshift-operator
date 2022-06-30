@@ -69,30 +69,47 @@ spec:
           status:
             description: PachydermExportStatus defines the observed state of PachydermExport
             properties:
-              backupID:
-                description: ID of the backup
-                type: string
-              backupName:
-                description: Name and location of backup resource created
-                type: string
-              completedAt:
-                description: Time the backup process completed
-                type: string
-              location:
-                description: Backup location on the S3 bucket
-                type: string
+              backup:
+                description: Backup represents the backup status
+                properties:
+                  completedAt:
+                    description: Time the backup process completed
+                    type: string
+                  id:
+                    description: Unique ID of the backup
+                    type: string
+                  location:
+                    description: Location of pachyderm backup on the S3 bucket
+                    type: string
+                  name:
+                    description: Name of backup resource created
+                    type: string
+                  startedAt:
+                    description: Time the backup process commenced
+                    type: string
+                  status:
+                    description: Status reports the state of the restore request
+                    type: string
+                type: object
               phase:
                 description: Phase of the export status
                 type: string
-              restoreID:
-                description: ID of the restore request
-                type: string
-              restored:
-                description: Returns true when the restore is completed
-                type: boolean
-              startedAt:
-                description: Time the backup process commenced
-                type: string
+              restore:
+                description: Restore represents the restore status
+                properties:
+                  completedAt:
+                    description: Time the restore process completed
+                    type: string
+                  id:
+                    description: Unique ID of the backup
+                    type: string
+                  startedAt:
+                    description: Time the restore process commenced
+                    type: string
+                  status:
+                    description: Status reports the state of the restore request
+                    type: string
+                type: object
             type: object
         type: object
     served: true

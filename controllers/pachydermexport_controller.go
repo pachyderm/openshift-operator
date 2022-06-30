@@ -96,7 +96,7 @@ func (r *PachydermExportReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if !reflect.DeepEqual(current.Status, aimlv1beta1.PachydermExportStatus{}) {
-		if export.Status.CompletedAt != "" {
+		if export.Status.Restore.CompletedAt != "" {
 			return ctrl.Result{}, nil
 		}
 
@@ -105,7 +105,7 @@ func (r *PachydermExportReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		}
 
 		if reflect.DeepEqual(export.Status, current.Status) &&
-			export.Status.CompletedAt == "" {
+			export.Status.Restore.CompletedAt == "" {
 			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 		}
 	}
@@ -167,7 +167,7 @@ func newBackupRequest(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachy
 }
 
 func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm, pods *corev1.PodList) (*backupservice.Backupresult, error) {
-	if export.Status.BackupID != "" {
+	if export.Status.Backup.ID != "" {
 		return nil, nil
 	}
 
@@ -215,7 +215,7 @@ func parseBackupresult(body []byte) (*backupservice.Backupresult, error) {
 }
 
 func getBackup(export *aimlv1beta1.PachydermExport) (*backupservice.Backupresult, error) {
-	url := fmt.Sprintf("http://localhost:8890/backups/%s", export.Status.BackupID)
+	url := fmt.Sprintf("http://localhost:8890/backups/%s", export.Status.Backup.ID)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -230,8 +230,8 @@ func getBackup(export *aimlv1beta1.PachydermExport) (*backupservice.Backupresult
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
-		export.Status.CompletedAt = time.Now().UTC().String()
-		msg := fmt.Sprintf("backup %s not found", export.Status.BackupID)
+		export.Status.Backup.CompletedAt = time.Now().UTC().String()
+		msg := fmt.Sprintf("backup %s not found", export.Status.Backup.ID)
 		return nil, goerrors.New(msg)
 	}
 
@@ -245,7 +245,7 @@ func getBackup(export *aimlv1beta1.PachydermExport) (*backupservice.Backupresult
 
 func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *aimlv1beta1.PachydermExport) error {
 	// return nil if the backup already exists
-	if export.Status.BackupID != "" {
+	if export.Status.Backup.ID != "" {
 		return nil
 	}
 
@@ -283,15 +283,15 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 
 	if backup != nil {
 		if backup.ID != nil {
-			export.Status.BackupID = *backup.ID
+			export.Status.Backup.ID = *backup.ID
 		}
 
 		if backup.Name != nil {
-			export.Status.Backup = *backup.Name
+			export.Status.Backup.Name = *backup.Name
 		}
 
 		if backup.CreatedAt != nil {
-			export.Status.StartedAt = *backup.CreatedAt
+			export.Status.Backup.StartedAt = *backup.CreatedAt
 		}
 
 		if backup.State != nil {
@@ -303,7 +303,7 @@ func (r *PachydermExportReconciler) newBackupTask(ctx context.Context, export *a
 }
 
 func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, export *aimlv1beta1.PachydermExport) error {
-	if export.Status.BackupID == "" {
+	if export.Status.Backup.ID == "" || export.Status.Backup.CompletedAt != "" {
 		return nil
 	}
 
@@ -321,11 +321,11 @@ func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, expor
 	}
 
 	if backup.Location != nil {
-		export.Status.BackupLocation = *backup.Location
+		export.Status.Backup.Location = *backup.Location
 	}
 
 	if backup.DeletedAt != nil {
-		export.Status.CompletedAt = *backup.DeletedAt
+		export.Status.Backup.CompletedAt = *backup.DeletedAt
 	}
 
 	return nil

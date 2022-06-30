@@ -895,9 +895,7 @@ spec:
           - create
         serviceAccountName: pachyderm-operator-controller-manager
       deployments:
-      - label:
-          control-plane: controller-manager
-        name: pachyderm-operator-controller-manager
+      - name: pachyderm-operator-controller-manager
         spec:
           replicas: 1
           selector:
@@ -910,6 +908,17 @@ spec:
                 control-plane: controller-manager
             spec:
               containers:
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=10
+                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:5e33f9d095952866b9743cc8268fb740cce6d93439f00ce333a2de1e5974837e
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                resources: {}
               - args:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
@@ -948,17 +957,6 @@ spec:
                     memory: 200Mi
                 securityContext:
                   allowPrivilegeEscalation: false
-              - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=10
-                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:5e33f9d095952866b9743cc8268fb740cce6d93439f00ce333a2de1e5974837e
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                resources: {}
               - image: quay.io/eochieng/backup-handler:latest
                 name: backup
                 resources:

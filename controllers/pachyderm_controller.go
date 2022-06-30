@@ -965,6 +965,11 @@ func (r *PachydermReconciler) pausePachydermCluster(ctx context.Context, pd *aim
 		return nil
 	}
 
+	// Do nothing until the pachyderm cluster is running
+	if pd.Status.Phase != aimlv1beta1.PhaseRunning {
+		return nil
+	}
+
 	pachd := &appsv1.Deployment{}
 	pachdKey := types.NamespacedName{
 		Name:      "pachd",

@@ -90,7 +90,10 @@ func (r *PachydermExportReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			return ctrl.Result{}, goerrors.New("storage secret name required")
 		}
 		if err := r.restorePachyderm(ctx, export); err != nil {
-			return ctrl.Result{}, err
+			if err != ErrPostgresNotReady {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 		}
 		return ctrl.Result{}, nil
 	}

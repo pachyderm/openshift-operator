@@ -90,10 +90,17 @@ func (r *PachydermExportReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 			return ctrl.Result{}, goerrors.New("storage secret name required")
 		}
 		if err := r.restorePachyderm(ctx, export); err != nil {
-			if err != ErrPostgresNotReady {
-				return ctrl.Result{}, err
+			// If the pachd deployment is not found, requeque the request
+			if errors.IsNotFound(err) {
+				return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 			}
-			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+			if err == ErrPachdPodsRunning {
+				return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+			}
+			if err == ErrDatabaseNotFound {
+				return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+			}
+			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
 	}
@@ -180,7 +187,7 @@ func createBackup(export *aimlv1beta1.PachydermExport, pd *aimlv1beta1.Pachyderm
 		pd,
 		pods.Items[0].Name,
 		"postgres",
-		[]string{"bash", "-c", "pg_dump --dbname \"pachyderm\" --dbname \"dex\""},
+		[]string{"bash", "-c", "pg_dump -U pachyderm -Ft -d pachyderm"},
 	)
 	if err != nil {
 		return nil, err

@@ -8,10 +8,11 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -42,97 +43,75 @@ func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export
 		}
 	}
 
-	if export.Status.Restore.ID != "" {
-		restore, err := getRestore(export)
-		if err != nil {
+	restore, err := getRestore(export)
+	if err != nil {
+		return err
+	}
+
+	if restore.CreatedAt != nil {
+		export.Status.Restore.StartedAt = *restore.CreatedAt
+	}
+
+	bk, err := decodeBackupContent(export, restore)
+	if err != nil {
+		return err
+	}
+
+	// create the pachyderm object returned from backup
+	if err := func(ctx context.Context, backup *backupContent) error {
+		if err := r.Create(ctx, backup.object); err != nil {
+			if errors.IsAlreadyExists(err) {
+				return nil
+			}
+			return err
+		}
+		return nil
+	}(ctx, bk); err != nil {
+		return err
+	}
+
+	// set pachyderm instance in maintenanace mode
+	restored := &aimlv1beta1.Pachyderm{}
+	if err := func(name, namespace string, pd *aimlv1beta1.Pachyderm) error {
+		restoreKey := types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		}
+		if err := r.Get(ctx, restoreKey, pd); err != nil {
+			if errors.IsNotFound(err) {
+				return nil
+			}
 			return err
 		}
 
-		if restore.CreatedAt != nil {
-			export.Status.Restore.StartedAt = *restore.CreatedAt
-		}
-
-		if restore.DeletedAt != nil {
-			bk, err := retrieveBackupContent(export, restore)
-			if err != nil {
-				return err
-			}
-
-			// create the pachyderm object returned from backup
-			if err := func(ctx context.Context, backup *backupContent) error {
-				if err := r.Create(ctx, bk.object); err != nil {
-					if errors.IsAlreadyExists(err) {
-						return nil
-					}
-					return err
-				}
-				return nil
-			}(ctx, bk); err != nil {
-				return err
-			}
-
-			// set pachyderm instance in maintenanace mode
-			restored := &aimlv1beta1.Pachyderm{}
-			if err := func(name, namespace string, pd *aimlv1beta1.Pachyderm) error {
-				restoreKey := types.NamespacedName{
-					Name:      bk.object.Name,
-					Namespace: bk.object.Namespace,
-				}
-				if err := r.Get(ctx, restoreKey, restored); err != nil {
-					if errors.IsNotFound(err) {
-						return nil
-					}
-					return err
-				}
-
-				if restored.Annotations == nil {
-					restored.Annotations = map[string]string{
-						aimlv1beta1.PachydermPauseAnnotation: "true",
-					}
-				}
-
-				return r.Update(ctx, restored)
-			}(bk.object.Name, bk.object.Namespace, restored); err != nil {
-				return err
-			}
-
-			// restore the pachyderm database
-			pg := &corev1.Pod{}
-			pgKey := types.NamespacedName{
-				Name:      "postgres-0",
-				Namespace: export.Namespace,
-			}
-			if err := r.Get(ctx, pgKey, pg); err != nil {
-				if errors.IsNotFound(err) {
-					return ErrPostgresNotReady
-				}
-				return err
-			}
-			if pg.Status.Phase != corev1.PodRunning {
-				return ErrPostgresNotReady
-			}
-
-			deleted, err := r.restorePachydermDB(ctx, *restore.ID)
-			if err != nil {
-				return err
-			}
-
-			if deleted != nil {
-				export.Status.Restore.CompletedAt = *restore.DeletedAt
-				export.Status.Restore.Status = "completed"
-			}
-
-			// TODO: remove from maintenance mode
-			fmt.Printf("== restore contents ==\nrestore name: %+v\n", *restore.Name)
-			if err := r.removeMaintenanceMode(ctx, export); err != nil {
-				return err
+		if restored.Annotations == nil {
+			restored.Annotations = map[string]string{
+				aimlv1beta1.PachydermPauseAnnotation: "true",
 			}
 		}
 
-		return r.Status().Update(ctx, export)
+		return r.Update(ctx, restored)
+	}(bk.object.Name, bk.object.Namespace, restored); err != nil {
+		return err
 	}
 
-	return nil
+	// restore the pachyderm database
+	// remove from maintenance mode
+	if err := r.initiateDBRestore(ctx, restored, restore); err != nil {
+		return err
+	}
+	log.Println("Database restore completed")
+
+	if restore.DeletedAt != nil {
+		export.Status.Restore.CompletedAt = *restore.DeletedAt
+		export.Status.Restore.Status = "completed"
+	}
+
+	if err := r.Status().Update(ctx, export); err != nil {
+		return err
+	}
+
+	return r.exitMaintenanceMode(ctx, restored)
 }
 
 func requestRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
@@ -221,8 +200,16 @@ type backupContent struct {
 	object *aimlv1beta1.Pachyderm
 }
 
-// retrieve backup content returns the content of the backup
-func retrieveBackupContent(export *aimlv1beta1.PachydermExport, restore *restoreservice.Restoreresult) (*backupContent, error) {
+// decode backup content returns the base64 decoded contents of the backup
+func decodeBackupContent(export *aimlv1beta1.PachydermExport, restore *restoreservice.Restoreresult) (*backupContent, error) {
+	if restore.KubernetesResource == nil {
+		return nil, ErrPachydermNotFound
+	}
+
+	if restore.Database == nil {
+		return nil, ErrDatabaseNotFound
+	}
+
 	cr, err := decode(restore.KubernetesResource)
 	if err != nil {
 		return nil, err
@@ -272,46 +259,49 @@ func decode(payload *string) ([]byte, error) {
 	return data, nil
 }
 
-func (r *PachydermExportReconciler) restorePachydermDB(ctx context.Context, restoreID string) (*restoreservice.Restoreresult, error) {
-	url := fmt.Sprintf("http://localhost:8890/restores/%s", restoreID)
+func (r *PachydermExportReconciler) initiateDBRestore(ctx context.Context, pd *aimlv1beta1.Pachyderm, restore *restoreservice.Restoreresult) error {
+	pachd := &appsv1.Deployment{}
+	pachdKey := types.NamespacedName{
+		Namespace: pd.Namespace,
+		Name:      "pachd",
+	}
+	if err := r.Get(ctx, pachdKey, pachd); err != nil {
+		return err
+	}
 
+	if *pachd.Spec.Replicas != 0 {
+		return ErrPachdPodsRunning
+	}
+
+	url := fmt.Sprintf("http://localhost:8890/restores/%s", *restore.ID)
 	request, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
-	}
-
-	return parseRestoreresult(body)
-}
-
-func (r *PachydermExportReconciler) removeMaintenanceMode(ctx context.Context, export *aimlv1beta1.PachydermExport) error {
-	pdKey := types.NamespacedName{
-		Name:      export.Spec.Backup.Target,
-		Namespace: export.Namespace,
-	}
-	pd := &aimlv1beta1.Pachyderm{}
-	if err := r.Get(ctx, pdKey, pd); err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
 		return err
 	}
 
-	if pd.IsPaused() {
-		delete(pd.Annotations, aimlv1beta1.PachydermPauseAnnotation)
+	result, err := parseRestoreresult(body)
+	if err != nil {
+		return err
 	}
+	restore.DeletedAt = result.DeletedAt
 
+	return nil
+}
+
+func (r *PachydermExportReconciler) exitMaintenanceMode(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	delete(pd.Annotations, aimlv1beta1.PachydermPauseAnnotation)
 	return r.Update(ctx, pd)
 }

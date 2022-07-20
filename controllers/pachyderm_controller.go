@@ -602,7 +602,7 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 	// pachd-peer connection test
 	const retries = 3
 	for i := 0; i < retries; i++ {
-		if testPachdPeerConnection(ctx, pd) {
+		if testPachdPeerConnection(pd) {
 			return true
 		}
 		time.Sleep(2 * time.Second)
@@ -611,7 +611,7 @@ func (r *PachydermReconciler) isPachydermRunning(ctx context.Context, pd *aimlv1
 	return false
 }
 
-func testPachdPeerConnection(ctx context.Context, pd *aimlv1beta1.Pachyderm) bool {
+func testPachdPeerConnection(pd *aimlv1beta1.Pachyderm) bool {
 	conn, err := net.Dial("tcp",
 		fmt.Sprintf("pachd-peer.%s.svc.cluster.local:30653", pd.Namespace))
 	if err != nil {

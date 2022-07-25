@@ -43,7 +43,7 @@ metadata:
     capabilities: Basic Install
     categories: AI/Machine Learning
     certified: "true"
-    containerImage: quay.io/opdev/pachyderm-operator:latest
+    containerImage: registry.connect.redhat.com/pachyderm/pachyderm-operator@sha256:b3ec850de86c044a070330154975e3a392cd0e711f6d50213ec198e4f3350191
     createdAt: "2021-05-20T08:05:00Z"
     description: Pachyderm provides the data layer that allows data science teams
       to productionize and scale their machine learning lifecycle with data driven
@@ -930,7 +930,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                image: quay.io/opdev/pachyderm-operator:latest
+                image: registry.connect.redhat.com/pachyderm/pachyderm-operator@sha256:b3ec850de86c044a070330154975e3a392cd0e711f6d50213ec198e4f3350191
                 livenessProbe:
                   httpGet:
                     path: /healthz

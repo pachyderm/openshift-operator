@@ -42,6 +42,18 @@ check_min_kube_version() {
 
 }
 
+
+set_container_image() {
+    echo -n "Setting .metadata.annotations.containerImage to ${IMG}..."
+    sed -i "s|containerImage:.*$|containerImage: ${IMG}|g" ${OPERATOR_CSV}
+	if [ $? -eq 0 ]
+	then
+		echo "done"
+	else
+		echo "failed"
+	fi
+}
+
 openshift_annotations() {
 cat <<EOF>> ${OPERATOR_ANNOTATIONS_FILE}
 
@@ -49,7 +61,6 @@ cat <<EOF>> ${OPERATOR_ANNOTATIONS_FILE}
   com.redhat.openshift.versions: v4.6
 EOF
 }
-
 
 if [[ ${OPERATOR_DIR} =~ ${OPERATOR_PKG_NAME} ]]
 then
@@ -63,3 +74,4 @@ fi
 
 default_channel_exists
 check_min_kube_version
+set_container_image

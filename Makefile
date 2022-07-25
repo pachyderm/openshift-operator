@@ -141,7 +141,7 @@ bundle: manifests kustomize
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
-	bash ./hack/bundle_prep.sh
+	IMG=$(IMG) ./hack/scripts/bundle_prep.sh
 
 .PHONY: bundle-build ## Build the bundle image.
 bundle-build:

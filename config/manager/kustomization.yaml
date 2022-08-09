@@ -14,6 +14,6 @@ configMapGenerator:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- digest: sha256:b3ec850de86c044a070330154975e3a392cd0e711f6d50213ec198e4f3350191
-  name: controller
-  newName: registry.connect.redhat.com/pachyderm/pachyderm-operator
+- name: controller
+  newName: quay.io/opdev/pachyderm-operator
+  newTag: latest

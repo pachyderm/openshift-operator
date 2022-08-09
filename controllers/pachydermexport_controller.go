@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -336,6 +337,21 @@ func (r *PachydermExportReconciler) checkBackupStatus(ctx context.Context, expor
 
 	if backup.DeletedAt != nil {
 		export.Status.Backup.CompletedAt = *backup.DeletedAt
+	}
+
+	if reflect.DeepEqual(export.Status, aimlv1beta1.PachydermExportStatus{}) {
+		return nil
+	}
+
+	if strings.EqualFold(export.Status.Phase, aimlv1beta1.ExportCompletedStatus) {
+		pd, err := r.pachydermForBackup(ctx, export)
+		if err != nil {
+			return err
+		}
+
+		if err := r.exitMaintenanceMode(ctx, pd); err != nil {
+			return err
+		}
 	}
 
 	return nil

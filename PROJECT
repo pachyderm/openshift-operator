@@ -29,4 +29,13 @@ resources:
   kind: PachydermExport
   path: github.com/pachyderm/openshift-operator/api/v1beta1
   version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: pachyderm.com
+  group: aiml
+  kind: PachydermImport
+  path: github.com/pachyderm/openshift-operator/api/v1beta1
+  version: v1beta1
 version: "3"

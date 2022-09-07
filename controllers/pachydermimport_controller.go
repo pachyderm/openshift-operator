@@ -18,7 +18,11 @@ package controllers
 
 import (
 	"context"
+	"reflect"
+	"strings"
+	"time"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,9 +51,58 @@ type PachydermImportReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.1/pkg/reconcile
 func (r *PachydermImportReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	restore := &aimlv1beta1.PachydermImport{}
+	if err := r.Client.Get(ctx, req.NamespacedName, restore); err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	logger.Info("Starting restore of backup", "backup", restore.Spec.BackupName)
+
+	// if strings.EqualFold(restore.Status.Phase, aimlv1beta1.ExportCompletedStatus) {
+	// 	return ctrl.Result{}, nil
+	// }
+
+	if err := r.restorePachyderm(ctx, restore); err != nil {
+		// If the pachd deployment is not found, requeque the request
+		if errors.IsNotFound(err) {
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+		if err == ErrPachdPodsRunning {
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+		if err == ErrDatabaseNotFound {
+			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+		}
+		if strings.Contains(err.Error(), "pachyderm resource not found") {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// Retrieve the most up to date instance of the pachyderm import object
+	current := &aimlv1beta1.PachydermImport{}
+	if err := r.Get(ctx, req.NamespacedName, current); err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// check the status of the pachyderm restore request
+	if !reflect.DeepEqual(restore.Status, aimlv1beta1.PachydermImportStatus{}) {
+		if restore.Status.CompletedAt != "" {
+			return ctrl.Result{}, nil
+		}
+
+		if reflect.DeepEqual(restore.Status, current.Status) &&
+			restore.Status.CompletedAt == "" {
+			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -59,4 +112,9 @@ func (r *PachydermImportReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&aimlv1beta1.PachydermImport{}).
 		Complete(r)
+}
+
+func (r *PachydermImportReconciler) exitMaintenanceMode(ctx context.Context, pd *aimlv1beta1.Pachyderm) error {
+	delete(pd.Annotations, aimlv1beta1.PachydermPauseAnnotation)
+	return r.Update(ctx, pd)
 }

@@ -1,0 +1,6 @@
+apiVersion: aiml.pachyderm.com/v1beta1
+kind: PachydermImport
+metadata:
+  name: pachydermimport-sample
+spec:
+  # TODO(user): Add fields here

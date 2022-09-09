@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: pachydermexports.aiml.pachyderm.com
+  name: pachydermimports.aiml.pachyderm.com
 spec:
   group: aiml.pachyderm.com
   names:
-    kind: PachydermExport
-    listKind: PachydermExportList
-    plural: pachydermexports
-    singular: pachydermexport
+    kind: PachydermImport
+    listKind: PachydermImportList
+    plural: pachydermimports
+    singular: pachydermimport
   scope: Namespaced
   versions:
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: PachydermExport is the Schema for the pachydermexports API
+        description: PachydermImport is the Schema for the pachydermimports API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,38 +34,39 @@ spec:
           metadata:
             type: object
           spec:
-            description: PachydermExportSpec defines the desired state of PachydermExport
+            description: PachydermImportSpec defines the desired state of PachydermImport
             properties:
+              backup:
+                description: Name of backup resource in S3 to restore
+                type: string
+              destination:
+                description: Name of the pachyderm instance to restore the backup
+                  to
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                type: object
               storageSecret:
                 description: Storage Secret containing credentials to upload the backup
                   to an S3-compatible object store
                 type: string
-              target:
-                description: Name of Pachyderm instance to backup.
-                type: string
-            required:
-            - target
             type: object
           status:
-            description: PachydermExportStatus defines the observed state of PachydermExport
+            description: PachydermImportStatus defines the observed state of PachydermImport
             properties:
               completedAt:
-                description: Time the backup process completed
+                description: Time the restore process completed
                 type: string
               id:
                 description: Unique ID of the backup
                 type: string
-              location:
-                description: Location of pachyderm backup on the S3 bucket
-                type: string
-              name:
-                description: Name of backup resource created
-                type: string
               phase:
-                description: Phase of the export status
+                description: Phase reports the status of the restore
                 type: string
               startedAt:
-                description: Time the backup process commenced
+                description: Time the restore process commenced
                 type: string
               status:
                 description: Status reports the state of the restore request

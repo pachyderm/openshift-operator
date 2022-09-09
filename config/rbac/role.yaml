@@ -35,6 +35,32 @@ rules:
 - apiGroups:
   - aiml.pachyderm.com
   resources:
+  - pachydermimports
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermimports/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
+  - pachydermimports/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - aiml.pachyderm.com
+  resources:
   - pachyderms
   verbs:
   - create

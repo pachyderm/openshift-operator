@@ -38,6 +38,14 @@ metadata:
               "target": "pachyderm-sample"
             }
           }
+        },
+        {
+          "apiVersion": "aiml.pachyderm.com/v1beta1",
+          "kind": "PachydermImport",
+          "metadata": {
+            "name": "pachydermimport-sample"
+          },
+          "spec": null
         }
       ]
     capabilities: Basic Install
@@ -63,25 +71,37 @@ spec:
       kind: PachydermExport
       name: pachydermexports.aiml.pachyderm.com
       specDescriptors:
+      - description: Storage Secret containing credentials to upload the backup to
+          an S3-compatible object store
+        displayName: S3 Upload Secret
+        path: storageSecret
+        x-descriptors:
+        - urn:alm:descriptor:io.kubernetes:Secret
+      version: v1beta1
+    - description: PachydermImport is the Schema for the pachydermimports API
+      displayName: Pachyderm Import
+      kind: PachydermImport
+      name: pachydermimports.aiml.pachyderm.com
+      specDescriptors:
       - description: Name of backup resource in S3 to restore
         displayName: Backup Name
-        path: restore.backup
+        path: backup
         x-descriptors:
         - urn:alm:descriptor:text
         - urn:alm:descriptor:io.kubernetes:custom
       - description: Name of the pachyderm instance to restore the backup to
         displayName: Restore Destination
-        path: restore.destination
+        path: destination
         x-descriptors:
         - urn:alm:descriptor:text
         - urn:alm:descriptor:io.kubernetes:custom
       - displayName: Restore Target
-        path: restore.destination.name
+        path: destination.name
         x-descriptors:
         - urn:alm:descriptor:text
         - urn:alm:descriptor:io.kubernetes:custom
       - displayName: Pachyderm Namespace
-        path: restore.destination.namespace
+        path: destination.namespace
         x-descriptors:
         - urn:alm:descriptor:text
         - urn:alm:descriptor:io.kubernetes:custom
@@ -631,6 +651,32 @@ spec:
           - aiml.pachyderm.com
           resources:
           - pachydermexports/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermimports
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermimports/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - aiml.pachyderm.com
+          resources:
+          - pachydermimports/status
           verbs:
           - get
           - patch

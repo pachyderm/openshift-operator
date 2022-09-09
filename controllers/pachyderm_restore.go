@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,34 +26,34 @@ var (
 	ErrPostgresNotReady = goerrors.New("postgres pod not ready")
 )
 
-func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export *aimlv1beta1.PachydermExport) error {
-	if export.Spec.Restore != nil && export.Status.Restore.ID == "" {
-		restore, err := requestRestore(export)
+func (r *PachydermImportReconciler) restorePachyderm(ctx context.Context, req *aimlv1beta1.PachydermImport) error {
+	if !reflect.DeepEqual(req.Spec, aimlv1beta1.PachydermImportSpec{}) && req.Status.ID == "" {
+		restore, err := requestRestore(req)
 		if err != nil {
 			return err
 		}
 
 		if restore.ID != nil {
-			if export.Status.Restore.ID == "" {
-				export.Status.Restore.ID = *restore.ID
+			if req.Status.ID == "" {
+				req.Status.ID = *restore.ID
 			}
 
-			if err := r.Status().Update(ctx, export); err != nil {
+			if err := r.Status().Update(ctx, req); err != nil {
 				return err
 			}
 		}
 	}
 
-	restore, err := getRestore(export)
+	restore, err := getRestore(req)
 	if err != nil {
 		return err
 	}
 
 	if restore.CreatedAt != nil {
-		export.Status.Restore.StartedAt = *restore.CreatedAt
+		req.Status.StartedAt = *restore.CreatedAt
 	}
 
-	bk, err := decodeBackupContent(export, restore)
+	bk, err := decodeBackupContent(req, restore)
 	if err != nil {
 		return err
 	}
@@ -103,19 +104,19 @@ func (r *PachydermExportReconciler) restorePachyderm(ctx context.Context, export
 	log.Println("Database restore completed")
 
 	if restore.DeletedAt != nil {
-		export.Status.Restore.CompletedAt = *restore.DeletedAt
-		export.Status.Restore.Status = "completed"
+		req.Status.CompletedAt = *restore.DeletedAt
+		req.Status.Status = "completed"
 	}
 
-	if err := r.Status().Update(ctx, export); err != nil {
+	if err := r.Status().Update(ctx, req); err != nil {
 		return err
 	}
 
 	return r.exitMaintenanceMode(ctx, restored)
 }
 
-func requestRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
-	payload, err := newRestorequest(export)
+func requestRestore(req *aimlv1beta1.PachydermImport) (*restoreservice.Restoreresult, error) {
+	payload, err := newRestorequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -141,8 +142,8 @@ func requestRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restor
 	return parseRestoreresult(body)
 }
 
-func getRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreresult, error) {
-	url := fmt.Sprintf("http://localhost:8890/restores/%s", export.Status.Restore.ID)
+func getRestore(req *aimlv1beta1.PachydermImport) (*restoreservice.Restoreresult, error) {
+	url := fmt.Sprintf("http://localhost:8890/restores/%s", req.Status.ID)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -156,7 +157,7 @@ func getRestore(export *aimlv1beta1.PachydermExport) (*restoreservice.Restoreres
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusNotFound {
-		export.Status.Restore.CompletedAt = time.Now().UTC().String()
+		req.Status.CompletedAt = time.Now().UTC().String()
 		return nil, goerrors.New("restore not found")
 	}
 
@@ -179,13 +180,13 @@ func parseRestoreresult(body []byte) (*restoreservice.Restoreresult, error) {
 	return &response, nil
 }
 
-func newRestorequest(export *aimlv1beta1.PachydermExport) ([]byte, error) {
+func newRestorequest(export *aimlv1beta1.PachydermImport) ([]byte, error) {
 	restoreObj := &restore{
 		Name:                 &export.Name,
 		Namespace:            &export.Namespace,
-		DestinationName:      &export.Spec.Restore.Destination.Name,
-		DestinationNamespace: &export.Spec.Restore.Destination.Namespace,
-		BackupLocation:       &export.Spec.Restore.BackupName,
+		DestinationName:      &export.Spec.Destination.Name,
+		DestinationNamespace: &export.Spec.Destination.Namespace,
+		BackupLocation:       &export.Spec.BackupName,
 		StorageSecret:        &export.Spec.StorageSecret,
 	}
 
@@ -201,7 +202,7 @@ type backupContent struct {
 }
 
 // decode backup content returns the base64 decoded contents of the backup
-func decodeBackupContent(export *aimlv1beta1.PachydermExport, restore *restoreservice.Restoreresult) (*backupContent, error) {
+func decodeBackupContent(req *aimlv1beta1.PachydermImport, restore *restoreservice.Restoreresult) (*backupContent, error) {
 	if restore.KubernetesResource == nil {
 		return nil, ErrPachydermNotFound
 	}
@@ -237,8 +238,8 @@ func decodeBackupContent(export *aimlv1beta1.PachydermExport, restore *restorese
 
 		return pd, nil
 	}(
-		export.Spec.Restore.Destination.Name,
-		export.Spec.Restore.Destination.Namespace,
+		req.Spec.Destination.Name,
+		req.Spec.Destination.Namespace,
 		cr,
 	)
 	if err != nil {
@@ -259,7 +260,7 @@ func decode(payload *string) ([]byte, error) {
 	return data, nil
 }
 
-func (r *PachydermExportReconciler) initiateDBRestore(ctx context.Context, pd *aimlv1beta1.Pachyderm, restore *restoreservice.Restoreresult) error {
+func (r *PachydermImportReconciler) initiateDBRestore(ctx context.Context, pd *aimlv1beta1.Pachyderm, restore *restoreservice.Restoreresult) error {
 	pachd := &appsv1.Deployment{}
 	pachdKey := types.NamespacedName{
 		Namespace: pd.Namespace,

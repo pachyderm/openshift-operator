@@ -3,6 +3,7 @@ kind: Pachyderm
 metadata:
   name: pachyderm-sample
 spec:
+  version: "v2.0.3"
   console: 
     disable: true
   pachd:

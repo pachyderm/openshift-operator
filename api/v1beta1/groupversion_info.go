@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1beta1 contains API Schema definitions for the aiml v1beta1 API group
-//+kubebuilder:object:generate=true
-//+groupName=aiml.pachyderm.com
+// +kubebuilder:object:generate=true
+// +groupName=aiml.pachyderm.com
 package v1beta1
 
 import (

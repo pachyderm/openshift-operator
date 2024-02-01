@@ -592,8 +592,13 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
+  - AI
+  - ML
+  - data processing
+  - MLOps
   - pachyderm
   - versioning
+  - data processing
   - machine learning
   - artificial intelligence
   links:
@@ -605,8 +610,7 @@ spec:
   - email: eochieng@redhat.com
     name: Edmund Ochieng
   maturity: beta
-  minKubeVersion: v1.19.0
   provider:
     name: Pachyderm, Inc.
-    url: https://pachyderm.com
+    url: https://www.pachyderm.com
   version: 0.0.0

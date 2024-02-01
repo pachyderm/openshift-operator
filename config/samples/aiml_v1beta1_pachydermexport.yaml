@@ -1,6 +1,12 @@
 apiVersion: aiml.pachyderm.com/v1beta1
 kind: PachydermExport
 metadata:
+  labels:
+    app.kubernetes.io/name: pachydermexport
+    app.kubernetes.io/instance: pachydermexport-sample
+    app.kubernetes.io/part-of: pachyderm-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: pachyderm-operator
   name: pachydermexport-sample
 spec:
   backup:

@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Pachyderm.
+Copyright 2024 Ecosystem Experience Engineering.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,30 +21,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strconv"
 
-	"sort"
-
 	"github.com/creasty/defaults"
+	"golang.org/x/mod/semver"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	"golang.org/x/mod/semver"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
 var pachydermlog = logf.Log.WithName("pachyderm-resource")
 
-// SetupWebhookWithManager setups the webhook
 func (r *Pachyderm) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-aiml-pachyderm-com-v1beta1-pachyderm,mutating=true,failurePolicy=fail,sideEffects=None,groups=aiml.pachyderm.com,resources=pachyderms,verbs=create;update,versions=v1beta1,name=mpachyderm.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/mutate-aiml-pachyderm-com-v1beta1-pachyderm,mutating=true,failurePolicy=fail,sideEffects=None,groups=aiml.pachyderm.com,resources=pachyderms,verbs=create;update,versions=v1beta1,name=mpachyderm.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &Pachyderm{}
 
@@ -64,35 +62,35 @@ func (r *Pachyderm) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-aiml-pachyderm-com-v1beta1-pachyderm,mutating=false,failurePolicy=fail,sideEffects=None,groups=aiml.pachyderm.com,resources=pachyderms,verbs=create;update,versions=v1beta1,name=vpachyderm.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-aiml-pachyderm-com-v1beta1-pachyderm,mutating=false,failurePolicy=fail,sideEffects=None,groups=aiml.pachyderm.com,resources=pachyderms,verbs=create;update,versions=v1beta1,name=vpachyderm.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Pachyderm{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Pachyderm) ValidateCreate() error {
+func (r *Pachyderm) ValidateCreate() (admission.Warnings, error) {
 	pachydermlog.Info("validate create", "name", r.Name)
 
 	if r.isUsingGCS() && r.Spec.Pachd.Storage.Google.CredentialSecret == "" {
-		return errors.New("spec.pachd.storage.google.credentialSecret can not be empty")
+		return nil, errors.New("spec.pachd.storage.google.credentialSecret can not be empty")
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Pachyderm) ValidateUpdate(old runtime.Object) error {
+func (r *Pachyderm) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	pachydermlog.Info("validate update", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object update.
-	return nil
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Pachyderm) ValidateDelete() error {
+func (r *Pachyderm) ValidateDelete() (admission.Warnings, error) {
 	pachydermlog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
-	return nil
+	return nil, nil
 }
 
 // returns true if Pachd storage is using Google Container storage

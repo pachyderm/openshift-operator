@@ -1,10 +1,16 @@
 apiVersion: aiml.pachyderm.com/v1beta1
 kind: Pachyderm
 metadata:
+  labels:
+    app.kubernetes.io/name: pachyderm
+    app.kubernetes.io/instance: pachyderm-sample
+    app.kubernetes.io/part-of: pachyderm-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: pachyderm-operator
   name: pachyderm-sample
 spec:
   version: "v2.0.3"
-  console: 
+  console:
     disable: true
   pachd:
     metrics:
@@ -13,4 +19,3 @@ spec:
       backend: AMAZON
       amazon:
         credentialSecretName: pachyderm-aws-secret
-

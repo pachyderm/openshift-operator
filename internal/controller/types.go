@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 type backup struct {
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`

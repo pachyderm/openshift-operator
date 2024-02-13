@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OPERATOR_DIR=$(pwd)
-OPERATOR_PKG_NAME=$(sed -n '/projectName/p' PROJECT | cut -d: -f2 | xargs)
+OPERATOR_PKG_NAME=`awk '/^projectName\:/ { print  $2 }' PROJECT`
 OPERATOR_CSV="${OPERATOR_DIR}/$(find bundle/manifests/ -name '*.clusterserviceversion.yaml' -type f)"
 
 annotations_exist() {
@@ -45,7 +45,12 @@ check_min_kube_version() {
 
 set_container_image() {
     echo -n "Setting .metadata.annotations.containerImage to ${IMG}..."
-    sed -i "s|containerImage:.*$|containerImage: ${IMG}|g" ${OPERATOR_CSV}
+    if [[ ${OSTYPE} == "darwin"* ]]; then
+        gsed -i "s|containerImage:.*$|containerImage: ${IMG}|g" ${OPERATOR_CSV}
+    else
+        sed -i "s|containerImage:.*$|containerImage: ${IMG}|g" ${OPERATOR_CSV}
+    fi
+
 	if [ $? -eq 0 ]
 	then
 		echo "done"

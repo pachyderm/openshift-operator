@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controller
 
 import (
 	"context"
@@ -25,8 +25,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-logr/logr"
 	"golang.org/x/mod/semver"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -34,14 +38,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
-	"github.com/pachyderm/openshift-operator/controllers/generators"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
+	"github.com/pachyderm/openshift-operator/internal/controller/generators"
 )
 
 const (
@@ -51,7 +52,6 @@ const (
 // PachydermReconciler reconciles a Pachyderm object
 type PachydermReconciler struct {
 	client.Client
-	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
@@ -77,9 +77,8 @@ type PachydermReconciler struct {
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=anyuid,verbs=use
 
-// Reconcile function attempts to bring the state of the world to resemble the desired state
 func (r *PachydermReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("pachyderm", req.NamespacedName)
+	_ = log.FromContext(ctx)
 
 	pd := &aimlv1beta1.Pachyderm{}
 	if err := r.Get(ctx, req.NamespacedName, pd); err != nil {

@@ -2,7 +2,7 @@ package generators
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	aimlv1beta1 "github.com/pachyderm/openshift-operator/api/v1beta1"
 )
@@ -20,7 +20,7 @@ type ImageCatalog struct {
 }
 
 func getDefaultCertifiedImages(images string) (*ImageCatalog, error) {
-	data, err := ioutil.ReadFile(images)
+	data, err := os.ReadFile(images)
 	if err != nil {
 		return nil, err
 	}

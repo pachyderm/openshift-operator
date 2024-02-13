@@ -8,6 +8,13 @@ metadata:
           "apiVersion": "aiml.pachyderm.com/v1beta1",
           "kind": "Pachyderm",
           "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "pachyderm-operator",
+              "app.kubernetes.io/instance": "pachyderm-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "pachyderm",
+              "app.kubernetes.io/part-of": "pachyderm-operator"
+            },
             "name": "pachyderm-sample"
           },
           "spec": {
@@ -24,13 +31,21 @@ metadata:
                 },
                 "backend": "AMAZON"
               }
-            }
+            },
+            "version": "v2.0.3"
           }
         },
         {
           "apiVersion": "aiml.pachyderm.com/v1beta1",
           "kind": "PachydermExport",
           "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "pachyderm-operator",
+              "app.kubernetes.io/instance": "pachydermexport-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "pachydermexport",
+              "app.kubernetes.io/part-of": "pachyderm-operator"
+            },
             "name": "pachydermexport-sample"
           },
           "spec": {
@@ -43,6 +58,13 @@ metadata:
           "apiVersion": "aiml.pachyderm.com/v1beta1",
           "kind": "PachydermImport",
           "metadata": {
+            "labels": {
+              "app.kubernetes.io/created-by": "pachyderm-operator",
+              "app.kubernetes.io/instance": "pachydermimport-sample",
+              "app.kubernetes.io/managed-by": "kustomize",
+              "app.kubernetes.io/name": "pachydermimport",
+              "app.kubernetes.io/part-of": "pachyderm-operator"
+            },
             "name": "pachydermimport-sample"
           },
           "spec": null
@@ -52,15 +74,15 @@ metadata:
     categories: AI/Machine Learning
     certified: "true"
     containerImage: quay.io/opdev/pachyderm-operator:latest
-    createdAt: "2021-05-20T08:05:00Z"
+    createdAt: "2024-02-02T14:28:20Z"
     description: Pachyderm provides the data layer that allows data science teams
       to productionize and scale their machine learning lifecycle with data driven
       automation, petabyte scalability and end-to-end reproducibility.
-    operators.operatorframework.io/builder: operator-sdk-v1.22.2
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    operators.operatorframework.io/builder: operator-sdk-v1.33.0
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
     repository: https://github.com/pachyderm/openshift-operator
     support: Pachyderm, Inc.
-  name: pachyderm-operator.v0.1.3
+  name: pachyderm-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -942,6 +964,12 @@ spec:
         serviceAccountName: pachyderm-operator-controller-manager
       deployments:
       - label:
+          app.kubernetes.io/component: manager
+          app.kubernetes.io/created-by: pachyderm-operator
+          app.kubernetes.io/instance: controller-manager
+          app.kubernetes.io/managed-by: kustomize
+          app.kubernetes.io/name: deployment
+          app.kubernetes.io/part-of: pachyderm-operator
           control-plane: controller-manager
         name: pachyderm-operator-controller-manager
         spec:
@@ -952,32 +980,18 @@ spec:
           strategy: {}
           template:
             metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
               labels:
                 control-plane: controller-manager
             spec:
               containers:
-              - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=10
-                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:5e33f9d095952866b9743cc8268fb740cce6d93439f00ce333a2de1e5974837e
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                resources: {}
               - args:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
                 command:
                 - /manager
-                env:
-                - name: NAMESPACE
-                  valueFrom:
-                    fieldRef:
-                      fieldPath: metadata.namespace
                 image: quay.io/opdev/pachyderm-operator:latest
                 livenessProbe:
                   httpGet:
@@ -995,36 +1009,72 @@ spec:
                     path: /readyz
                     port: 8081
                   initialDelaySeconds: 30
-                  periodSeconds: 15
+                  periodSeconds: 10
                 resources:
                   limits:
-                    cpu: 100m
-                    memory: 320Mi
+                    cpu: 500m
+                    memory: 512Mi
                   requests:
                     cpu: 100m
                     memory: 200Mi
                 securityContext:
                   allowPrivilegeEscalation: false
-              - image: quay.io/eochieng/backup-handler:latest
-                name: backup
+                  capabilities:
+                    drop:
+                    - ALL
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: cert
+                  readOnly: true
+              - args:
+                - --secure-listen-address=0.0.0.0:8443
+                - --upstream=http://127.0.0.1:8080/
+                - --logtostderr=true
+                - --v=0
+                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:2c0840f4573373a19eb8c9a26501138ef0e76efbd508fd69a6260e78194d86c8
+                name: kube-rbac-proxy
+                ports:
+                - containerPort: 8443
+                  name: https
+                  protocol: TCP
                 resources:
                   limits:
-                    cpu: 200m
-                    memory: 250Mi
+                    cpu: 500m
+                    memory: 256Mi
                   requests:
-                    cpu: 100m
-                    memory: 200Mi
+                    cpu: 5m
+                    memory: 64Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: pachyderm-operator-controller-manager
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: cert
+                secret:
+                  defaultMode: 420
+                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
           - ""
-          - coordination.k8s.io
           resources:
           - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
           - leases
           verbs:
           - get
@@ -1053,8 +1103,13 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
+  - AI
+  - ML
+  - data processing
+  - MLOps
   - pachyderm
   - versioning
+  - data processing
   - machine learning
   - artificial intelligence
   links:
@@ -1066,15 +1121,13 @@ spec:
   - email: eochieng@redhat.com
     name: Edmund Ochieng
   maturity: beta
-  minKubeVersion: v1.19.0
   provider:
     name: Pachyderm, Inc.
-    url: https://pachyderm.com
-  version: 0.1.3
+    url: https://www.pachyderm.com
+  version: 0.0.1
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: pachyderm-operator-controller-manager
     failurePolicy: Fail
@@ -1095,7 +1148,6 @@ spec:
     webhookPath: /mutate-aiml-pachyderm-com-v1beta1-pachyderm
   - admissionReviewVersions:
     - v1
-    - v1beta1
     containerPort: 443
     deploymentName: pachyderm-operator-controller-manager
     failurePolicy: Fail
